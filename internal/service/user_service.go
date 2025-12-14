@@ -21,6 +21,12 @@ func (s *UserService) Register(user *model.User) error {
 		return errors.New("密码或微信号不能为空！")
 	}
 
+	var cnt int64
+	s.db.Where("id = ?", user.Uid).Count(&cnt)
+	if cnt > 0 {
+		return errors.New("微信号已存在！")
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err

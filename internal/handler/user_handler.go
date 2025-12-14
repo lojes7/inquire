@@ -17,19 +17,19 @@ func NewUserHandler(serve *service.UserService) *UserHandler {
 	return &UserHandler{serve}
 }
 
-type registerReq struct {
-	uid string
-	pwd string
+type registerRequest struct {
+	Uid      string `json:"name" binding:"required,max=64"`
+	Password string `json:"password" binding:"required,min=6,max=72"`
 }
 
 func (h *UserHandler) Register(c *gin.Context) {
-	var req registerReq
+	var req registerRequest
 	if err := c.ShouldBindJSON(req); err != nil {
-		response.Fail(c, http.StatusBadRequest, "请求出错")
+		response.Fail(c, http.StatusBadRequest, "json解析出错")
 		return
 	}
 
-	user := model.NewUser(req.uid, req.pwd)
+	user := model.NewUser(req.Uid, req.Password)
 	err := h.serve.Register(user)
 	if err != nil {
 		response.Fail(c, http.StatusBadRequest, err.Error())
