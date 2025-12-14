@@ -2,10 +2,13 @@ package config
 
 import (
 	"log"
+	"os"
+	"time"
 
 	"github.com/spf13/viper"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 func InitConfig() error {
@@ -20,7 +23,13 @@ func InitConfig() error {
 }
 
 func InitDatabase() (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(viper.GetString("postgres.dsn")), nil)
+	newLogger := logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags),
+		logger.Config{
+			SlowThreshold: time.Second,
+			LogLevel:      logger.Info,
+			Colorful:      true,
+		})
+	db, err := gorm.Open(postgres.Open(viper.GetString("postgres.dsn")), &gorm.Config{Logger: newLogger})
 	if err != nil {
 		return nil, err
 	}
