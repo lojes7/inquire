@@ -17,14 +17,14 @@ func NewUserHandler(serve *service.UserService) *UserHandler {
 	return &UserHandler{serve}
 }
 
-type registerRequest struct {
+type RegisterRequest struct {
 	Uid      string `json:"name" binding:"required,max=64"`
 	Password string `json:"password" binding:"required,min=6,max=72"`
 }
 
 func (h *UserHandler) Register(c *gin.Context) {
-	var req registerRequest
-	if err := c.ShouldBindJSON(req); err != nil {
+	var req RegisterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, http.StatusBadRequest, "json解析出错")
 		return
 	}
