@@ -2,8 +2,8 @@ package main
 
 import (
 	"log"
-	"wechat/internal/config"
-	"wechat/internal/router"
+	"vvechat/internal/config"
+	"vvechat/internal/router"
 )
 
 func main() {

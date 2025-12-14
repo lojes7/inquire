@@ -1,8 +1,8 @@
 package router
 
 import (
-	"wechat/internal/handler"
-	"wechat/internal/service"
+	"vvechat/internal/handler"
+	"vvechat/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

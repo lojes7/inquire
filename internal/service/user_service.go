@@ -2,7 +2,7 @@ package service
 
 import (
 	"errors"
-	"wechat/internal/model"
+	"vvechat/internal/model"
 
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"

@@ -2,9 +2,9 @@ package handler
 
 import (
 	"net/http"
-	"wechat/internal/model"
-	"wechat/internal/service"
-	"wechat/pkg/response"
+	"vvechat/internal/model"
+	"vvechat/internal/service"
+	"vvechat/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
