@@ -1,4 +1,4 @@
-package class
+package model
 
 import (
 	"time"
@@ -28,8 +28,4 @@ func NewUser(uid string, password string) *User {
 		Password: password,
 	}
 	return &user
-}
-
-func AddUserToDB(user *User, db *gorm.DB) *gorm.DB {
-	return db.Create(user)
 }

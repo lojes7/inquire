@@ -1,15 +1,23 @@
 package router
 
 import (
+	"wechat/internal/handler"
 	"wechat/internal/service"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-func Launch(serve *service.Serve) *gin.Engine {
+func Launch(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
 
-	r.POST("/user/register", serve.RegisterUser)
+	serve := service.NewUserService(db)
+	handle := handler.NewUserHandler(serve)
+
+	api := r.Group("/api")
+	{
+		api.POST("/register", handle.Register)
+	}
 
 	return r
 }

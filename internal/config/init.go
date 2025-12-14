@@ -1,4 +1,4 @@
-package system
+package config
 
 import (
 	"log"
@@ -20,7 +20,7 @@ func InitConfig() error {
 }
 
 func InitDatabase() (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(viper.GetString("postgreSQL.dsn")), nil)
+	db, err := gorm.Open(postgres.Open(viper.GetString("postgres.dsn")), nil)
 	if err != nil {
 		return nil, err
 	}

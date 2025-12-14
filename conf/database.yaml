@@ -1,2 +1,2 @@
-postgreSQL:
+postgres:
   dsn: "host=localhost user=lojes dbname=wechat port=5432 sslmode=disable TimeZone=Asia/Shanghai"

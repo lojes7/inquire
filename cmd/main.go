@@ -2,25 +2,20 @@ package main
 
 import (
 	"log"
+	"wechat/internal/config"
 	"wechat/internal/router"
-	"wechat/internal/service"
-	"wechat/internal/system"
 )
 
 func main() {
-	err := system.InitConfig()
+	err := config.InitConfig()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	db, err := system.InitDatabase()
+	db, err := config.InitDatabase()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	serve := service.Serve{
-		DB: db,
-	}
-
-	r := router.Launch(&serve)
+	r := router.Launch(db)
 	r.Run(":8080")
 }
