@@ -1,4 +1,4 @@
-package models
+package class
 
 import (
 	"time"
@@ -20,4 +20,16 @@ type User struct {
 	HeartbeatTime time.Time
 	IsLogOut      bool
 	DeviceInfo    string
+}
+
+func NewUser(uid string, password string) *User {
+	user := User{
+		Uid: uid,
+		Password: password,
+	}
+	return &user
+}
+
+func AddUserToDB(user *User, db *gorm.DB) *gorm.DB {
+	return db.Create(user)
 }

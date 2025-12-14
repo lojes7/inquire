@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"wechat/internal/router"
+	"wechat/internal/service"
 	"wechat/internal/system"
 )
 
@@ -16,6 +17,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	r := router.Launch(db)
+	serve := service.Serve{
+		DB: db,
+	}
+
+	r := router.Launch(&serve)
 	r.Run(":8080")
 }

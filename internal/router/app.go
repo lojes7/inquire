@@ -1,11 +1,15 @@
 package router
 
 import (
+	"wechat/internal/service"
+
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-func Launch(db *gorm.DB) *gin.Engine {
+func Launch(serve *service.Serve) *gin.Engine {
 	r := gin.Default()
+
+	r.POST("/user/register", serve.RegisterUser)
+
 	return r
 }
