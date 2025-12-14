@@ -1,0 +1,23 @@
+package models
+
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
+
+type User struct {
+	gorm.Model
+	Name          string `gorm:"not null;unique;size:64"`
+	Password      string `gorm:"not null"`
+	Uid           string `gorm:"unique"`
+	Email         string `gorm:"unique"`
+	ClientIP      string
+	ClientPort    string
+	PhoneNumber   string    `gorm:"unique"`
+	LoginTime     time.Time `gorm:"default:now()"`
+	LoginOutTime  time.Time
+	HeartbeatTime time.Time
+	IsLogOut      bool
+	DeviceInfo    string
+}
