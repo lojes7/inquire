@@ -68,15 +68,5 @@ func (s *UserService) LoginByUid(uid string, password string) error {
 		return err
 	}
 
-	input_pwd, err := secure.HashString(password)
-
-	if err != nil {
-		return err
-	}
-
-	if input_pwd == user.Password {
-		return nil
-	} else {
-		return errors.New("密码错误")
-	}
+	return secure.VerifyPassword(user.Password, password)
 }
