@@ -1,31 +1,28 @@
 package model
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
 type User struct {
 	gorm.Model
-	Name          string `gorm:"not null;unique;size:64"`
-	Password      string `gorm:"not null"`
-	Uid           string `gorm:"unique"`
-	Email         string `gorm:"unique"`
-	ClientIP      string
-	ClientPort    string
-	PhoneNumber   string    `gorm:"unique"`
-	LoginTime     time.Time `gorm:"default:now()"`
-	LoginOutTime  time.Time
-	HeartbeatTime time.Time
-	IsLogOut      bool
-	DeviceInfo    string
+	Name        string `gorm:"type:varchar(64);not null;uniqueIndex"`
+	Password    string `gorm:"type:varchar(72);not null"`
+	Uid         string `gorm:"type:varchar(20);not null;uniqueIndex"`
+	Region      string `gorm:"type:varchar(32)"`
+	PhoneNumber string `gorm:"type:varchar(20);not null;uniqueIndex"`
+	Signature   string `gorm:"type:varchar(128);"`
+	Gender      string `gorm:"type:varchar(12);"`
 }
 
-func NewUser(uid string, password string) *User {
+func NewUser(name string, password string) *User {
 	user := User{
-		Uid: uid,
+		Name:      name,
 		Password: password,
 	}
 	return &user
+}
+
+func (*User) TableName() string {
+	return "users"
 }

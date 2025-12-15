@@ -32,7 +32,7 @@ func (s *UserService) GetUserByUid(uid string) (*model.User, error) {
 
 func (s *UserService) IsUidExist(uid string) (bool, error) {
 	var cnt int64
-	res := s.db.Where("id = ?", uid).Count(&cnt)
+	res := s.db.Model(&model.User{}).Where("uid = ?", uid).Count(&cnt)
 	if res.Error != nil {
 		return false, res.Error
 	}
