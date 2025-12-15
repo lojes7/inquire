@@ -18,14 +18,18 @@ func NewUserHandler(serve *service.UserService) *UserHandler {
 }
 
 func (h *UserHandler) Register(c *gin.Context) {
-	var req RequestUidAndPassword
+	var req RequestBasicInfo
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, http.StatusBadRequest, "json解析出错")
 		return
 	}
 
-	user := model.NewUser(req.Uid, req.Password)
-	err := h.serve.Register(user)
+	user, err := model.NewUser(req.Name, req.Password, req.PhoneNumber)
+	if err != nil {
+		response.Fail(c, http.StatusBadRequest, err.Error())
+	}
+
+	err = h.serve.Register(user)
 	if err != nil {
 		response.Fail(c, http.StatusBadRequest, err.Error())
 	} else {
@@ -34,7 +38,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 }
 
 func (h *UserHandler) LoginByUid(c *gin.Context) {
-	var req RequestUidAndPassword
+	var req RequestBasicInfo
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, http.StatusBadRequest, "json解析出错")
 		return

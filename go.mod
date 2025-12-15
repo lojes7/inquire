@@ -4,6 +4,7 @@ go 1.25.5
 
 require (
 	github.com/gin-gonic/gin v1.11.0
+	github.com/sony/sonyflake v1.3.0
 	github.com/spf13/viper v1.21.0
 	golang.org/x/crypto v0.45.0
 	gorm.io/driver/postgres v1.6.0

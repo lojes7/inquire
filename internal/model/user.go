@@ -1,6 +1,9 @@
 package model
 
 import (
+	"strconv"
+	"vvechat/pkg/utils"
+
 	"gorm.io/gorm"
 )
 
@@ -15,12 +18,20 @@ type User struct {
 	Gender      string `gorm:"type:varchar(12);"`
 }
 
-func NewUser(name string, password string) *User {
+func NewUser(name string, password string, phone string) (*User, error) {
 	user := User{
-		Name:      name,
-		Password: password,
+		Name:        name,
+		Password:    password,
+		PhoneNumber: phone,
 	}
-	return &user
+
+	uid, err := utils.NextUniqueID()
+	if err != nil {
+		return nil, err
+	}
+
+	user.Uid = strconv.FormatUint(uid, 10)
+	return &user, nil
 }
 
 func (*User) TableName() string {

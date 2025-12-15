@@ -30,34 +30,45 @@ func (s *UserService) GetUserByUid(uid string) (*model.User, error) {
 	return &user, nil
 }
 
-func (s *UserService) IsUidExist(uid string) (bool, error) {
+func (s *UserService) IsUidExist(uid string) error {
 	var cnt int64
 	res := s.db.Model(&model.User{}).Where("uid = ?", uid).Count(&cnt)
 	if res.Error != nil {
-		return false, res.Error
+		return res.Error
 	}
 
 	exist := cnt > 0
-	return exist, nil
+	if exist {
+		return errors.New("Uid is Exist")
+	}
+	return nil
+}
+
+func (s *UserService) IsPhoneNumberExist(phone string) error {
+	var cnt int64
+	res := s.db.Model(&model.User{}).Where("phone_number = ?", phone).Count(&cnt)
+	if res.Error != nil {
+		return res.Error
+	}
+
+	exist := cnt > 0
+	if exist {
+		return errors.New("Uid is Exist")
+	}
+	return nil
 }
 
 func (s *UserService) Register(user *model.User) error {
-	if user.Uid == "" || user.Password == "" {
-		return errors.New("密码或微信号不能为空！")
+	if err := s.IsPhoneNumberExist(user.PhoneNumber); err != nil {
+		return err
 	}
 
-	ok, err := s.IsUidExist(user.Uid)
+	pwd, err := secure.HashString(user.Password)
 	if err != nil {
 		return err
 	}
-	if ok == true {
-		return errors.New("微信号已存在！")
-	}
 
-	user.Password, err = secure.HashString(user.Password)
-	if err != nil {
-		return err
-	}
+	user.Password = pwd
 
 	return s.db.Create(user).Error
 }
