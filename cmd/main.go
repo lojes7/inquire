@@ -2,8 +2,8 @@ package main
 
 import (
 	"log"
-	"vvechat/internal/infra"
 	"vvechat/internal/router"
+	"vvechat/pkg/infra"
 	"vvechat/pkg/utils"
 )
 

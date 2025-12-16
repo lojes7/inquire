@@ -2,7 +2,7 @@ package service
 
 import (
 	"errors"
-	"vvechat/internal/infra"
+	"vvechat/pkg/infra"
 	"vvechat/internal/model"
 	"vvechat/pkg/secure"
 
