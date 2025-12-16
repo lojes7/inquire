@@ -3,12 +3,10 @@ package model
 import (
 	"strconv"
 	"vvechat/pkg/utils"
-
-	"gorm.io/gorm"
 )
 
 type User struct {
-	gorm.Model
+	ID          uint64 `gorm:"type:bigint;primaryKey;autoIncrement:false"`
 	Name        string `gorm:"type:varchar(64);not null;uniqueIndex"`
 	Password    string `gorm:"type:varchar(72);not null"`
 	Uid         string `gorm:"type:varchar(20);not null;uniqueIndex"`
@@ -25,12 +23,13 @@ func NewUser(name string, password string, phone string) (*User, error) {
 		PhoneNumber: phone,
 	}
 
-	uid, err := utils.NextUniqueID()
+	id, err := utils.NextUniqueID()
 	if err != nil {
 		return nil, err
 	}
 
-	user.Uid = strconv.FormatUint(uid, 10)
+	user.ID = id
+	user.Uid = "V_" + strconv.FormatUint(id, 64)
 	return &user, nil
 }
 
