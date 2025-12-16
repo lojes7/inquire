@@ -6,10 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Success(c *gin.Context, data any) {
+func Success(c *gin.Context, msg string, data any) {
 	c.JSON(http.StatusOK, gin.H{
 		"code":    200,
-		"message": "success",
+		"message": msg,
 		"data":    data,
 	})
 }

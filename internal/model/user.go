@@ -29,7 +29,7 @@ func NewUser(name string, password string, phone string) (*User, error) {
 	}
 
 	user.ID = id
-	user.Uid = "V_" + strconv.FormatUint(id, 64)
+	user.Uid = "V_" + strconv.FormatUint(id, 36)
 	return &user, nil
 }
 

@@ -19,18 +19,19 @@ func Register(c *gin.Context) {
 	user, err := model.NewUser(req.Name, req.Password, req.PhoneNumber)
 	if err != nil {
 		response.Fail(c, http.StatusBadRequest, err.Error())
+		return
 	}
 
 	err = service.Register(user)
 	if err != nil {
 		response.Fail(c, http.StatusBadRequest, err.Error())
 	} else {
-		response.Success(c, nil)
+		response.Success(c, "注册成功", nil)
 	}
 }
 
 func LoginByUid(c *gin.Context) {
-	var req RequestUidAndPassword
+	var req LoginByUidRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, http.StatusBadRequest, "json解析出错")
 		return
@@ -40,12 +41,12 @@ func LoginByUid(c *gin.Context) {
 	if err != nil {
 		response.Fail(c, http.StatusBadRequest, err.Error())
 	} else {
-		response.Success(c, nil)
+		response.Success(c, "登陆成功", nil)
 	}
 }
 
 func LoginByPhone(c *gin.Context) {
-	var req RequestPhoneAndPassword
+	var req LoginByPhoneRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, http.StatusBadRequest, "json解析出错")
 		return
@@ -55,6 +56,6 @@ func LoginByPhone(c *gin.Context) {
 	if err != nil {
 		response.Fail(c, http.StatusBadRequest, err.Error())
 	} else {
-		response.Success(c, nil)
+		response.Success(c, "登陆成功", nil)
 	}
 }
