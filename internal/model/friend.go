@@ -1,12 +1,8 @@
 package model
 
-import (
-	"gorm.io/gorm"
-)
-
 // Friendship 好友关系表
 type Friendship struct {
-	gorm.Model
+	MyModel
 	UserID       uint64 `gorm:"type:bigint;not null;index:idx_user_friend,unique"`
 	FriendID     uint64 `gorm:"type:bigint;not null;index:idx_user_friend,unique"`
 	FriendRemark string `gorm:"type:varchar(64);not null"`
@@ -14,7 +10,7 @@ type Friendship struct {
 
 // FriendshipRequest 好友申请列表
 type FriendshipRequest struct {
-	gorm.Model
+	MyModel
 	SenderID            uint64 `gorm:"type:bigint;not null;index:idx_sender_receiver,unique"`
 	SenderName          string `gorm:"type:varchar(64);not null;"`
 	ReceiverID          uint64 `gorm:"type:bigint;not null;index:idx_sender_receiver,unique"`

@@ -24,7 +24,6 @@ func Launch() *gin.Engine {
 			converse := auth.Group("/conversations")
 			{
 				converse.GET("")                  //加载聊天列表
-				converse.POST("/private")         //创建私聊
 				converse.GET("/:conversation_id") //加载聊天窗口
 			}
 
@@ -43,8 +42,9 @@ func Launch() *gin.Engine {
 
 			message := auth.Group("/messages")
 			{
-				message.POST("")               //发送消息
-				message.DELETE("/:message_id") //撤回消息
+				message.POST("", handler.SendMessage) //发送消息
+				message.DELETE("/recall")             //撤回消息
+				message.DELETE("/delete")             //删除消息
 			}
 
 		}

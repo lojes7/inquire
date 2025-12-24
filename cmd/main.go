@@ -45,10 +45,12 @@ func main() {
 	/*infra.GetDB().AutoMigrate(&model.User{})
 	infra.GetDB().AutoMigrate(&model.Friendship{})
 	infra.GetDB().AutoMigrate(&model.FriendshipRequest{})
-	*/
+	infra.GetDB().AutoMigrate(&model.Message{})
+	infra.GetDB().AutoMigrate(&model.Conversation{})
+	infra.GetDB().AutoMigrate(&model.MessageUser{})*/
 	r := router.Launch()
 	err = r.Run(":8080")
 	if err != nil {
-		log.Fatalln("路由器Run出错")
+		log.Fatalln("路由器出错")
 	}
 }

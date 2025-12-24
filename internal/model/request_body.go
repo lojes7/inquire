@@ -35,3 +35,13 @@ type AddFriendReq struct {
 type FriendRequestActionReq struct {
 	Status string `json:"status" binding:"required,oneof=accepted rejected"`
 }
+
+// SendMessageReq 发送消息请求体
+type SendMessageReq struct {
+	ReceiverID uint64 `json:"receiver_id" binding:"required,gt=0"`
+	Content    string `json:"content" binding:"required,max=1024"`
+}
+
+type MessageIDReq struct {
+	MessageID uint64 `json:"message_id" binding:"required,gt=0"`
+}
