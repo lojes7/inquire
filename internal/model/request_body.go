@@ -42,6 +42,7 @@ type SendMessageReq struct {
 	Content    string `json:"content" binding:"required,max=1024"`
 }
 
+// MessageIDReq 消息ID请求体
 type MessageIDReq struct {
 	MessageID uint64 `json:"message_id" binding:"required,gt=0"`
 }
