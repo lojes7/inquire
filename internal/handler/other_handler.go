@@ -17,7 +17,7 @@ func RefreshToken(c *gin.Context) {
 		response.Fail(c, 500, "token出现问题"+err.Error())
 	}
 
-	response.Success(c, "success", resp)
+	response.Success(c, 201, "success", resp)
 }
 
 func ReviseUid(c *gin.Context) {
@@ -40,5 +40,5 @@ func ReviseUid(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, "success", nil)
+	response.Success(c, 201, "success", nil)
 }

@@ -33,7 +33,7 @@ func Register(c *gin.Context) {
 			response.Fail(c, 500, "数据库错误")
 		}
 	} else {
-		response.Success(c, "注册成功", nil)
+		response.Success(c, 201, "注册成功", nil)
 	}
 }
 
@@ -49,7 +49,7 @@ func LoginByUid(c *gin.Context) {
 	if err != nil {
 		response.Fail(c, http.StatusBadRequest, err.Error())
 	} else {
-		response.Success(c, "登陆成功", loginResp)
+		response.Success(c, 200, "登陆成功", loginResp)
 	}
 }
 
@@ -65,6 +65,6 @@ func LoginByPhone(c *gin.Context) {
 	if err != nil {
 		response.Fail(c, http.StatusBadRequest, err.Error())
 	} else {
-		response.Success(c, "登陆成功", loginResp)
+		response.Success(c, 200, "登陆成功", loginResp)
 	}
 }

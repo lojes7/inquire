@@ -33,7 +33,7 @@ func SendFriendRequest(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, "发送成功", nil)
+	response.Success(c, 201, "发送成功", nil)
 }
 
 // FriendRequestList 加载好友申请列表操作
@@ -46,7 +46,7 @@ func FriendRequestList(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, "success", respSlice)
+	response.Success(c, 200, "success", respSlice)
 }
 
 // FriendRequestAction 通过/拒绝好友请求操作
@@ -80,5 +80,5 @@ func FriendRequestAction(c *gin.Context) {
 		response.Fail(c, 400, "status错误")
 		return
 	}
-	response.Success(c, "success", nil)
+	response.Success(c, 201, "success", nil)
 }

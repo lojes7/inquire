@@ -19,7 +19,7 @@ func FriendshipList(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, "success", resp)
+	response.Success(c, 200, "success", resp)
 }
 
 func DeleteFriendship(c *gin.Context) {
@@ -42,5 +42,5 @@ func DeleteFriendship(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, "success", nil)
+	response.Success(c, 201, "success", nil)
 }

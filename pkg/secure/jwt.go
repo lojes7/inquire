@@ -17,7 +17,7 @@ var (
 func InitJWT() error {
 	key := viper.GetString("jwt.key")
 	if key == "" {
-		return errors.New("jwtKey是空的")
+		return errors.New("jwtKey 是空的")
 	}
 
 	jwtKey = []byte(key)

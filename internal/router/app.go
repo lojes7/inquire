@@ -12,9 +12,10 @@ func Launch() *gin.Engine {
 
 	api := r.Group("/api")
 	{
-		api.POST("/register", handler.Register)
-		api.POST("/login/uid", handler.LoginByUid)
-		api.POST("/login/phone_number", handler.LoginByPhone)
+		api.POST("/register", handler.Register)               // 注册
+		api.POST("/login/uid", handler.LoginByUid)            // 微信号登陆
+		api.POST("/login/phone_number", handler.LoginByPhone) // 手机号登陆
+		// 刷新 token
 		api.POST("/auth/refresh_token", middleware.RefreshAuth(), handler.RefreshToken)
 
 		auth := api.Group("/auth", middleware.JWTAuth())
