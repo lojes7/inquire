@@ -62,38 +62,3 @@ Authorization: Bearer <token>
 }
 ```
 
-**查看最近访问的人**
-
-前端接口：
-
-```http
-GET api/auth/info/recent
-Authorization: Bearer <token>
-```
-
-成功后端返回：
-
-```json
-{
-    "code":200
-    "message":,
-    "data": {
-    	[
-			{
-    			"id":表主键,
-    			"name":昵称,
-			}    	
-    	]
-	}
-}
-```
-
-失败后端返回：
-
-```json
-{
-    "code": 400/401/404/500
-    "message":
-}
-```
-
