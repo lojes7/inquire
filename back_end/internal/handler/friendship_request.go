@@ -49,8 +49,8 @@ func FriendRequestList(c *gin.Context) {
 	response.Success(c, 200, "success", respSlice)
 }
 
-// FriendRequestAction 通过/拒绝好友请求操作
-func FriendRequestAction(c *gin.Context) {
+// FriendRequestAccept 通过好友申请操作
+func FriendRequestAccept(c *gin.Context) {
 	requestID := c.Param("request_id")
 	id, err := strconv.ParseUint(requestID, 10, 64)
 	if err != nil {
@@ -58,27 +58,29 @@ func FriendRequestAction(c *gin.Context) {
 		return
 	}
 
-	var req model.FriendRequestActionReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, 400, "JSON错误")
+	err = service.FriendRequestAccept(id)
+	if err != nil {
+		response.Fail(c, 500, "服务器错误")
 		return
 	}
 
-	if req.Status == "accepted" {
-		err := service.FriendRequestAccept(id)
-		if err != nil {
-			response.Fail(c, 500, "服务器错误")
-			return
-		}
-	} else if req.Status == "rejected" {
-		err := service.FriendRequestReject(id)
-		if err != nil {
-			response.Fail(c, 500, "服务器错误")
-			return
-		}
-	} else {
-		response.Fail(c, 400, "status错误")
+	response.Success(c, 201, "success", nil)
+}
+
+// FriendRequestDelete 删除好友申请
+func FriendRequestDelete(c *gin.Context) {
+	requestID := c.Param("request_id")
+	id, err := strconv.ParseUint(requestID, 10, 64)
+	if err != nil {
+		response.Fail(c, 400, "requestID错误")
 		return
 	}
+
+	err = service.FriendRequestDelete(id)
+	if err != nil {
+		response.Fail(c, 500, "服务器错误")
+		return
+	}
+
 	response.Success(c, 201, "success", nil)
 }

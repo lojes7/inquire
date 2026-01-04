@@ -105,17 +105,12 @@
   }
   ```
 
-- **同意/拒绝 好友申请操作**
+- **同意好友申请操作**
 
   前端接口
 
   ```http
   POST /api/auth/friendship_requests/{request_id}
-  Content-Type: application/json
-
-  {
-  	"status": "accepted" | "rejected"
-  }
   Authorization: Bearer <token>
   ```
 
@@ -124,7 +119,36 @@
   ```json
   {
       "code":  201,
-      "message": "success"
+      "message": "success",
+      "data": null
+  }
+  ```
+
+  失败后端返回：
+
+  ```json
+  {
+      "code":  500,
+      "message": "服务器错误"
+  }
+  ```
+
+- **拒绝/删除好友申请操作**
+
+  前端接口
+
+  ```http
+  DELETE /api/auth/friendship_requests/{request_id}
+  Authorization: Bearer <token>
+  ```
+
+  成功后端返回：
+
+  ```json
+  {
+      "code":  201,
+      "message": "success",
+      "data": null
   }
   ```
 

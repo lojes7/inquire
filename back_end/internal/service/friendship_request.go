@@ -84,11 +84,19 @@ func FriendRequestAccept(id uint64) error {
 	})
 }
 
-// FriendRequestReject 拒绝好友申请
-func FriendRequestReject(requestID uint64) error {
-	return infra.GetDB().
-		Model(&model.FriendshipRequest{}).
-		Where("id = ? AND status = ?", requestID, "pending").
-		Update("status", "rejected").
-		Error
+// FriendRequestDelete 删除好友申请
+func FriendRequestDelete(requestID uint64) error {
+	db := infra.GetDB()
+	var req model.FriendshipRequest
+	req.ID = requestID
+	res := db.Delete(&req)
+	if res.Error != nil {
+		log.Println(res.Error)
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		log.Println("删除好友申请操作影响了0行表")
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
