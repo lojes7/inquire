@@ -4,7 +4,7 @@
  * 需求：
  * 1. 在内存中存储
  * 2. 使用哈希表 + 双向链表实现
- * 3. 键值映射：微信号 (uid) -> 用户 ID (id)
+ * 3. 键值映射：用户标识 (uid) -> 用户 ID (id)
  * 4. 复杂度：O(1)
  * 5. 仅存储 ID，不存储用户信息，避免数据不一致
  */
@@ -14,7 +14,7 @@
  */
 class Node {
     constructor(key, value) {
-        this.key = key;   // 微信号 (uid)
+        this.key = key;   // 用户标识 (uid)
         this.value = value; // 用户 ID (id)
         this.prev = null;
         this.next = null;
@@ -200,7 +200,7 @@ class LRUCache {
 
     /**
      * 获取用户 ID
-     * @param {string} key - 微信号 (uid)
+     * @param {string} key - 用户标识 (uid)
      * @returns {string|number|null} - 用户 ID
      */
     get(key) {
@@ -214,7 +214,7 @@ class LRUCache {
 
     /**
      * 写入缓存
-     * @param {string} key - 微信号 (uid)
+     * @param {string} key - 用户标识 (uid)
      * @param {string|number} value - 用户 ID
      */
     put(key, value) {
