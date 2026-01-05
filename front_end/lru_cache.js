@@ -66,8 +66,10 @@ class DoublyLinkedList {
  */
 class LRUCache {
     constructor(capacity) {
-        this.capacity = capacity;
-        this.map = {}; // 哈希表: uid -> Node
+        this.capacity = Number.isFinite(capacity) ? capacity : 0;
+        // 哈希表: uid -> Node
+        // 使用 Map 避免对象原型链键冲突，更符合“哈希表”语义
+        this.map = new Map();
         this.list = new DoublyLinkedList(); // 双向链表
         this.size = 0;
     }
@@ -78,8 +80,8 @@ class LRUCache {
      * @returns {string|number|null} - 用户 ID
      */
     get(key) {
-        if (key in this.map) {
-            const node = this.map[key];
+        if (this.map.has(key)) {
+            const node = this.map.get(key);
             this.list.moveToHead(node); // 访问后移动到头部，标记为最近使用
             return node.value;
         }
@@ -92,23 +94,27 @@ class LRUCache {
      * @param {string|number} value - 用户 ID
      */
     put(key, value) {
-        if (key in this.map) {
+        if (this.capacity <= 0) return;
+
+        if (this.map.has(key)) {
             // 如果已存在，更新值并移动到头部
-            const node = this.map[key];
+            const node = this.map.get(key);
             node.value = value;
             this.list.moveToHead(node);
         } else {
             // 如果不存在，创建新节点
             const newNode = new Node(key, value);
-            this.map[key] = newNode;
+            this.map.set(key, newNode);
             this.list.addToHead(newNode);
             this.size++;
 
             // 如果超过容量，移除尾部节点
             if (this.size > this.capacity) {
                 const tail = this.list.removeTail();
-                delete this.map[tail.key];
-                this.size--;
+                if (tail) {
+                    this.map.delete(tail.key);
+                    this.size--;
+                }
             }
         }
     }
@@ -120,10 +126,10 @@ class LRUCache {
      * @param {string} key 
      */
     remove(key) {
-        if (key in this.map) {
-            const node = this.map[key];
+        if (this.map.has(key)) {
+            const node = this.map.get(key);
             this.list.removeNode(node);
-            delete this.map[key];
+            this.map.delete(key);
             this.size--;
         }
     }
