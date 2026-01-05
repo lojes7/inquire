@@ -13,15 +13,6 @@ func RefreshToken(id uint64) (*model.TokenResp, error) {
 	return NewTokenResp(id)
 }
 
-// ReviseUid 修改微信号
-func ReviseUid(id uint64, newUid string) error {
-	return infra.GetDB().
-		Model(&model.User{}).
-		Where("id = ?", id).
-		Update("uid", newUid).
-		Error
-}
-
 // FriendInfoByID 查看好友信息
 func FriendInfoByID(userID, friendID uint64) (*model.FriendInfoResp, error) {
 	var resp model.FriendInfoResp

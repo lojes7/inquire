@@ -10,7 +10,7 @@ import (
 
 type User struct {
 	ID          uint64         `gorm:"type:bigint;primaryKey;autoIncrement:false"`
-	Name        string         `gorm:"type:varchar(64);not null;uniqueIndex"`
+	Name        string         `gorm:"type:varchar(64);not null"`
 	Password    string         `gorm:"type:varchar(72);not null"`
 	Uid         string         `gorm:"type:varchar(20);not null;uniqueIndex"`
 	Region      string         `gorm:"type:varchar(32)"`
