@@ -786,14 +786,6 @@ async function handleSaveSettings() {
     }
 
     if (msg.length > 0) {
-            await apiCall('/auth/me/password', 'POST', { prev_password: oldPass, new_password: newPass });
-            msg.push('密码修改成功');
-        } catch (err) {
-            msg.push('密码修改失败: ' + err.message);
-        }
-    }
-
-    if (msg.length > 0) {
         alert(msg.join('\n'));
     }
 

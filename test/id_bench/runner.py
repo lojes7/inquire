@@ -115,12 +115,21 @@ def main():
     verifier = Verifier()
     verification_result = verifier.verify(all_ids)
     
+    # 分析性能瓶颈
+    bottleneck_analysis = Verifier.analyze_bottlenecks(stats_data, args.duration)
+    
     # 3. Write Summary
     summary = {
         "config": vars(args),
         "total_generated": total_generated,
         "verification": verification_result,
-        "avg_qps": total_generated / args.duration
+        "avg_qps": total_generated / args.duration,
+        "bottleneck_analysis": bottleneck_analysis,
+        "scalability_notes": {
+            "node_scaling": f"测试使用 {args.nodes} 个节点，最大支持 {1023} 个节点 (10位)",
+            "concurrency_scaling": f"每节点 {args.workers_per_node} 个工作线程",
+            "throughput": f"平均吞吐量 {total_generated / args.duration:.2f} ID/s"
+        }
     }
     
     with open(os.path.join(out_dir, "id_bench_results.json"), 'w') as f:

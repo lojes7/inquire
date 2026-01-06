@@ -11,7 +11,7 @@ const requests = parseInt(args[3]) || 20000;
 const zipf_s = parseFloat(args[4]) || 1.1;
 const seed = parseInt(args[5]) || 42;
 
-// Simple PRNG
+// Simple PRNG (Mulberry32)
 function mulberry32(a) {
     return function() {
       var t = a += 0x6D2B79F5;
@@ -23,49 +23,59 @@ function mulberry32(a) {
 
 const rand = mulberry32(seed);
 
-// Zipf Generator
-function zipf(s, N) {
-    // Precompute probabilities (simple rejection or inverse transform is hard for Zipf)
-    // For performance, we use an approximation or a simple precomputed table if N is small.
-    // For large N, we can use the rank-frequency distribution.
-    // Rank r has freq proportional to 1/r^s.
-    // We can use a simple approximation: 
-    // Generate x in [0, 1]. Find r such that CDF(r) >= x.
-    
-    // Optimization: Precompute CDF for small keyspace, or use approximation.
-    // Given the constraints, let's use a simple precomputed CDF for N up to 1e6? No, too big.
-    // We'll use a simplified generator:
-    // p(k) = c / k^s
-    
-    // Let's use a simpler approach for the test:
-    // Just generate numbers with a bias.
-    // Or use a library if allowed? No, "reproducible code".
-    
-    // Harmonic number H_{N,s}
-    let c = 0;
-    for (let i = 1; i <= N; i++) {
-        c += (1.0 / Math.pow(i, s));
-    }
-    c = 1.0 / c;
-    
-    // This is too slow for N=1e6.
-    // Let's use the "Approximate Zipfian" logic often used in benchmarks (e.g. YCSB).
-    // But for this script, let's implement a very simple one:
-    // Select an index from 0 to N-1.
-    // We want index 0 to be most frequent.
-    
-    // Inverse transform sampling is slow without precomputed CDF.
-    // Let's use a small pool of "hot" keys and a large pool of "cold" keys.
-    // 80% requests go to 20% keys (Pareto).
-    // This is easier to implement and sufficient for "Hotspot" testing.
-    
-    return function() {
-        if (rand() < 0.8) {
-            return Math.floor(rand() * (N * 0.2));
-        } else {
-            return Math.floor(rand() * N);
+/**
+ * Zipf 分布生成器
+ * 使用预计算 CDF + 二分查找实现
+ * 
+ * 参数:
+ *   s: Zipf 指数 (通常 1.0-2.0, 越大热点越集中)
+ *   N: 键空间大小
+ */
+class ZipfGenerator {
+    constructor(s, N, randFunc) {
+        this.s = s;
+        this.N = N;
+        this.rand = randFunc;
+        
+        // 预计算 CDF
+        // p(k) = c / k^s, 其中 c = 1 / H_{N,s}
+        // H_{N,s} = sum(1/k^s for k=1 to N)
+        
+        let harmonic = 0;
+        for (let k = 1; k <= N; k++) {
+            harmonic += 1.0 / Math.pow(k, s);
         }
-    };
+        this.c = 1.0 / harmonic;
+        
+        // 预计算累积分布函数 (CDF)
+        this.cdf = new Array(N + 1);
+        this.cdf[0] = 0;
+        let cumulative = 0;
+        for (let k = 1; k <= N; k++) {
+            cumulative += this.c / Math.pow(k, s);
+            this.cdf[k] = cumulative;
+        }
+    }
+    
+    /**
+     * 生成一个符合 Zipf 分布的随机数 (0 到 N-1)
+     * 使用二分查找
+     */
+    next() {
+        const u = this.rand();
+        
+        // 二分查找 CDF
+        let lo = 1, hi = this.N;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (this.cdf[mid] < u) {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        return lo - 1; // 返回 0-indexed
+    }
 }
 
 function run() {
@@ -73,20 +83,15 @@ function run() {
     let hits = 0;
     let misses = 0;
     
+    // 初始化键生成器
     let keyGen;
     if (workload === 'zipf') {
-        // Use Pareto 80/20 as proxy for Zipf-like hotspot
-        keyGen = function() {
-            if (rand() < 0.8) {
-                return Math.floor(rand() * (keyspace * 0.2));
-            } else {
-                return Math.floor(rand() * keyspace);
-            }
-        };
+        // 真正的 Zipf 分布
+        const zipfGen = new ZipfGenerator(zipf_s, keyspace, rand);
+        keyGen = () => zipfGen.next();
     } else {
-        keyGen = function() {
-            return Math.floor(rand() * keyspace);
-        };
+        // 均匀随机分布
+        keyGen = () => Math.floor(rand() * keyspace);
     }
     
     const start = process.hrtime.bigint();
@@ -94,7 +99,7 @@ function run() {
     for (let i = 0; i < requests; i++) {
         const key = keyGen();
         const val = cache.get(key);
-        if (val !== -1 && val !== undefined && val !== null) { // Implementation dependent return
+        if (val !== -1 && val !== undefined && val !== null) {
             hits++;
         } else {
             misses++;
@@ -111,17 +116,17 @@ function run() {
         workload,
         keyspace,
         requests,
+        zipf_s: workload === 'zipf' ? zipf_s : null,
         seed,
         hits,
         misses,
         hit_rate: hits / requests,
-        eviction_count: 0, // cache.evictionCount might not be exposed, check implementation
-        avg_latency_ns
+        eviction_count: 0,
+        avg_latency_ns,
+        throughput_ops_per_sec: requests / (duration_ns / 1e9)
     };
     
-    // Try to read eviction count if available (it's not in the provided snippet, but maybe in full file)
-    // If not, we can infer or just leave 0.
-    // The user asked to read `cache.evictionCount`.
+    // Try to read eviction count if available
     if (cache.evictionCount !== undefined) {
         result.eviction_count = cache.evictionCount;
     }
