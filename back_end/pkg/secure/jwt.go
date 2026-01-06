@@ -30,7 +30,7 @@ func GetExpiresTime() time.Duration {
 	return expiresTime
 }
 
-func GetRefreshtime() time.Duration {
+func GetRefreshTime() time.Duration {
 	return refreshTime
 }
 
@@ -40,7 +40,7 @@ type IDClaims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(id uint64, t time.Duration, tokenType string) (string, error) {
+func generateToken(id uint64, t time.Duration, tokenType string) (string, error) {
 	if string(jwtKey) == "" {
 		return "", errors.New("jwtKey在生成Token时发现是空的")
 	}
@@ -63,11 +63,11 @@ func GenerateToken(id uint64, t time.Duration, tokenType string) (string, error)
 }
 
 func NewToken(id uint64) (string, error) {
-	return GenerateToken(id, expiresTime, "access")
+	return generateToken(id, expiresTime, "access")
 }
 
 func NewRefreshToken(id uint64) (string, error) {
-	return GenerateToken(id, refreshTime, "refresh")
+	return generateToken(id, refreshTime, "refresh")
 }
 
 func ParseToken(tokenString string) (*IDClaims, error) {

@@ -149,3 +149,68 @@ func LoginByPhone(phone string, password string) (*model.LoginResp, error) {
 
 	return NewLoginResp(user.Name, user.Uid, user.ID)
 }
+
+// ReviseUid 修改微信号
+func ReviseUid(id uint64, newUid string) error {
+	return infra.GetDB().
+		Model(&model.User{}).
+		Where("id = ?", id).
+		Update("uid", newUid).
+		Error
+}
+
+// RevisePassword 修改密码
+func RevisePassword(id uint64, prevPassword, newPassword string) error {
+	if prevPassword == newPassword {
+		log.Println("修改密码时传入了相同的密码")
+		return errors.New("新密码与旧密码不能相同")
+	}
+
+	db := infra.GetDB()
+	var user model.User
+
+	res := db.Select("id, password").
+		Where("id = ?", id).
+		First(&user)
+
+	if res.Error != nil {
+		log.Println(res.Error)
+		return errors.New("服务器错误")
+	}
+	if user.Password == "" {
+		log.Println("修改密码时查询数据库获取哈希密码失败")
+		return errors.New("服务器错误")
+	}
+
+	err := secure.VerifyPassword(user.Password, prevPassword)
+	if err != nil {
+		log.Println(err)
+		return errors.New("密码错误！")
+	}
+
+	newHashPassword, err := secure.HashString(newPassword)
+	if err != nil {
+		log.Println(err)
+		return errors.New("服务器错误")
+	}
+
+	res = db.Model(&user).
+		Update("password", newHashPassword)
+	if res.Error != nil {
+		log.Println(res.Error)
+		return errors.New("服务器错误")
+	}
+	if res.RowsAffected == 0 {
+		log.Println("修改密码操作影响了0行表")
+		return errors.New("服务器错误")
+	}
+
+	return nil
+}
+
+// ReviseName 修改用户名
+func ReviseName(id uint64, newName string) error {
+	return infra.GetDB().Model(model.User{}).
+		Where("id = ?", id).
+		Update("name", newName).Error
+}

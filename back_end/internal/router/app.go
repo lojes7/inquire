@@ -33,7 +33,9 @@ func Launch() *gin.Engine {
 		{
 			me := auth.Group("/me")
 			{
-				me.POST("/uid", handler.ReviseUid) //修改微信号
+				me.POST("/uid", handler.ReviseUid)           //修改微信号
+				me.POST("/password", handler.RevisePassword) // 修改密码
+				me.POST("/name", handler.ReviseName)         // 修改用户名
 			}
 
 			info := auth.Group("/info")

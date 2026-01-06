@@ -12,7 +12,7 @@ func HashString(password string) (string, error) {
 	return string(hash), nil
 }
 
-// VerifyPassword 验证是否匹配
+// VerifyPassword 验证是否匹配 若返回nil则无问题
 func VerifyPassword(hashedPassword, inputPassword string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(inputPassword))
 }

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"strconv"
-	"vvechat/internal/model"
 	"vvechat/internal/service"
 	"vvechat/pkg/judge"
 	"vvechat/pkg/response"
@@ -21,30 +20,6 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	response.Success(c, 201, "success", resp)
-}
-
-// ReviseUid 修改微信号
-func ReviseUid(c *gin.Context) {
-	id := c.GetUint64("id")
-
-	var req model.ReviseUidReq
-	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, 400, "json解析出错")
-		return
-	}
-	newUid := req.NewUid
-
-	err := service.ReviseUid(id, newUid)
-	if err != nil {
-		if judge.IsUniqueConflict(err) {
-			response.Fail(c, 400, "微信号重复")
-		} else {
-			response.Fail(c, 500, "数据库错误")
-		}
-		return
-	}
-
-	response.Success(c, 201, "success", nil)
 }
 
 // FriendInfoByID 查看好友信息

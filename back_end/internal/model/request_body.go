@@ -24,16 +24,22 @@ type ReviseUidReq struct {
 	NewUid string `json:"new_uid" binding:"required,min=1,max=20"`
 }
 
+// ReviseNameReq 修改用户名请求体
+type ReviseNameReq struct {
+	NewName string `json:"new_name" binding:"required,min=1,max=64"`
+}
+
+// RevisePasswordReq 修改密码请求体
+type RevisePasswordReq struct {
+	PrevPassword string `json:"prev_password" binding:"required,min=6,max=72"`
+	NewPassword  string `json:"new_password" binding:"required,min=6,max=72"`
+}
+
 // AddFriendReq 添加好友请求体
 type AddFriendReq struct {
 	ReceiverID          uint64 `json:"receiver_id,string" binding:"required,gt=0"`
 	SenderName          string `json:"sender_name" binding:"required,max=64"`
 	VerificationMessage string `json:"verification_message" binding:"omitempty,max=128"`
-}
-
-// FriendRequestActionReq 通过/拒绝好友申请请求体
-type FriendRequestActionReq struct {
-	Status string `json:"status" binding:"required,oneof=accepted rejected"`
 }
 
 // SendMessageReq 发送消息请求体
