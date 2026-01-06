@@ -15,7 +15,7 @@ const state = {
 };
 
 // 初始化全局缓存 (容量 20)
-// 键: uid (微信号), 值: id (用户ID)
+// 键: uid (账号), 值: id (用户ID)
 const userCache = new LRUCache(20);
 
 // API 基础路径
@@ -315,7 +315,7 @@ async function loadInitialData() {
             state.conversations = [
                 {
                     id: 'sys_1',
-                    name: '微信团队',
+                    name: '欢迎信息',
                     avatar: 'https://ui-avatars.com/api/?name=WeChat',
                     lastMsg: '欢迎使用',
                     time: '12:00'
@@ -465,7 +465,7 @@ function renderContactView(info, isStranger) {
     
     // 只有当字段存在时才显示
     if (info.uid) {
-        els.contactInfoContainer.appendChild(createInfoRow('微信号', info.uid));
+        els.contactInfoContainer.appendChild(createInfoRow('账号', info.uid));
     }
     if (info.region) {
         els.contactInfoContainer.appendChild(createInfoRow('地区', info.region));
@@ -668,7 +668,7 @@ function handleSearchInput(e) {
     searchNetItem.className = 'search-item';
     searchNetItem.innerHTML = `
         <div class="search-item-icon" style="background:#576b95;">搜</div>
-        <span>搜索微信号：${escapeHtml(val)}</span>
+        <span>搜索账号：${escapeHtml(val)}</span>
     `;
     searchNetItem.onclick = () => searchStranger(val);
     els.searchDropdown.appendChild(searchNetItem);
@@ -686,7 +686,7 @@ async function searchStranger(uid) {
         if (cachedId) {
             console.log('LRU Cache Hit for UID:', uid, '-> ID:', cachedId);
             // 缓存命中：直接使用 ID 获取最新信息 (避免使用可能过期的缓存信息)
-            // 满足需求：通过微信号以 O(1) 获得 id，然后获取实时数据
+            // 满足需求：通过账号以 O(1) 获得 id，然后获取实时数据
             info = await apiCall(`/auth/info/strangers/id/${cachedId}`, 'GET');
         } else {
             console.log('LRU Cache Miss for UID:', uid);
@@ -728,7 +728,7 @@ async function handleSendFriendRequest() {
     }
 }
 
-// 14. 修改设置 (微信号、昵称、密码)
+// 14. 修改设置 (账号、昵称、密码)
 async function handleSaveSettings() {
     const newUid = els.settingUid.value.trim();
     const newName = els.settingName.value.trim();
