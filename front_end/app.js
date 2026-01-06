@@ -94,6 +94,10 @@ const els = {
 
     // 设置
     settingUid: document.getElementById('setting-uid'),
+    settingName: document.getElementById('setting-name'),
+    settingOldPass: document.getElementById('setting-old-pass'),
+    settingNewPass: document.getElementById('setting-new-pass'),
+    settingConfirmPass: document.getElementById('setting-confirm-pass'),
     btnCancelSetting: document.getElementById('btn-cancel-setting'),
     btnSaveSetting: document.getElementById('btn-save-setting'),
 };
@@ -192,6 +196,10 @@ function bindEvents() {
     // 设置按钮
     els.btnOpenSettings.addEventListener('click', () => {
         els.settingUid.value = state.user.uid;
+        els.settingName.value = state.user.name;
+        els.settingOldPass.value = '';
+        els.settingNewPass.value = '';
+        els.settingConfirmPass.value = '';
         openModal('settings');
     });
 
@@ -720,20 +728,84 @@ async function handleSendFriendRequest() {
     }
 }
 
-// 14. 修改设置 (微信号)
+// 14. 修改设置 (微信号、昵称、密码)
 async function handleSaveSettings() {
     const newUid = els.settingUid.value.trim();
-    if (!newUid) return;
+    const newName = els.settingName.value.trim();
+    const oldPass = els.settingOldPass.value.trim();
+    const confirmPass = els.settingConfirmPass.value.trim();
+    const newPass = els.settingNewPass.value.trim();
+    
+    let hasChange = false;
+    let msg = [];
 
-    try {
-        await apiCall('/auth/me/uid', 'POST', { new_uid: newUid });
-        alert('修改成功');
-        state.user.uid = newUid;
+    // 1. 修改 UID
+    if (newUid && newUid !== state.user.uid) {
+        try {
+            await apiCall('/auth/me/uid', 'POST', { new_uid: newUid });
+            state.user.uid = newUid;
+            msg.push('UID修改成功');
+            hasChange = true;
+        } catch (err) {
+            msg.push('UID修改失败: ' + err.message);
+        }
+    }
+
+    // 2. 修改昵称
+    if (newName && newName !== state.user.name) {
+        try {
+            await apiCall('/auth/me/name', 'POST', { new_name: newName });
+            state.user.name = newName;
+            msg.push('昵称修改成功');
+            hasChange = true;
+        } catch (err) {
+            msg.push('昵称修改失败: ' + err.message);
+        }
+    }
+
+    // 3. 修改密码
+    if (oldPass || newPass || confirmPass) {
+        if (!oldPass || !newPass || !confirmPass) {
+            alert('修改密码请填写：旧密码、新密码和确认密码');
+            return;
+        }
+        if (newPass !== confirmPass) {
+            alert('两次输入的新密码不一致');
+            return;
+        }
+        if (newPass.length < 6 || newPass.length > 72) {
+             alert('新密码长度必须在6-72位之间');
+             return;
+        }
+        try {
+            await apiCall('/auth/me/password', 'POST', { prev_password: oldPass, new_password: newPass });
+            msg.push('密码修改成功');
+        } catch (err) {
+            msg.push('密码修改失败: ' + err.message);
+        }
+    }
+
+    if (msg.length > 0) {
+            await apiCall('/auth/me/password', 'POST', { prev_password: oldPass, new_password: newPass });
+            msg.push('密码修改成功');
+        } catch (err) {
+            msg.push('密码修改失败: ' + err.message);
+        }
+    }
+
+    if (msg.length > 0) {
+        alert(msg.join('\n'));
+    }
+
+    if (hasChange) {
         localStorage.setItem('vve_user', JSON.stringify(state.user));
         renderMeView();
+    }
+    
+    if (msg.length === 0 && !hasChange) {
+        // Did nothing
+    } else {
         closeModal();
-    } catch (err) {
-        alert('修改失败: ' + err.message);
     }
 }
 
