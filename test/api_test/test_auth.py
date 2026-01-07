@@ -87,6 +87,10 @@ class TestUser:
     refresh_token: Optional[str] = None
 
 
+# pytest 会把以 Test 开头的类当成测试用例去收集，这里明确声明它不是。
+TestUser.__test__ = False
+
+
 def assert_login_shape(login_data: Any) -> Tuple[str, str, str]:
     """校验登录返回结构，并提取 (uid, access_token, refresh_token)。"""
     if not isinstance(login_data, dict):

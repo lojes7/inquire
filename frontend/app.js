@@ -526,7 +526,10 @@ function openNewFriends() {
             if (req.status === 'accepted') {
                 actionHtml = '<span class="new-friend-status">已添加</span>';
             } else {
-                actionHtml = `<button class="btn-accept" onclick="handleAcceptRequest('${req.request_id}')">接受</button>`;
+                actionHtml = `
+                    <button class="btn-accept" onclick="handleAcceptRequest('${req.request_id}')">接受</button>
+                    <button class="btn-accept" onclick="handleRejectRequest('${req.request_id}')">拒绝</button>
+                `;
             }
 
             item.innerHTML = `
@@ -561,6 +564,18 @@ window.handleAcceptRequest = async function(reqId) {
         // 刷新界面
         openNewFriends();
         
+    } catch (err) {
+        alert('操作失败: ' + err.message);
+    }
+};
+
+// 9.1 拒绝/删除好友请求
+window.handleRejectRequest = async function(reqId) {
+    try {
+        await apiCall(`/auth/friendship_requests/${reqId}`, 'DELETE');
+        // 从本地状态移除该申请
+        state.friendRequests = state.friendRequests.filter(r => String(r.request_id) !== String(reqId));
+        openNewFriends();
     } catch (err) {
         alert('操作失败: ' + err.message);
     }
