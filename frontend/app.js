@@ -194,7 +194,6 @@ function bindEvents() {
     
     els.btnEditRemark.addEventListener('click', (e) => {
         e.stopPropagation();
-        console.log('Modify Remark clicked');
         els.contactOptionsMenu.classList.add('hidden');
         // Pre-fill current remark if available
         const currentRemark = state.currentContactInfo ? (state.currentContactInfo.friend_remark || '') : '';
@@ -816,22 +815,27 @@ async function handleSaveSettings() {
 
 // 15. 修改好友备注
 async function handleSaveRemark() {
-    const friendId = state.currentContactInfo ? state.currentContactInfo.friend_id : null;
+    // 使用 activeContactId 作为 friend_id：它来自好友列表点击时传入的 friend.friend_id，是最可靠的来源。
+    // currentContactInfo 往往是“用户信息对象”，不一定包含 friend_id 字段，导致这里拿不到 ID 而直接 return。
+    const friendId = state.activeContactId;
     const newRemark = els.remarkInput.value.trim();
     
-    if (!friendId) return;
+    if (!friendId) {
+        alert('无法获取好友ID：请先从联系人列表打开一个好友，再修改备注。');
+        return;
+    }
 
     try {
         await apiCall(`/auth/friendships/remark/${friendId}`, 'POST', { remark: newRemark });
         
         // 更新本地数据
-        const friend = state.friends.find(f => f.friend_id == friendId);
+        const friend = state.friends.find(f => String(f.friend_id) === String(friendId));
         if (friend) {
             friend.friend_remark = newRemark;
         }
         
         // 更新当前显示信息
-        if (state.currentContactInfo && state.currentContactInfo.friend_id == friendId) {
+        if (state.currentContactInfo && !state.isViewingStranger) {
             state.currentContactInfo.friend_remark = newRemark;
             renderContactView(state.currentContactInfo, false);
         }
