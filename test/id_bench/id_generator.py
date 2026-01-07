@@ -82,37 +82,37 @@ class SnowflakeGenerator:
                    self.sequence
 
     def _next_id_batched(self):
-        # Optimistic locking / Batching
-        # We grab a batch of sequences for the current timestamp
+        # Batching：一次锁内分配一段 sequence 区间 [start, end)
+        # self.sequence 作为“下一个要发放的 sequence”，self.current_batch_end 为区间右开边界。
         with self.lock:
-            # Check if we can serve from current batch
-            if self.sequence < self.current_batch_end and self.last_timestamp == self._current_timestamp():
-                 self.sequence += 1
-                 return self._compose_id(self.last_timestamp, self.sequence)
-            
-            # Need new batch
             timestamp = self._current_timestamp()
+
+            # 时钟回拨：直接等待追平
             if timestamp < self.last_timestamp:
-                 timestamp = self._wait_for_next_millis(self.last_timestamp)
-            
-            if self.last_timestamp == timestamp:
-                # Same millisecond, advance batch
-                start_seq = self.current_batch_end
-                # If previous batch exhausted the sequence space
-                if start_seq > self.max_sequence:
-                     timestamp = self._wait_for_next_millis(self.last_timestamp)
-                     self.sequence = 0
-                     self.current_batch_end = min(self.batch_size, self.max_sequence)
-                else:
-                     self.sequence = start_seq
-                     self.current_batch_end = min(start_seq + self.batch_size, self.max_sequence + 1)
+                timestamp = self._wait_for_next_millis(self.last_timestamp)
+
+            # 还能在同一毫秒内从当前 batch 继续发放
+            if timestamp == self.last_timestamp and self.sequence < self.current_batch_end:
+                seq = self.sequence
+                self.sequence += 1
+                return self._compose_id(timestamp, seq)
+
+            # 需要分配新 batch
+            if timestamp != self.last_timestamp:
+                start_seq = 0
             else:
-                # New millisecond
-                self.sequence = 0
-                self.current_batch_end = self.batch_size
-            
+                start_seq = self.current_batch_end
+
+            # sequence 空间耗尽：等到下一毫秒再从 0 开始
+            if start_seq > self.max_sequence:
+                timestamp = self._wait_for_next_millis(self.last_timestamp)
+                start_seq = 0
+
+            end_seq = min(start_seq + self.batch_size, self.max_sequence + 1)  # 右开
             self.last_timestamp = timestamp
-            return self._compose_id(self.last_timestamp, self.sequence)
+            self.current_batch_end = end_seq
+            self.sequence = start_seq + 1  # 下一个
+            return self._compose_id(timestamp, start_seq)
 
     def _next_id_cached_time(self):
         # Reduces system calls to time.time()

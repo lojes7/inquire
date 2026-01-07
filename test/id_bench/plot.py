@@ -1,9 +1,20 @@
 import csv
-import matplotlib.pyplot as plt
 import os
 import sys
+from pathlib import Path
+
+try:
+    import matplotlib.pyplot as plt
+except ModuleNotFoundError:
+    plt = None
 
 def plot_results(out_dir):
+    if plt is None:
+        print("缺少依赖：matplotlib。无法生成图表。")
+        print("解决：在当前 Python 环境里安装 matplotlib，例如：")
+        print("  python -m pip install matplotlib")
+        return
+
     ts_file = os.path.join(out_dir, "id_bench_timeseries.csv")
     if not os.path.exists(ts_file):
         print(f"No data file found at {ts_file}")
@@ -67,7 +78,7 @@ def plot_results(out_dir):
     print(f"Plot saved to {out_png}")
 
 if __name__ == "__main__":
-    out_dir = "d:/mmy/vvechat/test/out"
+    out_dir = str((Path(__file__).resolve().parents[1] / 'out'))
     if len(sys.argv) > 1:
         out_dir = sys.argv[1]
     plot_results(out_dir)

@@ -1,8 +1,9 @@
-import time
 import os
+import time
+
 from id_generator import SnowflakeGenerator
 
-def worker_loop(node_id, duration, target_qps, mode, result_queue, report_interval=1):
+def worker_loop(node_id, duration, target_qps, mode, result_queue, out_dir, report_interval=1):
     """
     Worker process that generates IDs at a fixed QPS.
     """
@@ -81,8 +82,9 @@ def worker_loop(node_id, duration, target_qps, mode, result_queue, report_interv
     # Warning: Large lists might block the queue. In real prod, write to file.
     # Here we write to a temp file and send the filename.
     
-    filename = f"d:/mmy/vvechat/test/out/ids_{node_id}.txt"
-    with open(filename, "w") as f:
+    os.makedirs(out_dir, exist_ok=True)
+    filename = os.path.join(out_dir, f"ids_{node_id}.txt")
+    with open(filename, "w", encoding="utf-8") as f:
         for id_val in generated_ids:
             f.write(f"{id_val}\n")
             

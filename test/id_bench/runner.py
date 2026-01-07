@@ -4,6 +4,7 @@ import time
 import csv
 import os
 import json
+from pathlib import Path
 from node_worker import worker_loop
 from verifier import Verifier
 
@@ -16,17 +17,24 @@ def main():
     parser.add_argument('--target-qps', type=int, default=200000)
     parser.add_argument('--mode', default='mutex', choices=['mutex', 'batched', 'cachedtime'])
     parser.add_argument('--report-interval', type=int, default=1)
+    parser.add_argument('--out-dir', default=None, help='输出目录（默认 test/out）')
     
     args = parser.parse_args()
     
     print(f"Starting benchmark: {args}")
+
+    # 默认输出到 test/out（与仓库无关路径解耦）
+    default_out_dir = str((Path(__file__).resolve().parents[1] / 'out'))
+    out_dir = args.out_dir or default_out_dir
+    # 让 summary 里记录真实输出目录，而不是 None
+    args.out_dir = out_dir
     
     # Calculate QPS per worker
     total_workers = args.nodes * args.workers_per_node
     qps_per_worker = args.target_qps / total_workers
     
-    manager = multiprocessing.Manager()
-    result_queue = manager.Queue()
+    # Manager().Queue() 会显著变慢；普通 Queue 足够用于本场景
+    result_queue: multiprocessing.Queue = multiprocessing.Queue()
     
     processes = []
     for i in range(args.nodes):
@@ -51,7 +59,7 @@ def main():
             
             p = multiprocessing.Process(
                 target=worker_loop,
-                args=(unique_node_id, args.duration, qps_per_worker, args.mode, result_queue, args.report_interval)
+                args=(unique_node_id, args.duration, qps_per_worker, args.mode, result_queue, out_dir, args.report_interval)
             )
             processes.append(p)
             p.start()
@@ -65,22 +73,22 @@ def main():
     start_time = time.time()
     
     while finished_workers < total_workers:
-        if not result_queue.empty():
-            msg = result_queue.get()
-            if msg['type'] == 'stats':
-                stats_data.append(msg)
-                # print(f"Node {msg['node_id']} QPS: {msg['actual_qps']:.2f}")
-            elif msg['type'] == 'done':
-                finished_workers += 1
-                total_generated += msg['count']
-                id_files.append(msg['filename'])
-                print(f"Worker {msg['node_id']} finished. Generated {msg['count']} IDs.")
-        else:
-            time.sleep(0.1)
+        try:
+            msg = result_queue.get(timeout=0.2)
+        except Exception:
             # Check for timeouts or dead processes
             if time.time() - start_time > args.duration + 10:
                 print("Timeout waiting for workers.")
                 break
+            continue
+
+        if msg['type'] == 'stats':
+            stats_data.append(msg)
+        elif msg['type'] == 'done':
+            finished_workers += 1
+            total_generated += msg['count']
+            id_files.append(msg['filename'])
+            print(f"Worker {msg['node_id']} finished. Generated {msg['count']} IDs.")
                 
     for p in processes:
         p.join()
@@ -88,7 +96,6 @@ def main():
     print("Benchmark finished. Aggregating results...")
     
     # 1. Write Time Series Stats
-    out_dir = "d:/mmy/vvechat/test/out"
     os.makedirs(out_dir, exist_ok=True)
     
     ts_file = os.path.join(out_dir, "id_bench_timeseries.csv")
