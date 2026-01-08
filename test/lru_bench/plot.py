@@ -12,10 +12,17 @@ def _parse_optional_float(value):
         return None
     return float(value)
 
+
+def _default_out_dir():
+    here = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.abspath(os.path.join(here, "..", ".."))
+    return os.path.join(repo_root, "test", "out")
+
 def plot_lru(out_dir):
     csv_file = os.path.join(out_dir, "lru_bench_results.csv")
     if not os.path.exists(csv_file):
-        print("No LRU results found.")
+        print(f"No LRU bench results found at: {os.path.abspath(csv_file)}")
+        print("Hint: run `python test/lru_bench/run_lru_bench.py` first, or pass the correct out_dir as an argument.")
         return
 
     # series_points: name -> list[(capacity, hit_rate, hit_rate_std, throughput, throughput_std)]
@@ -98,7 +105,7 @@ def plot_lru(out_dir):
         print(f"Plot saved to {out_png}")
 
 if __name__ == "__main__":
-    out_dir = "d:/mmy/vvechat/test/out"
+    out_dir = _default_out_dir()
     if len(sys.argv) > 1:
         out_dir = sys.argv[1]
     plot_lru(out_dir)
