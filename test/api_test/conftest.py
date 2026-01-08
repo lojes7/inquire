@@ -2,7 +2,7 @@ import os
 import time
 import random
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Iterator, Optional, Tuple
 
 import pytest
 import requests
@@ -34,10 +34,12 @@ def api_config() -> ApiConfig:
 
 
 @pytest.fixture()
-def session() -> requests.Session:
+def session() -> Iterator[requests.Session]:
     s = requests.Session()
-    yield s
-    s.close()
+    try:
+        yield s
+    finally:
+        s.close()
 
 
 def _api_json(
