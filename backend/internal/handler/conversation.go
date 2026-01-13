@@ -41,3 +41,14 @@ func EnterConversation(c *gin.Context) {
 	}
 	response.Success(c, 200, "success", resp)
 }
+
+func ConversationList(c *gin.Context) {
+	userID := c.GetUint64("id")
+
+	resp, err := service.ConversationList(userID)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.Success(c, 200, "success", resp)
+}

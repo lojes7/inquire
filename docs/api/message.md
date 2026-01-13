@@ -1,6 +1,8 @@
 - **打开微信时， 加载会话列表**
 
-  根据user_id查conversation_users表，前端需要拿到：会话备注、最后一条消息预览、会话时间
+  根据user_id查conversation_users表，需要注意删除的会话就隐藏，
+
+  前端需要拿到：会话备注、最后一条消息预览，会话ID 排序：会话时间、是否置顶
 
   加载会话列表前端接口：
 
@@ -132,6 +134,8 @@
 
   同时，需要更新conversation_users表的last_message_id and unread_count字段
 
+  需要返回给前端该消息的ID
+
   前端接口
 
   ```http
@@ -144,7 +148,7 @@
   }
   Authorization: Bearer <token>
   ```
-  
+
   成功后端返回：
 
   ```json
@@ -154,7 +158,7 @@
       "data":
   }
   ```
-  
+
   失败后端返回：
 
   ```json
@@ -163,7 +167,7 @@
       "message": 信息
   }
   ```
-  
+
 - **撤回消息**
 
   根据message_id 更新messages表中的status字段

@@ -44,10 +44,10 @@ type ConversationUser struct {
 	UserID         uint64 `gorm:"type:bigint;uniqueIndex:idx_conv_user"`
 	ConversationID uint64 `gorm:"type:bigint;uniqueIndex:idx_conv_user"`
 	UnreadCount    int    `gorm:"type:int;default:0"`
-	IsPinned       bool   `gorm:"type:boolean;default:false"`
 	Remark         string `gorm:"varchar(32)"`
 	LastMessageID  uint64 `gorm:"type:bigint;index"`
 	IsDeleted      bool   `gorm:"type:boolean;default:false"`
+	IsPinned       bool   `gorm:"type:boolean;default:false"`
 }
 
 func (m *Message) BeforeCreate(db *gorm.DB) error {

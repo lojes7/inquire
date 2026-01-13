@@ -41,7 +41,7 @@ func CreatePrivateConversation(userID, conversationID uint64) error {
 			utils.NewUniqueID(), userID, conversationID, conversationID)
 		if res.Error != nil {
 			log.Println(res.Error)
-			errors.New("服务器错误")
+			return errors.New("服务器错误")
 		}
 		if res.RowsAffected == 0 {
 			log.Println("创建conversation_users操作影响了0行表")
@@ -55,18 +55,37 @@ func CreatePrivateConversation(userID, conversationID uint64) error {
 func EnterConversation(conversationID uint64) ([]model.EnterConversationResp, error) {
 	db := infra.GetDB()
 
-	var resp []model.EnterConversationResp
+	resp := make([]model.EnterConversationResp, 0)
 
 	res := db.Raw(`SELECT m.content, m.id, m.status, u.name
 		FROM messages m 
 		JOIN users u ON u.id = m.sender_id
-		JOIN message_users mu ON mu.user_id = u.id AND mu.message_id = m.id
-		WHERE m.conversation_id = ? AND  m.status != 1 AND m.is_deleted = false
+		LEFT JOIN message_users mu ON mu.user_id = u.id AND mu.message_id = m.id
+		WHERE m.conversation_id = ? AND  m.status != 1 AND mu.is_deleted = false
 		ORDER BY m.updated_at DESC `, conversationID).Find(&resp)
 
 	if res.Error != nil {
 		log.Println(res.Error)
 		return nil, errors.New("服务器错误")
 	}
+	return resp, nil
+}
+
+func ConversationList(userID uint64) ([]model.ConversationListResp, error) {
+	db := infra.GetDB()
+	resp := make([]model.ConversationListResp, 0)
+
+	sql := `SELECT m.content, cu.remark, cu.conversation_id
+		FROM conversation_users cu 
+		LEFT JOIN messages m ON m.id = cu.last_message_id
+		WHERE cu.user_id = ?
+		ORDER BY cu.is_pinned DESC, m.updated_at DESC `
+	res := db.Raw(sql, userID).Find(&resp)
+
+	if res.Error != nil {
+		log.Println(res.Error)
+		return nil, errors.New("服务器错误")
+	}
+
 	return resp, nil
 }

@@ -7,14 +7,16 @@ import (
 )
 
 // Friendship 好友关系表
+// userID、friendID、deleted_at为联合唯一索引
 type Friendship struct {
 	MyModel
-	UserID       uint64 `gorm:"type:bigint;not null;index:idx_user_friend,unique"`
-	FriendID     uint64 `gorm:"type:bigint;not null;index:idx_user_friend,unique"`
+	UserID       uint64 `gorm:"type:bigint;not null"`
+	FriendID     uint64 `gorm:"type:bigint;not null"`
 	FriendRemark string `gorm:"type:varchar(64);not null"`
 }
 
 // FriendshipRequest 好友申请列表
+// senderID、receiverID、deleted_at为联合唯一索引
 type FriendshipRequest struct {
 	MyModel
 	SenderID            uint64 `gorm:"type:bigint;not null;index:idx_sender_receiver,unique"`

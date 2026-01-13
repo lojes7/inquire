@@ -2,6 +2,12 @@ package model
 
 import "time"
 
+// IDResp 通用返回体
+// 返回一个uint64的ID
+type IDResp struct {
+	ID uint64 `json:"id,string"`
+}
+
 // UserInfoResp 用户信息返回体
 type UserInfoResp struct {
 	Name string `json:"name"`
@@ -57,4 +63,10 @@ type EnterConversationResp struct {
 	Content    string `json:"content"`
 	ID         uint64 `json:"id,string"`
 	Status     uint8  `json:"status"`
+}
+
+type ConversationListResp struct {
+	Remark         string `json:"remark"`
+	Content        string `json:"content"`
+	ConversationID uint64 `json:"conversation_id,string"`
 }
