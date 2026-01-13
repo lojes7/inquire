@@ -71,9 +71,9 @@ func Launch() *gin.Engine {
 
 			message := auth.Group("/messages")
 			{
-				message.POST("")          //发送消息
-				message.DELETE("/recall") //撤回消息
-				message.DELETE("/delete") //删除消息
+				message.POST("", handler.SendMessage) //发送消息
+				message.DELETE("/recall")             //撤回消息
+				message.DELETE("/delete")             //删除消息
 			}
 		}
 	}

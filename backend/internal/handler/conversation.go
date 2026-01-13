@@ -14,7 +14,7 @@ func CreatePrivateConversation(c *gin.Context) {
 	userID := c.GetUint64("id")
 	var req model.IDReq
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, 400, "json解析出错")
+		response.Fail(c, 400, "json 解析出错")
 		return
 	}
 
@@ -26,7 +26,9 @@ func CreatePrivateConversation(c *gin.Context) {
 	response.Success(c, 201, "success", nil)
 }
 
+// EnterConversation 进入聊天窗口
 func EnterConversation(c *gin.Context) {
+	userID := c.GetUint64("id")
 	id := c.Param("conversation_id")
 	conversationID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
@@ -34,7 +36,7 @@ func EnterConversation(c *gin.Context) {
 		return
 	}
 
-	resp, err := service.EnterConversation(conversationID)
+	resp, err := service.EnterConversation(userID, conversationID)
 	if err != nil {
 		response.Fail(c, 500, err.Error())
 		return
@@ -42,6 +44,7 @@ func EnterConversation(c *gin.Context) {
 	response.Success(c, 200, "success", resp)
 }
 
+// ConversationList 会话列表
 func ConversationList(c *gin.Context) {
 	userID := c.GetUint64("id")
 

@@ -53,6 +53,6 @@ type AddFriendReq struct {
 
 // SendMessageReq 发送消息请求体
 type SendMessageReq struct {
-	ReceiverID uint64 `json:"receiver_id,string" binding:"required,gt=0"`
-	Content    string `json:"content" binding:"required,max=1024"`
+	ConversationID uint64 `json:"conversation_id,string" binding:"required,gt=0"`
+	Content        string `json:"content" binding:"required,max=1024"`
 }
