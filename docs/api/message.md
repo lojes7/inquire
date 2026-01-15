@@ -1,252 +1,269 @@
-- **打开微信时， 加载会话列表**
+- **打开微信时，加载会话列表**
 
-  根据user_id查conversation_users表，需要注意删除的会话就隐藏，
+    前端接口：
 
-  前端需要拿到：会话备注、最后一条消息预览，会话ID 排序：会话时间、是否置顶
+    ```http
+    GET /api/auth/conversations
+    Authorization: Bearer <token>
+    ```
 
-  加载会话列表前端接口：
+    成功后端返回（示例）：
 
-  ```http
-  GET api/auth/conversations
-  Authorization: Bearer <token>
-  ```
+    ```json
+    {
+        "code": 200,
+        "message": "success",
+        "data": [
+            {
+                "conversation_id": "c_1001",
+                "title": "张三",
+                "last_message_preview": "你好，今天有空吗？",
+                "last_message_time": "2026-01-15T09:40:00Z",
+                "unread_count": 2,
+                "is_pinned": false
+            }
+        ]
+    }
+    ```
 
-  成功后端返回：
+    失败后端返回（示例）：
 
-  ```json
-  {
-      "code":
-      "message":
-      "data":
-  }
-  ```
+    ```json
+    {
+        "code": 401,
+        "message": "未授权"
+    }
+    ```
 
-  失败后端返回：
+- **会话详情（用户点击进入聊天窗口）**
 
-  ```json
-  {
-      "code":  400 / 401 / 500 / 409,
-      "message": 信息
-  }
-  ```
+    前端接口：
 
-- **会话详情（表现为用户点击进入聊天窗口）**
+    ```http
+    GET /api/auth/conversations/{conversation_id}
+    Authorization: Bearer <token>
+    ```
 
-  根据conversation_id查messages表，需要根据时间排
+    成功后端返回（示例）：
 
-  所以要返回每个消息的 sender_name  content  id  status
+    ```json
+    {
+        "code": 200,
+        "message": "success",
+        "data": [
+            {
+                "id": "m_2001",
+                "sender_id": "u_111",
+                "sender_name": "李四",
+                "content": "下午一起吃饭？",
+                "status": 0,
+                "created_at": "2026-01-15T09:35:00Z"
+            },
+            {
+                "id": "m_2002",
+                "sender_id": "u_100",
+                "sender_name": "我",
+                "content": "可以，几点？",
+                "status": 0,
+                "created_at": "2026-01-15T09:36:00Z"
+            }
+        ]
+    }
+    ```
 
-  需要注意撤回的消息和删除的消息，status = 2是系统消息
+    字段说明：`status` = 0 正常消息，1 已撤回，2 系统消息。
 
-  前端接口
+    失败后端返回（示例）：
 
-  ```http
-  GET api/auth/conversations/{conversation_id}
-  Authorization: Bearer <token>
-  ```
+    ```json
+    {
+        "code": 404,
+        "message": "会话不存在"
+    }
+    ```
 
-  成功后端返回：
+- **创建私聊**
 
-  ```json
-  { 
-      "code": 200,
-      "message": "success",
-      "data": [
-          {
-              "sender_name": "发送者昵称",
-              "content": "消息内容",
-              "id": "消息ID（string格式）",
-              "status": 0
-          }
-      ]
-  }
-  ```
+    前端接口：
 
-  注意：status字段说明：0-正常消息，1-已撤回，2-系统消息
-  {
-      "code":  400 / 401 / 500 / 409,
-      "message": 信息
-  }
-  ```
+    ```http
+    POST /api/auth/conversations/private
+    Content-Type: application/json
+    Authorization: Bearer <token>
+    ```
 
-- 创建私聊
+    请求体示例：
 
-  前端接口
+    ```json
+    {
+        "friend_id": "u_67890"
+    }
+    ```
 
-  ```http
-  POST /api/auth/conversations/private
-  Content-Type: application/json
-  
-  {
-  	"id": 好友id
-  }
-  Authorization: Bearer <token>
-  ```
+    成功后端返回（示例）：
 
-  成功后端返回：
+    ```json
+    {
+        "code": 201,
+        "message": "会话已创建",
+        "data": {
+            "conversation_id": "c_1002"
+        }
+    }
+    ```
 
-  ```json
-  {
-      "code": 201
-      "message": "success"
-      "data": null
-  }
-  ```
+    失败后端返回（示例）：
 
-  失败后端返回：
+    ```json
+    {
+        "code": 400,
+        "message": "参数错误"
+    }
+    ```
 
-  ```json
-  {
-      "code":  400 / 401 / 500 / 409,
-      "message": 信息
-  }
-  ```
+- **创建群聊**
 
-- 创建群聊
+    前端接口：
 
-  前端接口
+    ```http
+    POST /api/auth/conversations/group
+    Content-Type: application/json
+    Authorization: Bearer <token>
+    ```
 
-  ```http
-  POST /api/auth/conversations/group
-  Content-Type: application/json
-  
-  {
-  
-  }
-  Authorization: Bearer <token>
-  ```
+    请求体示例：
 
-  成功后端返回：
+    ```json
+    {
+        "name": "项目讨论组",
+        "member_ids": ["u_111", "u_222", "u_333"]
+    }
+    ```
 
-  ```json
-  {
-      "code":
-      "message":
-      "data":
-  }
-  ```
+    成功后端返回（示例）：
 
-  失败后端返回：
+    ```json
+    {
+        "code": 201,
+        "message": "群聊已创建",
+        "data": { "conversation_id": "c_2001" }
+    }
+    ```
 
 - **发送消息**
 
-  根据sender_id conversation_id content 写进messages表
+    前端接口：
 
-  同时，需要更新conversation_users表的last_message_id and unread_count字段
+    ```http
+    POST /api/auth/messages
+    Content-Type: application/json
+    Authorization: Bearer <token>
+    ```
 
-  需要返回给前端该消息的ID
+    请求体示例：
 
-  前端接口
+    ```json
+    {
+        "conversation_id": "c_1001",
+        "content": "大家下午见！"
+    }
+    ```
 
-  ```http
-  POST /api/auth/messages
-  Content-Type: application/json
-  
-  {
-  	"conversation_id": "会话ID",
-  	"content": "消息内容"
-  }
-  Authorization: Bearer <token>
-  ```
+    成功后端返回（示例）：
 
-  成功后端返回：
+    ```json
+    {
+        "code": 201,
+        "message": "消息已发送",
+        "data": {
+            "message_id": "m_3001",
+            "created_at": "2026-01-15T10:00:00Z"
+        }
+    }
+    ```
 
-  ```json
-  {
-      "code":
-      "message":
-      "data":
-  }
-  ```
+    失败后端返回（示例）：
 
-  失败后端返回：
-
-  ```json
-  {
-      "code":  400 / 401 / 500 / 409,
-      "message": 信息
-  }
-  ```
+    ```json
+    {
+        "code": 400,
+        "message": "发送失败"
+    }
+    ```
 
 - **撤回消息**
 
-  根据message_id 更新messages表中的status字段
+    前端接口：
 
-  同时创建一个系统级消息为“对方撤回了一条消息”
+    ```http
+    DELETE /api/auth/messages/recall
+    Content-Type: application/json
+    Authorization: Bearer <token>
+    ```
 
-  同时更新conversation_users表的last_message_id字段指向新创建的系统级消息
+    请求体示例：
 
-  撤回的同时创建一个系统级消息，需要返回给前端
+    ```json
+    { "id": "m_3001" }
+    ```
 
-  前端接口
+    成功后端返回（示例）：
 
-  ```http
-  DELETE /api/auth/messages/recall
-  Content-Type: application/json
-  
-  {
-  	"id": "消息ID"
-  }
-  Authorization: Bearer <token>
-  ```
+    ```json
+    {
+        "code": 200,
+        "message": "消息已撤回",
+        "data": {
+            "system_message_id": "m_sys_1"
+        }
+    }
+    ```
 
-  成功后端返回：
+    失败后端返回（示例）：
 
-  ```json
-  {
-      "code":
-      "message":
-      "data":
-  }
-  ```
+    ```json
+    {
+        "code": 403,
+        "message": "不可撤回（超时或无权限）"
+    }
+    ```
 
-  失败后端返回：
+- **删除消息（沙箱级别的用户删除，仅对该用户隐藏）**
 
-  ```json
-  {
-      "code":  400 / 401 / 500 / 409,
-      "message": 信息
-  }
-  ```
+    前端接口：
 
-- **删除消息**
+    ```http
+    DELETE /api/auth/messages/delete
+    Content-Type: application/json
+    Authorization: Bearer <token>
+    ```
 
-  根据message_id和user_id更新message_users表的is_deleted字段为true
+    请求体示例：
 
-  同时需要注意修改conversation_users表中的last_message_id
-  
-  前端接口
+    ```json
+    { "id": "m_3001" }
+    ```
 
-  ```http
-  DELETE /api/auth/messages/delete
-  Content-Type: application/json
-  
-  {
-  	"id": "消息ID"
-  }
-  Authorization: Bearer <token>
-  ```
-  
-  成功后端返回：
-  
-  ```json
-  {
-      "code": 200,
-      "message": "success",
-      "data": null
-  }
-  ```
-  
-  失败后端返回：
-  
-  ```json
-  {
-      "code": 500,
-      "message": "服务器错误"
-  }
-  ```
-  
-  
+    成功后端返回（示例）：
+
+    ```json
+    {
+        "code": 200,
+        "message": "已删除",
+        "data": null
+    }
+    ```
+
+    失败后端返回（示例）：
+
+    ```json
+    {
+        "code": 500,
+        "message": "服务器错误"
+    }
+    ```
+
+
 
 
 
