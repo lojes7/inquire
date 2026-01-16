@@ -8,11 +8,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// RefreshToken 刷新Token
-func RefreshToken(id uint64) (*model.TokenResp, error) {
-	return NewTokenResp(id)
-}
-
 // FriendInfoByID 查看好友信息
 func FriendInfoByID(userID, friendID uint64) (*model.FriendInfoResp, error) {
 	var resp model.FriendInfoResp

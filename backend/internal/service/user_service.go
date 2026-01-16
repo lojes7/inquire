@@ -53,58 +53,6 @@ func NewLoginResp(name string, uid string, id uint64) (*model.LoginResp, error) 
 	return &resp, nil
 }
 
-func getUserByUid(uid string) (*model.User, error) {
-	var user model.User
-	res := infra.GetDB().Where("uid = ?", uid).First(&user)
-
-	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return nil, errors.New("微信号不存在！")
-		}
-		log.Println(res.Error)
-		return nil, res.Error
-	}
-
-	return &user, nil
-}
-
-func getUserByPhone(phone string) (*model.User, error) {
-	var user model.User
-	res := infra.GetDB().Where("phone_number = ?", phone).First(&user)
-
-	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return nil, errors.New("手机号不存在！")
-		}
-		log.Println(res.Error)
-		return nil, res.Error
-	}
-
-	return &user, nil
-}
-
-// 如果数据库查询未出现问题且主键存在返回nil，主键不存在返回invalidData，数据库问题直接返回Error
-func isPKExist(id uint64) error {
-	var exists int
-	err := infra.GetDB().
-		Model(&model.User{}).
-		Select("1").
-		Where("id = ?", id).
-		Limit(1).
-		Scan(&exists).Error
-
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-
-	// exists == 1 → 存在
-	if exists == 1 {
-		return nil
-	}
-	return gorm.ErrInvalidData
-}
-
 // Register 注册操作
 func Register(user *model.User) error {
 	pwd, err := secure.HashString(user.Password)

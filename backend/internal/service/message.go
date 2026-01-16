@@ -10,15 +10,19 @@ import (
 	"gorm.io/gorm"
 )
 
-func SendMessage(senderID, conversationID uint64, content string) (uint64, error) {
+func SendText(senderID, conversationID uint64, content string) (uint64, error) {
 	newID := utils.NewUniqueID()
 	newMsg := model.Message{
 		SenderID:       senderID,
 		ConversationID: conversationID,
-		Content:        content,
+		Status:         model.TEXT,
 		MyModel: model.MyModel{
 			ID: newID,
 		},
+	}
+	newText := model.Text{
+		Content:   content,
+		MessageID: newID,
 	}
 	db := infra.GetDB()
 	return newID, db.Transaction(func(tx *gorm.DB) error {
@@ -27,36 +31,25 @@ func SendMessage(senderID, conversationID uint64, content string) (uint64, error
 			log.Println(res.Error)
 			return errors.New("服务器错误")
 		}
+
+		res = tx.Create(&newText)
+		if res.Error != nil {
+			log.Println(res.Error)
+			return errors.New("服务器错误")
+		}
+
 		err := updateLastMessageID(tx, conversationID, newID)
 		if err != nil {
 			return errors.New("服务器错误")
 		}
+
 		err = updateUnreadCount(tx, senderID, conversationID)
 		if err != nil {
 			return errors.New("服务器错误")
 		}
+
 		return nil
 	})
-}
-
-// createSystemMessage 在一个会话中创建一个系统级消息
-// newID用户指定该系统消息的ID
-func createSystemMessage(tx *gorm.DB, content string, conversationID, newID uint64) error {
-	newMsg := model.Message{
-		SenderID:       0,
-		ConversationID: conversationID,
-		Content:        content,
-		MyModel: model.MyModel{
-			ID: newID,
-		},
-		Status: model.SYSTEM,
-	}
-	res := tx.Create(&newMsg)
-	if res.Error != nil {
-		log.Println(res.Error)
-		return errors.New("创建系统消息失败")
-	}
-	return nil
 }
 
 func RecallMessage(userID, msgID uint64) (uint64, error) {

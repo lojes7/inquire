@@ -53,18 +53,42 @@ func CreatePrivateConversation(userID, friendID uint64) error {
 	})
 }
 
-// EnterConversation 进入聊天窗口
-func EnterConversation(userID, conversationID uint64) ([]model.EnterConversationResp, error) {
+// ChatHistoryList 加载聊天记录
+func ChatHistoryList(userID, conversationID uint64) ([]model.ChatHistoryResp, error) {
 	db := infra.GetDB()
 
-	resp := make([]model.EnterConversationResp, 0)
+	resp := make([]model.ChatHistoryResp, 0)
 
-	res := db.Raw(`SELECT m.content, m.id, m.status, u.name
-		FROM messages m 
-		LEFT JOIN users u ON u.id = m.sender_id
-		LEFT JOIN message_users mu ON mu.user_id = ? AND mu.message_id = m.id
-		WHERE m.conversation_id = ? AND  m.status != 1 AND mu.is_deleted = false
-		ORDER BY m.updated_at DESC `, userID, conversationID).Find(&resp)
+	sql := `SELECT m.id AS message_id, 
+       		m.sender_id, 
+       		u.name AS sender_name,
+			m.status, 
+			m.updated_at,
+			CASE m.status
+			WHEN ? OR ? THEN t.text
+			WHEN ? THEN json_build_object(
+               'file_name', f.file_name,
+               'file_url', f.file_url,
+               'file_size', f.file_size,
+               'file_type', f.file_type
+           )
+			ELSE ''
+			END AS content
+			FROM messages m
+			LEFT JOIN users u ON u.id = m.sender_id
+			LEFT JOIN message_users mu ON mu.message_id = m.id AND mu.user_id = ?
+			LEFT JOIN texts t ON t.message_id = m.id
+			LEFT JOIN files f ON f.message_id = m.id
+			WHERE mu.is_deleted = false AND m.conversation_id = ? AND m.status != ?
+			ORDER BY m.updated_at DESC`
+
+	res := db.Raw(sql, model.TEXT,
+		model.SYSTEM,
+		model.FILE,
+		userID,
+		conversationID,
+		model.RECALLED).
+		Scan(&resp)
 
 	if res.Error != nil {
 		log.Println(res.Error)
@@ -78,12 +102,26 @@ func ConversationList(userID uint64) ([]model.ConversationListResp, error) {
 	db := infra.GetDB()
 	resp := make([]model.ConversationListResp, 0)
 
-	sql := `SELECT m.content, cu.remark, cu.conversation_id
+	sql := `SELECT cu.remark, 
+       	cu.conversation_id,
+       	cu.unread_count,
+       	CASE m.status
+		WHEN ? OR ? THEN t.text
+		WHEN ? THEN f.file_name
+		ELSE ''
+		END AS content
 		FROM conversation_users cu 
 		LEFT JOIN messages m ON m.id = cu.last_message_id
-		WHERE cu.user_id = ?
-		ORDER BY cu.is_pinned DESC, m.updated_at DESC `
-	res := db.Raw(sql, userID).Find(&resp)
+		LEFT JOIN files f ON f.message_id = m.id
+		LEFT JOIN texts t ON t.message_id = m.id
+		WHERE cu.user_id = ? AND cu.is_deleted = false
+		ORDER BY cu.is_pinned DESC, cu.updated_at DESC `
+
+	res := db.Raw(sql, model.TEXT,
+		model.SYSTEM,
+		model.FILE,
+		userID).
+		Scan(&resp)
 
 	if res.Error != nil {
 		log.Println(res.Error)
@@ -91,37 +129,4 @@ func ConversationList(userID uint64) ([]model.ConversationListResp, error) {
 	}
 
 	return resp, nil
-}
-
-// updateUnreadCount 给当前会话中除开当前sender的所有人的unread_count加一
-func updateUnreadCount(tx *gorm.DB, senderID, conversationID uint64) error {
-	res := tx.Model(&model.ConversationUser{}).
-		Where("user_id != ? AND conversation_id = ?",
-			senderID, conversationID).
-		UpdateColumn("unread_count", gorm.Expr("unread_count + ?", 1))
-	if res.Error != nil {
-		log.Println(res.Error)
-		return res.Error
-	}
-	if res.RowsAffected == 0 {
-		log.Println("更新unread count字段影响了0行表")
-		return errors.New("更新unread count失败")
-	}
-	return nil
-}
-
-// updateLastMessageID 更新当前会话的last_message_id
-func updateLastMessageID(tx *gorm.DB, conversationID, msgID uint64) error {
-	res := tx.Model(&model.ConversationUser{}).
-		Where("conversation_id = ?", conversationID).
-		Update("last_message_id", msgID)
-	if res.Error != nil {
-		log.Println(res.Error)
-		return res.Error
-	}
-	if res.RowsAffected == 0 {
-		log.Println("更新last msg id字段影响了0行表")
-		return errors.New("更新last msg id失败")
-	}
-	return nil
 }

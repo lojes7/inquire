@@ -51,8 +51,8 @@ type AddFriendReq struct {
 	VerificationMessage string `json:"verification_message" binding:"omitempty,max=128"`
 }
 
-// SendMessageReq 发送消息请求体
-type SendMessageReq struct {
+// SendTextReq 发送消息请求体
+type SendTextReq struct {
 	ConversationID uint64 `json:"conversation_id,string" binding:"required,gt=0"`
 	Content        string `json:"content" binding:"required,max=1024"`
 }

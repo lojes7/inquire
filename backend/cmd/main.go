@@ -48,7 +48,8 @@ func main() {
 	infra.GetDB().AutoMigrate(&model.Message{})
 	infra.GetDB().AutoMigrate(&model.Conversation{})
 	infra.GetDB().AutoMigrate(&model.MessageUser{})
-	infra.GetDB().AutoMigrate(&model.ConversationUser{})*/
+	infra.GetDB().AutoMigrate(&model.ConversationUser{})
+	infra.GetDB().AutoMigrate(&model.File{})*/
 	r := router.Launch()
 	err = r.Run(":8080")
 	if err != nil {

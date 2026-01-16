@@ -26,8 +26,8 @@ func CreatePrivateConversation(c *gin.Context) {
 	response.Success(c, 201, "success", nil)
 }
 
-// EnterConversation 进入聊天窗口
-func EnterConversation(c *gin.Context) {
+// ChatHistoryList 加载聊天记录
+func ChatHistoryList(c *gin.Context) {
 	userID := c.GetUint64("id")
 	id := c.Param("conversation_id")
 	conversationID, err := strconv.ParseUint(id, 10, 64)
@@ -36,7 +36,7 @@ func EnterConversation(c *gin.Context) {
 		return
 	}
 
-	resp, err := service.EnterConversation(userID, conversationID)
+	resp, err := service.ChatHistoryList(userID, conversationID)
 	if err != nil {
 		response.Fail(c, 500, err.Error())
 		return

@@ -51,7 +51,7 @@ func Launch() *gin.Engine {
 				converse.GET("", handler.ConversationList)                   // 加载聊天列表
 				converse.POST("/private", handler.CreatePrivateConversation) // 创建私聊
 				converse.POST("/group")                                      //创建群聊
-				converse.GET("/:conversation_id", handler.EnterConversation) // 进入聊天窗口
+				converse.GET("/:conversation_id", handler.ChatHistoryList)   // 加载聊天记录
 			}
 
 			request := auth.Group("/friendship_requests")
@@ -71,7 +71,8 @@ func Launch() *gin.Engine {
 
 			message := auth.Group("/messages")
 			{
-				message.POST("", handler.SendMessage)            //发送消息
+				message.POST("", handler.SendText)               //发送文本消息
+				message.POST("/file")                            // 发送文件
 				message.DELETE("/recall", handler.RecallMessage) //撤回消息
 				message.DELETE("/delete", handler.DeleteMessage) //删除消息
 			}

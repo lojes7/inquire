@@ -58,15 +58,20 @@ type FriendshipListResp struct {
 	FriendID     uint64 `json:"friend_id,string"`
 }
 
-type EnterConversationResp struct {
-	SenderName string `gorm:"name" json:"sender_name,string"`
-	Content    string `json:"content"`
-	ID         uint64 `json:"id,string"`
-	Status     uint8  `json:"status"`
-}
-
+// ConversationListResp 聊天列表返回体
 type ConversationListResp struct {
 	Remark         string `json:"remark"`
-	Content        string `json:"content"`
 	ConversationID uint64 `json:"conversation_id,string"`
+	UnreadCount    int    `json:"unread_count"`
+	Content        string `json:"content"`
+}
+
+// ChatHistoryResp 聊天记录返回体
+type ChatHistoryResp struct {
+	MessageID  uint64    `json:"message_id,string"`
+	SenderID   uint64    `json:"sender_id,string"`
+	SenderName string    `json:"sender_name"`
+	Status     uint8     `json:"status"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	Content    any       `json:"content"`
 }

@@ -8,15 +8,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SendMessage(c *gin.Context) {
+func SendText(c *gin.Context) {
 	senderID := c.GetUint64("id")
-	var req model.SendMessageReq
+	var req model.SendTextReq
 	if err := c.ShouldBind(&req); err != nil {
 		response.Fail(c, 400, "json 解析出错")
 		return
 	}
 
-	msgID, err := service.SendMessage(senderID, req.ConversationID, req.Content)
+	msgID, err := service.SendText(senderID, req.ConversationID, req.Content)
 	if err != nil {
 		response.Fail(c, 500, err.Error())
 		return
