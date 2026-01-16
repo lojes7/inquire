@@ -21,7 +21,7 @@ func SendText(senderID, conversationID uint64, content string) (uint64, error) {
 		},
 	}
 	newText := model.Text{
-		Content:   content,
+		Text:      content,
 		MessageID: newID,
 	}
 	db := infra.GetDB()

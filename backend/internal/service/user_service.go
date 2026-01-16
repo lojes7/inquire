@@ -6,8 +6,6 @@ import (
 	"vvechat/internal/model"
 	"vvechat/pkg/infra"
 	"vvechat/pkg/secure"
-
-	"gorm.io/gorm"
 )
 
 func NewTokenResp(id uint64) (*model.TokenResp, error) {
