@@ -2,12 +2,14 @@ package utils
 
 import (
 	"errors"
+	"log"
 	"strconv"
 	"sync"
 	"time"
 )
 
 const (
+	nodeNum = 66
 	// Epoch is set to the twitter snowflake epoch of Nov 04 2010 01:42:54 UTC in milliseconds
 	epoch int64 = 1288834974657
 
@@ -17,6 +19,13 @@ const (
 	// StepBits holds the number of bits to use for Step
 	stepBits uint8 = 12
 )
+
+func init() {
+	err := InitSnowflake(nodeNum)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
 
 // Snowflake struct holds the basic information needed for a snowflake generator
 type Snowflake struct {

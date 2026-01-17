@@ -4,44 +4,10 @@ import (
 	"log"
 	"vvechat/internal/router"
 	"vvechat/pkg/infra"
-	"vvechat/pkg/secure"
-	"vvechat/pkg/utils"
 )
 
-func initAll() error {
-	err := utils.InitSnowflake(666)
-	if err != nil {
-		return err
-	}
-
-	err = infra.InitConfig()
-	if err != nil {
-		return err
-	}
-
-	err = infra.InitDatabase()
-	if err != nil {
-		return err
-	}
-
-	err = infra.InitRedis()
-	if err != nil {
-		return err
-	}
-	err = secure.InitJWT()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func main() {
-	err := initAll()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
+	infra.Init()
 	/*infra.GetDB().AutoMigrate(&model.User{})
 	infra.GetDB().AutoMigrate(&model.Friendship{})
 	infra.GetDB().AutoMigrate(&model.FriendshipRequest{})
@@ -51,7 +17,7 @@ func main() {
 	infra.GetDB().AutoMigrate(&model.ConversationUser{})
 	infra.GetDB().AutoMigrate(&model.File{})*/
 	r := router.Launch()
-	err = r.Run(":8080")
+	err := r.Run(":8080")
 	if err != nil {
 		log.Fatalln("路由器出错")
 	}

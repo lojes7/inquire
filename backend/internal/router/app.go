@@ -72,7 +72,7 @@ func Launch() *gin.Engine {
 			message := auth.Group("/messages")
 			{
 				message.POST("/text", handler.SendText)          //发送文本消息
-				message.POST("/file")                            // 发送文件
+				message.POST("/file", handler.SendFile)          // 发送文件
 				message.DELETE("/recall", handler.RecallMessage) //撤回消息
 				message.DELETE("/delete", handler.DeleteMessage) //删除消息
 			}

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"strconv"
 	"vvechat/internal/model"
 	"vvechat/internal/service"
 	"vvechat/pkg/response"
@@ -29,6 +30,29 @@ func SendText(c *gin.Context) {
 func SendFile(c *gin.Context) {
 	userID := c.GetUint64("id")
 
+	conversationIDStr := c.PostForm("conversation_id")
+	if conversationIDStr == "" {
+		response.Fail(c, 400, "conversation_id 是空的")
+		return
+	}
+	conversationID, err := strconv.ParseUint(conversationIDStr, 10, 64)
+	if err != nil {
+		response.Fail(c, 400, "conversation_id 格式错误")
+		return
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		response.Fail(c, 400, "没有接收到文件")
+		return
+	}
+
+	resp, err := service.SendFile(userID, conversationID, file)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.Success(c, 201, "success", resp)
 }
 
 func RecallMessage(c *gin.Context) {

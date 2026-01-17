@@ -2,7 +2,11 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"mime/multipart"
+	"path/filepath"
+	"strings"
 	"vvechat/internal/model"
 	"vvechat/pkg/infra"
 	"vvechat/pkg/utils"
@@ -52,7 +56,76 @@ func SendText(senderID, conversationID uint64, content string) (uint64, error) {
 	})
 }
 
-func SendFile() (*model.SendFileResp, error) {}
+func SendFile(senderID, conversationID uint64, file *multipart.FileHeader) (*model.SendFileResp, error) {
+	newID := utils.NewUniqueID()
+
+	// 创建 uploads 目录
+	uploadDir := infra.GetFilePath()
+
+	// 生成文件路径，使用newID作为文件名，保持原扩展名
+	ext := filepath.Ext(file.Filename)
+	fileName := strings.TrimSuffix(file.Filename, ext) // 原文件名
+	filePath := filepath.Join(uploadDir, fmt.Sprintf("%d%s", newID, ext))
+
+	// 保存文件
+	if err := saveFile(file, filePath); err != nil {
+		log.Println(err)
+		return nil, errors.New("服务器错误")
+	}
+
+	// 获取文件信息
+	fileSize := file.Size
+	fileType := getFileType(filePath)
+
+	newMsg := model.Message{
+		SenderID:       senderID,
+		ConversationID: conversationID,
+		Status:         model.FILE,
+		MyModel: model.MyModel{
+			ID: newID,
+		},
+	}
+	newFile := model.File{
+		FileName:  fileName,
+		FileType:  fileType,
+		FileUrl:   filePath,
+		FileSize:  fileSize,
+		MessageID: newID,
+	}
+
+	db := infra.GetDB()
+	resp := &model.SendFileResp{
+		MessageID: newID,
+		FileName:  fileName,
+		FileSize:  fileSize,
+		FileType:  fileType,
+	}
+	return resp, db.Transaction(func(tx *gorm.DB) error {
+		res := tx.Create(&newMsg)
+		if res.Error != nil {
+			log.Println(res.Error)
+			return errors.New("服务器错误")
+		}
+
+		res = tx.Create(&newFile)
+		if res.Error != nil {
+			log.Println(res.Error)
+			return errors.New("服务器错误")
+		}
+
+		err := updateLastMessageID(tx, conversationID, newID)
+		if err != nil {
+			return errors.New("服务器错误")
+		}
+
+		err = updateUnreadCount(tx, senderID, conversationID)
+		if err != nil {
+			return errors.New("服务器错误")
+		}
+
+		return nil
+	})
+}
 
 func RecallMessage(userID, msgID uint64) (uint64, error) {
 	db := infra.GetDB()

@@ -10,3 +10,5 @@ jwt:
   key: "Z7cK1+zEdxBqrLqt2ul1/ThL4Iyhe4WnYn95WGnlvl+VWZ/1L9HGp2+0cQOzB0le+232dnN7fJH15Zjhdw7Snw=="
   expires_time: 600s
   refresh_time: 604800s
+file_storage:
+  path: "/Users/lojes/Downloads/Code/vvechat/assets"
