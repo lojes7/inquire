@@ -16,11 +16,16 @@ sqldialects.xml
 vcs.xml
 vvechat.iml
 
-/assets
+# 本地存储文件的目录
+/assets     
 
+# IDE配置文件
 /copilot.data.migration.agent.xml
 /copilot.data.migration.ask.xml
 /copilot.data.migration.ask2agent.xml
 /copilot.data.migration.edit.xml
 /docs/not_best.txt
 /.idea/.gitignore
+
+# .env文件
+.env
