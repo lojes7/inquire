@@ -2,10 +2,11 @@ package secure
 
 import (
 	"errors"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -15,14 +16,26 @@ var (
 )
 
 func InitJWT() error {
-	key := viper.GetString("jwt.key")
+	key := os.Getenv("JWT_KEY")
 	if key == "" {
 		return errors.New("jwtKey 是空的")
 	}
 
 	jwtKey = []byte(key)
-	expiresTime = viper.GetDuration("jwt.expires_time")
-	refreshTime = viper.GetDuration("jwt.refresh_time")
+	expiresStr := os.Getenv("JWT_EXPIRE_TIME")
+	refreshStr := os.Getenv("JWT_REFRESH_TIME")
+
+	expiresInt, err := strconv.ParseUint(expiresStr, 10, 64)
+	if err != nil {
+		return errors.New("无法解析 JWT_EXPIRE_TIME 环境变量")
+	}
+	refreshInt, err := strconv.ParseUint(refreshStr, 10, 64)
+	if err != nil {
+		return errors.New("无法解析 JWT_REFRESH_TIME 环境变量")
+	}
+
+	expiresTime = time.Duration(expiresInt) * time.Second
+	refreshTime = time.Duration(refreshInt) * time.Second
 	return nil
 }
 

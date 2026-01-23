@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"vvechat/internal/router"
 	"vvechat/pkg/infra"
 )
@@ -17,7 +18,10 @@ func main() {
 	infra.GetDB().AutoMigrate(&model.ConversationUser{})
 	infra.GetDB().AutoMigrate(&model.File{})*/
 	r := router.Launch()
-	err := r.Run(":8080")
+
+	address := ":" + os.Getenv("PORT")
+
+	err := r.Run(address)
 	if err != nil {
 		log.Fatalln("路由器出错")
 	}
