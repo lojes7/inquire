@@ -27,7 +27,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: docker/Dockerfile
+      dockerfile: ./docker/Dockerfile
     container_name: backend
     environment:
       DATABASE_URL: "host=${DB_HOST} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} port=${DB_PORT} sslmode=${POSTGRES_SSLMODE}"
@@ -36,6 +36,8 @@ services:
       JWT_EXPIRE_TIME: ${JWT_EXPIRE_TIME}
       JWT_REFRESH_TIME: ${JWT_REFRESH_TIME}
       FILE_STORAGE_PATH: ${FILE_STORAGE_PATH}
+    volumes:
+      - file_assets:/assets
     ports:
       - "${BACKEND_PORT}:${BACKEND_PORT}"
     depends_on:
@@ -45,3 +47,4 @@ services:
 
 volumes:
   postgres_data:
+  file_assets:
