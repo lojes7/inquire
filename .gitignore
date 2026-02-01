@@ -25,7 +25,7 @@ vvechat.iml
 /copilot.data.migration.ask2agent.xml
 /copilot.data.migration.edit.xml
 /docs/not_best.txt
-/.idea/.gitignore
+/.idea/
 
 # .env文件
 .env

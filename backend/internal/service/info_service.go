@@ -32,7 +32,7 @@ func FriendInfoByID(userID, friendID uint64) (*model.FriendInfoResp, error) {
 	return &resp, nil
 }
 
-// StrangerInfoByID 查看陌生人信息
+// StrangerInfoByID 查看陌生人信息 通过ID
 func StrangerInfoByID(strangerID uint64) (*model.StrangerInfoResp, error) {
 	var resp model.StrangerInfoResp
 	resp.ID = strangerID
