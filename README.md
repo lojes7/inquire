@@ -12,4 +12,4 @@
 
    即可启动项目后端和数据库
 
-   服务器将 listening and serving on http://localhost:8080
+   服务器将 listening and serving on http://localhost:${BACKEND_PORT} （请根据 `.env` 文件中的配置进行访问）
