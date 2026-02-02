@@ -1,0 +1,157 @@
+/* src/styles/register.css */
+
+.register-container {
+  display: flex;
+  height: 100vh;
+  font-family: "Microsoft YaHei", sans-serif;
+}
+
+/* 左侧 */
+.register-left {
+  flex: 0 0 60%;
+  background: #ffffff;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 500;
+  margin-left: 20%;
+  margin-top: 10%;
+}
+
+.logo-icon {
+  width: 150px;
+  height: 150px;
+  margin-right: 20px;
+  object-fit: contain;
+}
+
+.logo-text {
+  font-size: 50px;
+  color: #111;
+}
+
+.logo-highlight {
+  font-size: 70px;
+  font-weight: 700;
+  color: #4b2b7f;
+}
+
+
+
+.illustration {
+  text-align: center;
+}
+
+.illustration img {
+  max-width: 80%;
+}
+
+.login-tip {
+  text-align: center;
+  font-size: 14px;
+}
+
+.login-tip a {
+  color: #6c3bbf;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* 右侧 */
+.register-right {
+  flex: 1;
+  background: linear-gradient(180deg, #4b2b7f, #3a215f);
+  color: #fff;
+  padding: 80px 70px;
+}
+
+.register-right h1 {
+  font-size: 70px;
+  margin-bottom: 50px;
+  margin-top: 1%;
+}
+
+.subtitle {
+  margin-bottom: 40px;
+  opacity: 0.85;
+  font-size: 25px;
+  opacity: 0.8;
+  margin-bottom: 36px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+  margin: 0 auto;
+  margin-top: 20px;
+}
+
+.form label {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.form input::placeholder {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.form input {
+  height: 44px;
+  font-size: 15px;
+  padding: 0 14px;
+  margin-bottom: 22px;
+
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.18),
+    rgba(255, 255, 255, 0.08)
+  );
+
+  color: #fff;
+  outline: none;
+}
+
+.form input:focus {
+  border-color: #c7a4ff;
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.28),
+    rgba(255, 255, 255, 0.12)
+  );
+}
+
+/* 输入框上方的小提示文字 */
+.input-tip {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6); /* 浅灰色 */
+  margin-bottom: 4px;
+  display: block;
+  text-align: right;    /* 靠左对齐，也可以改成 right 居右 */
+}
+
+.margin-top {
+  margin-top: -10px;
+}
+
+.submit-btn {
+  margin-top: 30px;
+  height: 46px;
+  background: #ffffff;
+  color: #3a215f;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+}

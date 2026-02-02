@@ -1,0 +1,199 @@
+* {
+  box-sizing: border-box;
+  font-family: "Microsoft YaHei", sans-serif;
+}
+
+/* 整体左中右布局 */
+.chatpage-app {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  background: #f4f3f8;
+}
+
+/* ===== 左侧导航栏 ===== */
+.chat-sidebar {
+  width: 60px;
+  background: #fff;
+  border-right: 1px solid #e5e5e5;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.nav-top, .nav-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-item {
+  font-size: 20px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.nav-item:hover, .nav-item.active {
+  background: #f0ebff;
+}
+
+/* ===== 中间会话列表 ===== */
+.chat-middle {
+  width: 260px;
+  background: #fff;
+  border-right: 1px solid #e5e5e5;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.new-chat {
+  background: #8f6ae1;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.chat-list {
+  flex: 1;
+}
+
+.chat-item {
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.chat-item.active {
+  background: #f0ebff;
+  color: #6b4bd9;
+}
+
+.chat-item small {
+  display: block;
+  font-size: 12px;
+  color: #999;
+  margin-top: 4px;
+}
+
+/* ===== 右侧聊天主区 ===== */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶部 */
+.header {
+  padding: 12px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e5e5e5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-right button {
+  margin-left: 10px;
+}
+
+/* 聊天区 */
+.content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+/* 消息气泡 */
+.message {
+  max-width: 20%;
+  padding: 12px 30px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.message.user {
+  background: #8f6ae1;
+  color: #fff;
+  margin-left: auto;
+}
+
+.message.bot {
+  background: #f3f3f3;
+}
+
+/* 文档卡片 */
+.doc-list {
+  margin-top: 10px;
+}
+
+.doc-item {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.doc-item small {
+  color: #999;
+}
+
+/* 底部输入区 */
+.footer {
+  padding: 16px;
+  background: #fff;
+  border-top: 1px solid #e5e5e5;
+}
+
+.actions {
+  margin-bottom: 8px;
+}
+
+.actions button {
+  background: #f0ebff;
+  border: none;
+  color: #6b4bd9;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+.input-box {
+  display: flex;
+  gap: 10px;
+}
+
+.input-box textarea {
+  flex: 1;
+  height: 80px;
+  resize: none;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.send-btn {
+  width: 50px;
+  background: #8f6ae1;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+}
