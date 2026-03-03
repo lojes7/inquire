@@ -7,9 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lojes7/inquire/internal/model"
 	"github.com/lojes7/inquire/internal/service"
-	"github.com/lojes7/inquire/pkg/judge"
 	"github.com/lojes7/inquire/pkg/response"
-	"gorm.io/gorm"
+	"github.com/lojes7/inquire/pkg/secure"
 )
 
 // SendFriendRequest 发送好友申请操作
@@ -35,12 +34,12 @@ func SendFriendRequest(c *gin.Context) {
 
 	err := service.SendFriendRequest(senderID, req.ReceiverID, req.VerificationMessage, req.SenderName)
 	if err != nil {
-		if errors.Is(err, gorm.ErrInvalidData) {
-			response.Fail(c, 400, "发送失败")
-		} else if judge.IsUniqueConflict(err) {
-			response.Fail(c, 409, "发送失败，请勿重复发送")
+		var myErr *secure.MyError
+
+		if errors.As(err, &myErr) {
+			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "服务器出错")
+			response.Fail(c, 500, "转换为 myErr 时错误")
 		}
 		return
 	}

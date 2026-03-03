@@ -1,14 +1,15 @@
 package handler
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lojes7/inquire/internal/model"
 	"github.com/lojes7/inquire/internal/service"
-	"github.com/lojes7/inquire/pkg/judge"
 	"github.com/lojes7/inquire/pkg/response"
+	"github.com/lojes7/inquire/pkg/secure"
 )
 
 // Register 注册操作
@@ -37,14 +38,18 @@ func Register(c *gin.Context) {
 
 	err = service.Register(user)
 	if err != nil {
-		if judge.IsUniqueConflict(err) {
-			response.Fail(c, http.StatusBadRequest, "手机号已存在")
+		var myErr *secure.MyError
+
+		if errors.As(err, &myErr) {
+			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "数据库错误")
+			response.Fail(c, 500, "转换为 myErr 时错误")
 		}
-	} else {
-		response.Success(c, 201, "注册成功", nil)
+
+		return
 	}
+	response.Success(c, 201, "注册成功", nil)
+
 }
 
 // LoginByUid 微信号登陆操作
@@ -120,10 +125,12 @@ func ReviseUid(c *gin.Context) {
 
 	err := service.ReviseUid(id, newUid)
 	if err != nil {
-		if judge.IsUniqueConflict(err) {
-			response.Fail(c, 400, "微信号重复")
+		var myErr *secure.MyError
+
+		if errors.As(err, &myErr) {
+			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "数据库错误")
+			response.Fail(c, 500, "转换为 myErr 时错误")
 		}
 		return
 	}

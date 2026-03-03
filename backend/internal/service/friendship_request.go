@@ -8,6 +8,7 @@ import (
 	"github.com/lojes7/inquire/internal/model"
 	"github.com/lojes7/inquire/internal/ws"
 	"github.com/lojes7/inquire/pkg/infra"
+	"github.com/lojes7/inquire/pkg/secure"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -58,7 +59,11 @@ func SendFriendRequest(senderID, receiverID uint64, msg string, senderName strin
 		ws.GetHub().SendToUser(receiverID, msgBytes)
 	}
 
-	return err
+	return &secure.MyError{
+		Err:     err,
+		Message: "发送好友申请失败",
+		Code:    500,
+	}
 }
 
 // FriendRequestList 加载好友申请列表操作

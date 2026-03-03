@@ -1,12 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lojes7/inquire/internal/service"
-	"github.com/lojes7/inquire/pkg/judge"
 	"github.com/lojes7/inquire/pkg/response"
+	"github.com/lojes7/inquire/pkg/secure"
 )
 
 // RefreshToken 刷新Token
@@ -54,10 +55,12 @@ func FriendInfoByID(c *gin.Context) {
 
 	resp, err := service.FriendInfoByID(userID, friendID)
 	if err != nil {
-		if judge.IsUniqueConflict(err) {
-			response.Fail(c, 400, "找不到好友")
+		var myErr *secure.MyError
+
+		if errors.As(err, &myErr) {
+			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "服务器错误")
+			response.Fail(c, 500, "转换为 myErr 时错误")
 		}
 		return
 	}
@@ -86,10 +89,12 @@ func StrangerInfoByID(c *gin.Context) {
 
 	resp, err := service.StrangerInfoByID(strangerID)
 	if err != nil {
-		if judge.IsUniqueConflict(err) {
-			response.Fail(c, 400, "找不到此人")
+		var myErr *secure.MyError
+
+		if errors.As(err, &myErr) {
+			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "服务器错误")
+			response.Fail(c, 500, "转换为 myErr 时错误")
 		}
 		return
 	}
@@ -118,10 +123,12 @@ func FriendInfoByUid(c *gin.Context) {
 
 	resp, err := service.FriendInfoByUid(userID, uid)
 	if err != nil {
-		if judge.IsUniqueConflict(err) {
-			response.Fail(c, 400, "找不到好友")
+		var myErr *secure.MyError
+
+		if errors.As(err, &myErr) {
+			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "服务器错误")
+			response.Fail(c, 500, "转换为 myErr 时错误")
 		}
 		return
 	}
@@ -149,10 +156,12 @@ func StrangerInfoByUid(c *gin.Context) {
 
 	resp, err := service.StrangerInfoByUid(uid)
 	if err != nil {
-		if judge.IsUniqueConflict(err) {
-			response.Fail(c, 400, "找不到此人")
+		var myErr *secure.MyError
+
+		if errors.As(err, &myErr) {
+			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "服务器错误")
+			response.Fail(c, 500, "转换为 myErr 时错误")
 		}
 		return
 	}

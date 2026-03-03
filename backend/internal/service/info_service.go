@@ -5,10 +5,11 @@ import (
 
 	"github.com/lojes7/inquire/internal/model"
 	"github.com/lojes7/inquire/pkg/infra"
+	"github.com/lojes7/inquire/pkg/secure"
 	"gorm.io/gorm"
 )
 
-// FriendInfoByID 查看好友信息
+// FriendInfoByID 查看好友信息 通过ID
 func FriendInfoByID(userID, friendID uint64) (*model.FriendInfoResp, error) {
 	var resp model.FriendInfoResp
 	resp.ID = friendID
@@ -23,10 +24,18 @@ func FriendInfoByID(userID, friendID uint64) (*model.FriendInfoResp, error) {
 
 	if res.Error != nil {
 		log.Println(res.Error)
-		return nil, res.Error
+		return nil, &secure.MyError{
+			Code:    500,
+			Message: "服务器错误",
+			Err:     res.Error,
+		}
 	}
 	if res.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
+		return nil, &secure.MyError{
+			Code:    404,
+			Message: "好友不存在",
+			Err:     gorm.ErrRecordNotFound,
+		}
 	}
 
 	return &resp, nil
@@ -44,7 +53,11 @@ func StrangerInfoByID(strangerID uint64) (*model.StrangerInfoResp, error) {
 		First(&resp)
 	if res.Error != nil {
 		log.Println(res.Error)
-		return nil, res.Error
+		return nil, &secure.MyError{
+			Code:    500,
+			Message: "服务器错误",
+			Err:     res.Error,
+		}
 	}
 
 	return &resp, nil
@@ -64,10 +77,18 @@ func FriendInfoByUid(userID uint64, friendUid string) (*model.FriendInfoResp, er
 
 	if res.Error != nil {
 		log.Println(res.Error)
-		return nil, res.Error
+		return nil, &secure.MyError{
+			Code:    500,
+			Message: "服务器错误",
+			Err:     res.Error,
+		}
 	}
 	if res.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
+		return nil, &secure.MyError{
+			Code:    404,
+			Message: "好友不存在",
+			Err:     gorm.ErrRecordNotFound,
+		}
 	}
 
 	return &resp, nil
@@ -84,7 +105,18 @@ func StrangerInfoByUid(strangerUid string) (*model.StrangerInfoResp, error) {
 		First(&resp)
 	if res.Error != nil {
 		log.Println(res.Error)
-		return nil, res.Error
+		return nil, &secure.MyError{
+			Code:    500,
+			Message: "服务器错误",
+			Err:     res.Error,
+		}
+	}
+	if res.RowsAffected == 0 {
+		return nil, &secure.MyError{
+			Code:    404,
+			Message: "用户不存在",
+			Err:     gorm.ErrRecordNotFound,
+		}
 	}
 
 	return &resp, nil

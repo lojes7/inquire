@@ -120,7 +120,15 @@ func Register(user *model.User) error {
 
 	user.Password = pwd
 
-	return infra.GetDB().Create(user).Error
+	err = infra.GetDB().Create(user).Error
+	if err != nil {
+		return &secure.MyError{
+			Err:     err,
+			Message: "注册失败 uid或手机号已存在",
+			Code:    400,
+		}
+	}
+	return nil
 }
 
 // LoginByUid 微信号登陆操作
@@ -157,11 +165,19 @@ func LoginByPhone(phone string, password string) (*model.LoginResp, error) {
 
 // ReviseUid 修改微信号
 func ReviseUid(id uint64, newUid string) error {
-	return infra.GetDB().
+	err := infra.GetDB().
 		Model(&model.User{}).
 		Where("id = ?", id).
 		Update("uid", newUid).
 		Error
+	if err != nil {
+		return &secure.MyError{
+			Err:     err,
+			Message: "修改uid失败 uid已存在",
+			Code:    400,
+		}
+	}
+	return nil
 }
 
 // RevisePassword 修改密码
