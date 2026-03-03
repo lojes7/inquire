@@ -4,6 +4,7 @@ import bg from '../images/background1.svg';
 import logo from '../images/logo.svg';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
 
 export default function Register() {
   const navigate = useNavigate(); // ⭐ 关键

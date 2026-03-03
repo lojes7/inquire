@@ -45,6 +45,14 @@ services:
         condition: service_healthy
     restart: always
 
+  frontend:
+    build:
+      context: ./frontend
+    container_name: vvechat-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+
 volumes:
   postgres_data:
   file_assets:
