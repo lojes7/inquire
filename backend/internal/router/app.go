@@ -5,10 +5,15 @@ import (
 	"github.com/lojes7/inquire/internal/handler"
 	"github.com/lojes7/inquire/internal/ws"
 	"github.com/lojes7/inquire/pkg/middleware"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func Launch() *gin.Engine {
 	r := gin.Default()
+
+	// Swagger
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// 跨域中间件
 	r.Use(func(c *gin.Context) {

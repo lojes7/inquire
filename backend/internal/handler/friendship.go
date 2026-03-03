@@ -12,6 +12,16 @@ import (
 	"gorm.io/gorm"
 )
 
+// FriendshipList 获取好友列表
+// @Summary      获取好友列表
+// @Description  获取当前用户的好友列表
+// @Tags         friendship
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Success      200  {array}   model.FriendshipListResp "获取成功"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/friendships [get]
 func FriendshipList(c *gin.Context) {
 	id := c.GetUint64("id")
 	resp, err := service.FriendshipList(id)
@@ -24,6 +34,18 @@ func FriendshipList(c *gin.Context) {
 	response.Success(c, 200, "success", resp)
 }
 
+// DeleteFriendship 删除好友
+// @Summary      删除好友
+// @Description  根据好友ID删除好友
+// @Tags         friendship
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        friend_id path      string  true  "好友ID"
+// @Success      201  {object}  response.Response   "删除成功"
+// @Failure      400  {object}  response.Response   "ID错误或好友不存在"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/friendships/{friend_id} [delete]
 func DeleteFriendship(c *gin.Context) {
 	userID := c.GetUint64("id")
 	friendId := c.Param("friend_id")
@@ -47,6 +69,19 @@ func DeleteFriendship(c *gin.Context) {
 	response.Success(c, 201, "success", nil)
 }
 
+// ReviseRemark 修改好友备注
+// @Summary      修改好友备注
+// @Description  修改好友的备注信息
+// @Tags         friendship
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        friend_id path      string  true  "好友ID"
+// @Param        req  body      model.RemarkReq  true  "修改备注请求体"
+// @Success      200  {object}  response.Response   "修改成功"
+// @Failure      400  {object}  response.Response   "ID错误或输入不合法"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/friendships/remark/{friend_id} [post]
 func ReviseRemark(c *gin.Context) {
 	userID := c.GetUint64("id")
 	id := c.Param("friend_id")

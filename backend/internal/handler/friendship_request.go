@@ -13,6 +13,18 @@ import (
 )
 
 // SendFriendRequest 发送好友申请操作
+// @Summary      发送好友申请
+// @Description  发送好友申请给指定用户
+// @Tags         friendship_request
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        req  body      model.AddFriendReq  true  "添加好友请求体"
+// @Success      201  {object}  response.Response   "发送成功"
+// @Failure      400  {object}  response.Response   "发送失败"
+// @Failure      409  {object}  response.Response   "请勿重复发送"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/friendship_requests [post]
 func SendFriendRequest(c *gin.Context) {
 	senderID := c.GetUint64("id")
 	var req model.AddFriendReq
@@ -37,6 +49,15 @@ func SendFriendRequest(c *gin.Context) {
 }
 
 // FriendRequestList 加载好友申请列表操作
+// @Summary      获取好友申请列表
+// @Description  获取当前收到的好友申请列表
+// @Tags         friendship_request
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Success      200  {array}   model.FriendRequestListResp "获取成功"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/friendship_requests [get]
 func FriendRequestList(c *gin.Context) {
 	receiverID := c.GetUint64("id")
 
@@ -50,6 +71,17 @@ func FriendRequestList(c *gin.Context) {
 }
 
 // FriendRequestAccept 通过好友申请操作
+// @Summary      接受好友申请
+// @Description  接受指定的好友申请
+// @Tags         friendship_request
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        request_id path      string  true  "申请ID"
+// @Success      201  {object}  response.Response   "接受成功"
+// @Failure      400  {object}  response.Response   "requestID错误"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/friendship_requests/{request_id} [post]
 func FriendRequestAccept(c *gin.Context) {
 	requestID := c.Param("request_id")
 	id, err := strconv.ParseUint(requestID, 10, 64)
@@ -68,6 +100,17 @@ func FriendRequestAccept(c *gin.Context) {
 }
 
 // FriendRequestDelete 删除好友申请
+// @Summary      删除好友申请
+// @Description  删除或拒绝指定的好友申请
+// @Tags         friendship_request
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        request_id path      string  true  "申请ID"
+// @Success      201  {object}  response.Response   "删除成功"
+// @Failure      400  {object}  response.Response   "requestID错误"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/friendship_requests/{request_id} [delete]
 func FriendRequestDelete(c *gin.Context) {
 	requestID := c.Param("request_id")
 	id, err := strconv.ParseUint(requestID, 10, 64)

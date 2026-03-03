@@ -16,9 +16,6 @@ sqldialects.xml
 vcs.xml
 vvechat.iml
 
-# 本地存储文件的目录
-/backend/assets     
-
 # IDE配置文件
 /copilot.data.migration.agent.xml
 /copilot.data.migration.ask.xml

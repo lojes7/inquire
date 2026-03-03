@@ -18,6 +18,18 @@ import (
 	"github.com/lojes7/inquire/pkg/response"
 )
 
+// SendText 发送文本消息
+// @Summary      发送文本消息
+// @Description  Send a text message to a conversation
+// @Tags         message
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        req  body      model.SendTextReq  true  "发送文本消息请求体"
+// @Success      201  {object}  response.Response   "发送成功"
+// @Failure      400  {object}  response.Response   "json解析出错"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/messages/text [post]
 func SendText(c *gin.Context) {
 	senderID := c.GetUint64("id")
 	var req model.SendTextReq
@@ -36,6 +48,19 @@ func SendText(c *gin.Context) {
 	response.Success(c, 201, "success", msgID)
 }
 
+// SendFile 发送文件
+// @Summary      发送文件
+// @Description  Send a file to a conversation
+// @Tags         message
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        conversation_id formData string true "会话ID"
+// @Param        file formData file true "文件"
+// @Success      201  {object}  response.Response   "发送成功"
+// @Failure      400  {object}  response.Response   "参数错误"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/messages/file [post]
 func SendFile(c *gin.Context) {
 	userID := c.GetUint64("id")
 
@@ -64,6 +89,20 @@ func SendFile(c *gin.Context) {
 	response.Success(c, 201, "success", resp)
 }
 
+// DownloadFile 下载文件
+// @Summary      下载文件
+// @Description  Download a file by message ID
+// @Tags         message
+// @Accept       json
+// @Produce      application/octet-stream
+// @Param        Authorization header string true "Bearer Token"
+// @Param        message_id path string true "消息ID"
+// @Success      200  {file}    file                "文件内容"
+// @Failure      400  {object}  response.Response   "message_id错误"
+// @Failure      403  {object}  response.Response   "非法文件路径"
+// @Failure      404  {object}  response.Response   "文件不存在"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/files/{message_id} [get]
 func DownloadFile(c *gin.Context) {
 	userID := c.GetUint64("id")
 	messageIDStr := c.Param("message_id")
@@ -128,6 +167,18 @@ func DownloadFile(c *gin.Context) {
 	}
 }
 
+// RecallMessage 撤回消息
+// @Summary      撤回消息
+// @Description  Recall a sent message
+// @Tags         message
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        req  body      model.IDReq  true  "消息ID"
+// @Success      201  {object}  response.Response   "撤回成功"
+// @Failure      400  {object}  response.Response   "json解析出错"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/messages/recall [delete]
 func RecallMessage(c *gin.Context) {
 	userID := c.GetUint64("id")
 	var req model.IDReq
@@ -144,6 +195,18 @@ func RecallMessage(c *gin.Context) {
 	response.Success(c, 201, "success", systemMsgID)
 }
 
+// DeleteMessage 删除消息
+// @Summary      删除消息
+// @Description  Delete a message
+// @Tags         message
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        req  body      model.IDReq  true  "消息ID"
+// @Success      200  {object}  response.Response   "删除成功"
+// @Failure      400  {object}  response.Response   "json解析出错"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/messages/delete [delete]
 func DeleteMessage(c *gin.Context) {
 	userID := c.GetUint64("id")
 	var req model.IDReq

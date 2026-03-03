@@ -10,6 +10,17 @@ import (
 )
 
 // StartPrivateConversation 新建私聊
+// @Summary      发起私聊
+// @Description  Create a new private conversation with a friend
+// @Tags         conversation
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        req  body      model.IDReq  true  "好友ID"
+// @Success      201  {object}  response.Response   "创建成功"
+// @Failure      400  {object}  response.Response   "json解析出错"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/conversations/private [post]
 func StartPrivateConversation(c *gin.Context) {
 	userID := c.GetUint64("id")
 	var req model.IDReq
@@ -28,6 +39,17 @@ func StartPrivateConversation(c *gin.Context) {
 }
 
 // ChatHistoryList 加载聊天记录
+// @Summary      获取聊天记录
+// @Description  Get chat history for a conversation
+// @Tags         conversation
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        conversation_id path      string  true  "会话ID"
+// @Success      200  {array}   model.ChatHistoryResp "获取成功"
+// @Failure      400  {object}  response.Response   "conversation_id参数错误"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/conversations/{conversation_id} [get]
 func ChatHistoryList(c *gin.Context) {
 	userID := c.GetUint64("id")
 	id := c.Param("conversation_id")
@@ -46,6 +68,15 @@ func ChatHistoryList(c *gin.Context) {
 }
 
 // ConversationList 会话列表
+// @Summary      获取会话列表
+// @Description  Get the list of active conversations
+// @Tags         conversation
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Success      200  {array}   model.ConversationListResp "获取成功"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/conversations [get]
 func ConversationList(c *gin.Context) {
 	userID := c.GetUint64("id")
 

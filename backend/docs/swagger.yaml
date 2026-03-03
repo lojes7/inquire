@@ -1,0 +1,1144 @@
+basePath: /api
+definitions:
+  model.AddFriendReq:
+    properties:
+      receiver_id:
+        example: "0"
+        type: string
+      sender_name:
+        maxLength: 64
+        type: string
+      verification_message:
+        maxLength: 128
+        type: string
+    required:
+    - receiver_id
+    - sender_name
+    type: object
+  model.ChatHistoryResp:
+    properties:
+      content: {}
+      message_id:
+        example: "0"
+        type: string
+      sender_id:
+        example: "0"
+        type: string
+      sender_name:
+        type: string
+      status:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  model.ConversationListResp:
+    properties:
+      content:
+        type: string
+      conversation_id:
+        example: "0"
+        type: string
+      remark:
+        type: string
+      unread_count:
+        type: integer
+    type: object
+  model.FriendInfoResp:
+    properties:
+      friend_remark:
+        type: string
+      id:
+        example: "0"
+        type: string
+      name:
+        type: string
+      uid:
+        type: string
+    type: object
+  model.FriendRequestListResp:
+    properties:
+      created_at:
+        type: string
+      request_id:
+        example: "0"
+        type: string
+      sender_id:
+        example: "0"
+        type: string
+      sender_name:
+        type: string
+      status:
+        type: string
+      verification_message:
+        type: string
+    type: object
+  model.FriendshipListResp:
+    properties:
+      friend_id:
+        example: "0"
+        type: string
+      friend_remark:
+        type: string
+      friendship_id:
+        description: friend_ships 表的主键
+        example: "0"
+        type: string
+    type: object
+  model.IDReq:
+    properties:
+      id:
+        example: "0"
+        type: string
+    required:
+    - id
+    type: object
+  model.LoginByPhoneReq:
+    properties:
+      password:
+        maxLength: 72
+        minLength: 6
+        type: string
+      phone_number:
+        type: string
+    required:
+    - password
+    - phone_number
+    type: object
+  model.LoginByUidReq:
+    properties:
+      password:
+        maxLength: 72
+        minLength: 6
+        type: string
+      uid:
+        maxLength: 20
+        minLength: 1
+        type: string
+    required:
+    - password
+    - uid
+    type: object
+  model.LoginResp:
+    properties:
+      token_class:
+        $ref: '#/definitions/model.TokenResp'
+      user_info:
+        $ref: '#/definitions/model.UserInfoResp'
+    type: object
+  model.NameReq:
+    properties:
+      name:
+        maxLength: 64
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
+  model.RegisterReq:
+    properties:
+      name:
+        maxLength: 64
+        minLength: 1
+        type: string
+      password:
+        maxLength: 72
+        minLength: 6
+        type: string
+      phone_number:
+        type: string
+    required:
+    - name
+    - password
+    - phone_number
+    type: object
+  model.RemarkReq:
+    properties:
+      remark:
+        maxLength: 64
+        type: string
+    required:
+    - remark
+    type: object
+  model.RevisePasswordReq:
+    properties:
+      new_password:
+        maxLength: 72
+        minLength: 6
+        type: string
+      prev_password:
+        maxLength: 72
+        minLength: 6
+        type: string
+    required:
+    - new_password
+    - prev_password
+    type: object
+  model.SendTextReq:
+    properties:
+      content:
+        maxLength: 1024
+        type: string
+      conversation_id:
+        example: "0"
+        type: string
+    required:
+    - content
+    - conversation_id
+    type: object
+  model.StrangerInfoResp:
+    properties:
+      id:
+        example: "0"
+        type: string
+      name:
+        type: string
+    type: object
+  model.TokenResp:
+    properties:
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      token:
+        type: string
+    type: object
+  model.UidReq:
+    properties:
+      uid:
+        maxLength: 20
+        minLength: 1
+        type: string
+    required:
+    - uid
+    type: object
+  model.UserInfoResp:
+    properties:
+      name:
+        type: string
+      uid:
+        type: string
+    type: object
+  response.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is the API documentation for the Inquire backend.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Inquire API
+  version: "1.0"
+paths:
+  /auth/conversations:
+    get:
+      consumes:
+      - application/json
+      description: Get the list of active conversations
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            items:
+              $ref: '#/definitions/model.ConversationListResp'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取会话列表
+      tags:
+      - conversation
+  /auth/conversations/{conversation_id}:
+    get:
+      consumes:
+      - application/json
+      description: Get chat history for a conversation
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: path
+        name: conversation_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            items:
+              $ref: '#/definitions/model.ChatHistoryResp'
+            type: array
+        "400":
+          description: conversation_id参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取聊天记录
+      tags:
+      - conversation
+  /auth/conversations/private:
+    post:
+      consumes:
+      - application/json
+      description: Create a new private conversation with a friend
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 好友ID
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.IDReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 创建成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: json解析出错
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 发起私聊
+      tags:
+      - conversation
+  /auth/files/{message_id}:
+    get:
+      consumes:
+      - application/json
+      description: Download a file by message ID
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 消息ID
+        in: path
+        name: message_id
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: 文件内容
+          schema:
+            type: file
+        "400":
+          description: message_id错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "403":
+          description: 非法文件路径
+          schema:
+            $ref: '#/definitions/response.Response'
+        "404":
+          description: 文件不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 下载文件
+      tags:
+      - message
+  /auth/friendship_requests:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前收到的好友申请列表
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            items:
+              $ref: '#/definitions/model.FriendRequestListResp'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取好友申请列表
+      tags:
+      - friendship_request
+    post:
+      consumes:
+      - application/json
+      description: 发送好友申请给指定用户
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 添加好友请求体
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.AddFriendReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 发送成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 发送失败
+          schema:
+            $ref: '#/definitions/response.Response'
+        "409":
+          description: 请勿重复发送
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 发送好友申请
+      tags:
+      - friendship_request
+  /auth/friendship_requests/{request_id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除或拒绝指定的好友申请
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 申请ID
+        in: path
+        name: request_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: requestID错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 删除好友申请
+      tags:
+      - friendship_request
+    post:
+      consumes:
+      - application/json
+      description: 接受指定的好友申请
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 申请ID
+        in: path
+        name: request_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 接受成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: requestID错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 接受好友申请
+      tags:
+      - friendship_request
+  /auth/friendships:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户的好友列表
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            items:
+              $ref: '#/definitions/model.FriendshipListResp'
+            type: array
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取好友列表
+      tags:
+      - friendship
+  /auth/friendships/{friend_id}:
+    delete:
+      consumes:
+      - application/json
+      description: 根据好友ID删除好友
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 好友ID
+        in: path
+        name: friend_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: ID错误或好友不存在
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 删除好友
+      tags:
+      - friendship
+  /auth/friendships/remark/{friend_id}:
+    post:
+      consumes:
+      - application/json
+      description: 修改好友的备注信息
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 好友ID
+        in: path
+        name: friend_id
+        required: true
+        type: string
+      - description: 修改备注请求体
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.RemarkReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 修改成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: ID错误或输入不合法
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 修改好友备注
+      tags:
+      - friendship
+  /auth/info/friends/id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户ID获取好友详细信息
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 好友用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.FriendInfoResp'
+              type: object
+        "400":
+          description: ID错误或找不到好友
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 根据ID查看好友信息
+      tags:
+      - user
+  /auth/info/friends/uid/{uid}:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户Uid获取好友详细信息
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 好友Uid
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.FriendInfoResp'
+              type: object
+        "400":
+          description: Uid为空或找不到好友
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 根据Uid查看好友信息
+      tags:
+      - user
+  /auth/info/strangers/id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户ID获取陌生人信息
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 陌生人用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.StrangerInfoResp'
+              type: object
+        "400":
+          description: ID错误或找不到此人
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 根据ID查看陌生人信息
+      tags:
+      - user
+  /auth/info/strangers/uid/{uid}:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户Uid获取陌生人信息
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 陌生人Uid
+        in: path
+        name: uid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.StrangerInfoResp'
+              type: object
+        "400":
+          description: Uid为空或找不到此人
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 根据Uid查看陌生人信息
+      tags:
+      - user
+  /auth/me/name:
+    post:
+      consumes:
+      - application/json
+      description: 修改当前用户的用户名
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 修改用户名请求体
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.NameReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 修改成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 修改用户名
+      tags:
+      - user
+  /auth/me/password:
+    post:
+      consumes:
+      - application/json
+      description: 修改当前用户的密码
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 修改密码请求体
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.RevisePasswordReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 修改成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 修改密码
+      tags:
+      - user
+  /auth/me/uid:
+    post:
+      consumes:
+      - application/json
+      description: 修改当前用户的微信号
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 修改微信号请求体
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.UidReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 修改成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误或微信号重复
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 修改微信号
+      tags:
+      - user
+  /auth/messages/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a message
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 消息ID
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.IDReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 删除成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: json解析出错
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 删除消息
+      tags:
+      - message
+  /auth/messages/file:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Send a file to a conversation
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 会话ID
+        in: formData
+        name: conversation_id
+        required: true
+        type: string
+      - description: 文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 发送成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 发送文件
+      tags:
+      - message
+  /auth/messages/recall:
+    delete:
+      consumes:
+      - application/json
+      description: Recall a sent message
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 消息ID
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.IDReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 撤回成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: json解析出错
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 撤回消息
+      tags:
+      - message
+  /auth/messages/text:
+    post:
+      consumes:
+      - application/json
+      description: Send a text message to a conversation
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 发送文本消息请求体
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.SendTextReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 发送成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: json解析出错
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 发送文本消息
+      tags:
+      - message
+  /auth/refresh_token:
+    post:
+      consumes:
+      - application/json
+      description: 使用 Refresh Token 获取新的 Access Token
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 刷新成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.TokenResp'
+              type: object
+        "500":
+          description: Token问题
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 刷新Token
+      tags:
+      - auth
+  /login/phone_number:
+    post:
+      consumes:
+      - application/json
+      description: 使用手机号和密码登录
+      parameters:
+      - description: 手机号登录请求体
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginByPhoneReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.LoginResp'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 手机号登录
+      tags:
+      - user
+  /login/uid:
+    post:
+      consumes:
+      - application/json
+      description: 使用微信号和密码登录
+      parameters:
+      - description: 微信号登录请求体
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginByUidReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.LoginResp'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 微信号登录
+      tags:
+      - user
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: 用户注册接口
+      parameters:
+      - description: 注册请求体
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.RegisterReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 注册成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 请求参数错误或手机号重复
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 用户注册
+      tags:
+      - user
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

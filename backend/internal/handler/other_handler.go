@@ -10,6 +10,15 @@ import (
 )
 
 // RefreshToken 刷新Token
+// @Summary      刷新Token
+// @Description  使用 Refresh Token 获取新的 Access Token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Success      201  {object}  response.Response{data=model.TokenResp} "刷新成功"
+// @Failure      500  {object}  response.Response   "Token问题"
+// @Router       /auth/refresh_token [post]
 func RefreshToken(c *gin.Context) {
 	id := c.GetUint64("id")
 
@@ -23,6 +32,17 @@ func RefreshToken(c *gin.Context) {
 }
 
 // FriendInfoByID 查看好友信息
+// @Summary      根据ID查看好友信息
+// @Description  根据用户ID获取好友详细信息
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        id   path      int     true  "好友用户ID"
+// @Success      200  {object}  response.Response{data=model.FriendInfoResp} "获取成功"
+// @Failure      400  {object}  response.Response   "ID错误或找不到好友"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/info/friends/id/{id} [get]
 func FriendInfoByID(c *gin.Context) {
 	userID := c.GetUint64("id")
 	id := c.Param("id")
@@ -45,6 +65,17 @@ func FriendInfoByID(c *gin.Context) {
 }
 
 // StrangerInfoByID 查看陌生人信息
+// @Summary      根据ID查看陌生人信息
+// @Description  根据用户ID获取陌生人信息
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        id   path      int     true  "陌生人用户ID"
+// @Success      200  {object}  response.Response{data=model.StrangerInfoResp} "获取成功"
+// @Failure      400  {object}  response.Response   "ID错误或找不到此人"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/info/strangers/id/{id} [get]
 func StrangerInfoByID(c *gin.Context) {
 	id := c.Param("id")
 	strangerID, err := strconv.ParseUint(id, 10, 64)
@@ -66,6 +97,17 @@ func StrangerInfoByID(c *gin.Context) {
 }
 
 // FriendInfoByUid 查看好友信息 通过Uid
+// @Summary      根据Uid查看好友信息
+// @Description  根据用户Uid获取好友详细信息
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        uid  path      string  true  "好友Uid"
+// @Success      200  {object}  response.Response{data=model.FriendInfoResp} "获取成功"
+// @Failure      400  {object}  response.Response   "Uid为空或找不到好友"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/info/friends/uid/{uid} [get]
 func FriendInfoByUid(c *gin.Context) {
 	userID := c.GetUint64("id")
 	uid := c.Param("uid")
@@ -87,6 +129,17 @@ func FriendInfoByUid(c *gin.Context) {
 }
 
 // StrangerInfoByUid 查看陌生人信息通过Uid
+// @Summary      根据Uid查看陌生人信息
+// @Description  根据用户Uid获取陌生人信息
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        uid  path      string  true  "陌生人Uid"
+// @Success      200  {object}  response.Response{data=model.StrangerInfoResp} "获取成功"
+// @Failure      400  {object}  response.Response   "Uid为空或找不到此人"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/info/strangers/uid/{uid} [get]
 func StrangerInfoByUid(c *gin.Context) {
 	uid := c.Param("uid")
 	if uid == "" {
