@@ -12,6 +12,9 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+// 若修改文件保存路径 请同时修改Dockerfile
+const fileStoragePath = "/assets"
+
 func Init() {
 	err := InitDatabase()
 	if err != nil {
@@ -22,22 +25,15 @@ func Init() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	InitFileStorage()
 }
 
 var (
-	dbOnce          sync.Once
-	db              *gorm.DB
-	fileStoragePath string
+	dbOnce sync.Once
+	db     *gorm.DB
 )
 
 func GetFilePath() string {
 	return fileStoragePath
-}
-
-func InitFileStorage() {
-	fileStoragePath = os.Getenv("FILE_STORAGE_PATH")
 }
 
 func InitDatabase() error {
