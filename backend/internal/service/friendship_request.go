@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"errors"
 	"log"
 
 	"github.com/lojes7/inquire/internal/model"
@@ -111,35 +110,6 @@ func FriendRequestAccept(id uint64) error {
 			return err
 		}
 
-		// 两用户有好友关系之后，开始创建（或确认存在）私聊会话
-		conversationID, err := getPrivateConversationID(req.ReceiverID, req.SenderID)
-		if err != nil {
-			return err
-		}
-
-		// 获取 receiver 的名字，用于备注
-		var user model.User
-		err = tx.Model(&model.User{}).
-			Select("name").
-			Where("id = ?", req.ReceiverID).
-			First(&user).Error
-		if err != nil {
-			log.Println(err)
-			return errors.New("服务器错误")
-		}
-		receiverName := user.Name
-
-		// 创建或取消删除标记 conversation_users 表
-		err = CreateConversationUser(tx, req.SenderID, conversationID, receiverName)
-		if err != nil {
-			return err
-		}
-
-		err = CreateConversationUser(tx, req.ReceiverID, conversationID, req.SenderName)
-		if err != nil {
-			return err
-		}
-
 		return nil
 	})
 }
@@ -147,8 +117,10 @@ func FriendRequestAccept(id uint64) error {
 // FriendRequestDelete 删除好友申请
 func FriendRequestDelete(requestID uint64) error {
 	db := infra.GetDB()
+
 	var req model.FriendshipRequest
 	req.ID = requestID
+
 	res := db.Delete(&req)
 	if res.Error != nil {
 		log.Println(res.Error)

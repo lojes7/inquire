@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict NKIwmDCaEUpCA19ybLwnpDVkVrKgayPfs7OjokcKnA4i3yBKH6yrU7dncY98L2e
+\restrict C00gRxnQfZLaRxbanPfwhFgS1xUAeVhHfaZDkMh5IGZhTswF9ZiJZf5XsCoNTwr
 
 -- Dumped from database version 18.1 (Homebrew)
 -- Dumped by pg_dump version 18.1 (Homebrew)
@@ -182,7 +182,8 @@ CREATE TABLE public.message_users (
     updated_at timestamp with time zone,
     user_id bigint,
     message_id bigint,
-    is_starred boolean DEFAULT false
+    is_starred boolean DEFAULT false,
+    is_deleted boolean DEFAULT false
 );
 
 
@@ -415,5 +416,5 @@ CREATE UNIQUE INDEX idx_users_uid ON public.users USING btree (uid);
 -- PostgreSQL database dump complete
 --
 
-\unrestrict NKIwmDCaEUpCA19ybLwnpDVkVrKgayPfs7OjokcKnA4i3yBKH6yrU7dncY98L2e
+\unrestrict C00gRxnQfZLaRxbanPfwhFgS1xUAeVhHfaZDkMh5IGZhTswF9ZiJZf5XsCoNTwr
 

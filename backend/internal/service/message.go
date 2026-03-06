@@ -371,6 +371,7 @@ func RecallMessage(userID, msgID uint64) (uint64, error) {
 	return newID, err
 }
 
+// DeleteMessage 删除消息 逻辑是：
 func DeleteMessage(userID, messageID uint64) error {
 	db := infra.GetDB()
 	var msg model.Message

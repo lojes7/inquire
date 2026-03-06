@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// createFriendship 给两个人（id主键）创建出好友关系
+// createFriendship 给两个人（传id）双向创建出好友关系
 func createFriendship(tx *gorm.DB, userID, friendID uint64) error {
 	var friendName, userName string
 

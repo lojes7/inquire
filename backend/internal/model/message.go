@@ -33,12 +33,11 @@ type MessageUser struct {
 	UserID    uint64 `gorm:"bigint;uniqueIndex:idx_message_user"`
 	MessageID uint64 `gorm:"bigint;uniqueIndex:idx_message_user"`
 	IsStarred bool   `gorm:"type:boolean;default:false"`
+	IsDeleted bool   `gorm:"type:boolean;default:false"`
 }
 
 type Conversation struct {
 	MyModel
-	// 如果是私聊（type为0）则conversation_id 是friend_id
-	// 如果是群里（type为1）则conversation_id 由雪花ID生成器分配
 	Type uint8 `gorm:"smallint;not null"`
 }
 type ConversationUser struct {
