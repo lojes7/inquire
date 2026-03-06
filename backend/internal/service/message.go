@@ -1,18 +1,47 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"mime/multipart"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/lojes7/inquire/internal/model"
+	"github.com/lojes7/inquire/internal/ws"
 	"github.com/lojes7/inquire/pkg/infra"
 	"github.com/lojes7/inquire/pkg/utils"
 	"gorm.io/gorm"
 )
+
+// notifyConversationUsers 通知会话中的所有用户
+func notifyConversationUsers(conversationID uint64, msgType string, data any) {
+	var userIDs []uint64
+	err := infra.GetDB().Model(&model.ConversationUser{}).
+		Where("conversation_id = ?", conversationID).
+		Pluck("user_id", &userIDs).Error
+	if err != nil {
+		log.Printf("获取会话用户失败: %v\n", err)
+		return
+	}
+
+	payload := map[string]any{
+		"type": msgType,
+		"data": data,
+	}
+	msgBytes, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("json marshal failed: %v\n", err)
+		return
+	}
+
+	for _, uid := range userIDs {
+		ws.GetHub().SendToUser(uid, msgBytes)
+	}
+}
 
 // sendMessageAuth 验证用户是否有权限在该会话中发送消息
 func sendMessageAuth(userID, conversationID uint64) error {
@@ -115,7 +144,7 @@ func SendText(senderID, conversationID uint64, content string) (uint64, error) {
 		MessageID: newID,
 	}
 	db := infra.GetDB()
-	return newID, db.Transaction(func(tx *gorm.DB) error {
+	err = db.Transaction(func(tx *gorm.DB) error {
 		res := tx.Create(&newMsg)
 		if res.Error != nil {
 			log.Println(res.Error)
@@ -140,6 +169,19 @@ func SendText(senderID, conversationID uint64, content string) (uint64, error) {
 
 		return nil
 	})
+
+	if err == nil {
+		// 发送 websocket 通知
+		notifyConversationUsers(conversationID, "new_message", map[string]any{
+			"message_id":      newID,
+			"conversation_id": conversationID,
+			"sender_id":       senderID,
+			"content":         content,
+			"status":          model.TEXT, // 0
+			"updated_at":      time.Now(),
+		})
+	}
+	return newID, err
 }
 
 func SendFile(senderID, conversationID uint64, file *multipart.FileHeader) (*model.SendFileResp, error) {
@@ -191,7 +233,7 @@ func SendFile(senderID, conversationID uint64, file *multipart.FileHeader) (*mod
 		FileSize:  fileSize,
 		FileType:  fileType,
 	}
-	return resp, db.Transaction(func(tx *gorm.DB) error {
+	err = db.Transaction(func(tx *gorm.DB) error {
 		res := tx.Create(&newMsg)
 		if res.Error != nil {
 			log.Println(res.Error)
@@ -216,6 +258,22 @@ func SendFile(senderID, conversationID uint64, file *multipart.FileHeader) (*mod
 
 		return nil
 	})
+
+	if err == nil {
+		// 发送 websocket 通知
+		// actually frontend might need different structure
+		// resp is: MessageID, FileName, FileSize, FileType
+		notifyConversationUsers(conversationID, "new_message", map[string]any{
+			"message_id":      newID,
+			"conversation_id": conversationID,
+			"sender_id":       senderID,
+			"content":         resp,       // Sending the file response object as content
+			"status":          model.FILE, // 3
+			"updated_at":      time.Now(),
+		})
+	}
+
+	return resp, err
 }
 
 func DownloadFile(userID, messageID uint64) (string, error) {
@@ -262,7 +320,9 @@ func RecallMessage(userID, msgID uint64) (uint64, error) {
 	}
 
 	newID := utils.NewUniqueID()
-	return newID, db.Transaction(func(tx *gorm.DB) error {
+	var newContent string // Declare variable to capture content inside transaction
+
+	err = db.Transaction(func(tx *gorm.DB) error {
 		res := tx.Model(&model.Message{}).
 			Where("id = ?", msgID).
 			Update("status", model.RECALLED)
@@ -283,7 +343,7 @@ func RecallMessage(userID, msgID uint64) (uint64, error) {
 			log.Println(err)
 			return errors.New("服务器错误")
 		}
-		newContent := senderName + "撤回了一条消息"
+		newContent = senderName + "撤回了一条消息" // Assign to captured variable
 		err = createSystemMessage(tx, newContent, conversationID, newID)
 		if err != nil {
 			return err
@@ -295,6 +355,20 @@ func RecallMessage(userID, msgID uint64) (uint64, error) {
 		}
 		return nil
 	})
+
+	if err == nil {
+		// 发送 websocket 通知
+		// 1. Tell clients to update the old message to RECALLED status
+		notifyConversationUsers(conversationID, "recall_message", map[string]any{
+			"recalled_message_id": msgID,
+			"system_message_id":   newID,
+			"conversation_id":     conversationID,
+			"content":             newContent,
+			"updated_at":          time.Now(),
+		})
+	}
+
+	return newID, err
 }
 
 func DeleteMessage(userID, messageID uint64) error {
@@ -313,7 +387,7 @@ func DeleteMessage(userID, messageID uint64) error {
 	}
 	conversationID := msg.ConversationID
 
-	return db.Transaction(func(tx *gorm.DB) error {
+	err = db.Transaction(func(tx *gorm.DB) error {
 		res := tx.Where("user_id = ? AND message_id = ?", userID, messageID).
 			Delete(&model.MessageUser{})
 
@@ -349,4 +423,19 @@ func DeleteMessage(userID, messageID uint64) error {
 
 		return nil
 	})
+
+	if err == nil {
+		// Only notify the user who performed the delete
+		payload := map[string]any{
+			"type": "delete_message",
+			"data": map[string]any{
+				"message_id":      messageID,
+				"conversation_id": conversationID,
+			},
+		}
+		msgBytes, _ := json.Marshal(payload)
+		ws.GetHub().SendToUser(userID, msgBytes)
+	}
+
+	return err
 }

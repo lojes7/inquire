@@ -41,17 +41,6 @@ SET default_table_access_method = heap;
 -- Name: conversation_friends; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public.conversation_friends (
-    id bigint NOT NULL,
-    created_at timestamp without time zone,
-    deleted_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    conversation_id bigint NOT NULL,
-    user_id bigint NOT NULL,
-    friend_id bigint NOT NULL
-);
-
-
 --
 -- Name: conversation_users; Type: TABLE; Schema: public; Owner: -
 --
@@ -288,15 +277,6 @@ CREATE TABLE public.users (
     CONSTRAINT chk_users_gender CHECK (((gender)::text = ANY ((ARRAY['male'::character varying, 'female'::character varying, ''::character varying])::text[])))
 );
 
-
---
--- Name: conversation_friends conversation_friends_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.conversation_friends
-    ADD CONSTRAINT conversation_friends_pkey PRIMARY KEY (id);
-
-
 --
 -- Name: conversation_users conversation_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
@@ -513,4 +493,3 @@ CREATE UNIQUE INDEX idx_users_uid ON public.users USING btree (uid);
 --
 
 \unrestrict 7If4iLKASUsmIrqkae3mSelVe4UixeM0YZtACJnrEYee9oCadfdeK5axuEfHHmQ
-
