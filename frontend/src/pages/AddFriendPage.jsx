@@ -63,7 +63,7 @@ export default function AddFriendPage() {
       if (!token) throw new Error("缺少登录 token");
 
       const res = await fetch(
-        `http://localhost:8000/api/auth/friendship_requests/${requestId}/accept`,
+        `http://localhost:8000/api/auth/friendship_requests/${requestId}`,
         { method: "POST", headers: { Authorization: `Bearer ${token}` } }
       );
       const result = await res.json();
@@ -81,8 +81,8 @@ export default function AddFriendPage() {
       if (!token) throw new Error("缺少登录 token");
 
       const res = await fetch(
-        `http://localhost:8000/api/auth/friendship_requests/${requestId}/reject`,
-        { method: "POST", headers: { Authorization: `Bearer ${token}` } }
+        `http://localhost:8000/api/auth/friendship_requests/${requestId}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
       );
       const result = await res.json();
 

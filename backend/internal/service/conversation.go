@@ -126,36 +126,64 @@ func getPrivateConversationID(userID, friendID uint64) (uint64, error) {
 	}
 
 	db := infra.GetDB()
-	var cf model.ConversationFriend
-	res := db.Model(&model.ConversationFriend{}).
-		Select("conversation_id").
-		Where("(user_id = ? AND friend_id = ?)"+
-			"OR (friend_id = ? AND user_id = ?)", userID, friendID).
-		First(&cf)
+	var conversationID uint64
+
+	res := db.Raw(`
+    SELECT cu1.conversation_id
+    FROM conversation_users cu1
+    JOIN conversation_users cu2 ON cu1.conversation_id = cu2.conversation_id
+    WHERE (cu1.user_id = ? AND cu2.user_id = ?)
+       OR (cu1.user_id = ? AND cu2.user_id = ?)`,
+		userID, friendID,
+		friendID, userID).Scan(&conversationID)
 
 	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			// 创建新会话
-			return createPrivateConversation(userID, friendID)
-		}
+		// 数据库出错
 		log.Println(res.Error)
 		return 0, errors.New("服务器错误")
 	}
 
-	return cf.ConversationID, nil
+	if res.RowsAffected == 0 {
+		return createPrivateConversation(userID, friendID)
+	}
+
+	return conversationID, nil
 }
 
 func createPrivateConversation(userID, friendID uint64) (uint64, error) {
 	db := infra.GetDB()
 	newID := utils.NewUniqueID()
 
-	cf := model.ConversationFriend{
-		ConversationID: newID,
-		UserID:         userID,
-		FriendID:       friendID,
+	// 先创建出一个新 conversation
+	c := model.Conversation{}
+	c.ID = newID
+	c.Type = model.PRIVATE
+
+	res := db.Create(&c)
+	if res.Error != nil {
+		log.Println(res.Error)
+		return 0, errors.New("创建会话失败")
 	}
 
-	res := db.Create(&cf)
+	// 在 conversation_users 表中创建出新 conversation
+	cu := model.ConversationUser{
+		UserID:         userID,
+		ConversationID: newID,
+	}
+	res = db.Create(&cu)
+	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrDuplicatedKey) {
+			return 0, errors.New("会话已存在")
+		}
+		log.Println(res.Error)
+		return 0, errors.New("服务器错误")
+	}
+
+	cu = model.ConversationUser{
+		UserID:         friendID,
+		ConversationID: newID,
+	}
+	res = db.Create(&cu)
 	if res.Error != nil {
 		if errors.Is(res.Error, gorm.ErrDuplicatedKey) {
 			return 0, errors.New("会话已存在")
@@ -167,26 +195,15 @@ func createPrivateConversation(userID, friendID uint64) (uint64, error) {
 	return newID, nil
 }
 
+// CreateConversationUser 用于创建出一个 conversation_users 表的字段
 func CreateConversationUser(tx *gorm.DB, userID, conversationID uint64, remark string) error {
-	res := tx.Model(&model.ConversationUser{}).
-		Where("user_id = ? AND conversation_id = ?", userID, conversationID).
-		Update("deleted_at", nil)
-	if res.Error != nil {
-		log.Println(res.Error)
-		return errors.New("服务器错误")
-	}
-	if res.RowsAffected > 0 {
-		// 已经存在该记录，直接返回
-		return nil
-	}
-
 	cu := model.ConversationUser{
 		UserID:         userID,
 		ConversationID: conversationID,
 		Remark:         remark,
 	}
 
-	res = tx.Create(&cu)
+	res := tx.Create(&cu)
 	if res.Error != nil {
 		log.Println(res.Error)
 		return errors.New("服务器错误")

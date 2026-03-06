@@ -32,7 +32,7 @@ type StrangerInfoResp struct {
 type TokenResp struct {
 	Token        string `json:"token"`
 	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    uint64 `json:"expires_in"`
+	ExpiresIn    uint64 `json:"expires_in,string"`
 }
 
 // LoginResp 登陆操作返回体
@@ -80,6 +80,6 @@ type ChatHistoryResp struct {
 type SendFileResp struct {
 	MessageID uint64 `json:"message_id,string"`
 	FileName  string `json:"file_name"`
-	FileSize  int64  `json:"file_size"`
+	FileSize  int64  `json:"file_size,string"`
 	FileType  string `json:"file_type"`
 }
