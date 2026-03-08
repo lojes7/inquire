@@ -21,6 +21,8 @@ const (
 
 // SendFriendRequest 发送好友申请操作
 func SendFriendRequest(senderID, receiverID uint64, msg string, senderName string) error {
+	db := infra.GetDB()
+
 	if senderID == receiverID {
 		return gorm.ErrInvalidData
 	}
@@ -30,8 +32,7 @@ func SendFriendRequest(senderID, receiverID uint64, msg string, senderName strin
 	}
 
 	var count int64
-	infra.GetDB().
-		Model(&model.Friendship{}).
+	db.Model(&model.Friendship{}).
 		Where("(user_id = ? AND friend_id = ?) OR (user_id = ? AND friend_id = ?)",
 			senderID, receiverID, receiverID, senderID).
 		Count(&count)
@@ -39,8 +40,7 @@ func SendFriendRequest(senderID, receiverID uint64, msg string, senderName strin
 		return gorm.ErrDuplicatedKey
 	}
 
-	err := infra.GetDB().
-		Model(&model.FriendshipRequest{}).
+	err := db.Model(&model.FriendshipRequest{}).
 		Create(model.NewFriendshipRequest(senderID, receiverID, msg, senderName)).
 		Error
 

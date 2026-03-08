@@ -14,23 +14,10 @@ import (
 // 会调用getPrivateConversationID以获取会话ID
 // 最后返回会话ID
 func StartPrivateConversation(userID, friendID uint64) (uint64, error) {
-	db := infra.GetDB()
-
 	// 找到 A 和 B 共同的 conversation_id
 	conversationID, err := getPrivateConversationID(userID, friendID)
 	if err != nil {
 		return 0, err
-	}
-
-	// 第二步：不管用户有没有删除该会话，都更新该用户的 conversation_users 记录
-	// 使该会话在可能被删除的情况下重新出现
-	res := db.Model(&model.ConversationUser{}).
-		Where("user_id = ? AND conversation_id = ?", userID, conversationID).
-		Update("deleted_at", nil)
-
-	if res.Error != nil {
-		log.Println(res.Error)
-		return 0, errors.New("服务器错误")
 	}
 
 	return conversationID, nil
@@ -62,7 +49,7 @@ func ChatHistoryList(userID, conversationID uint64) ([]model.ChatHistoryResp, er
 			LEFT JOIN message_users mu ON mu.message_id = m.id AND mu.user_id = ? 
 			LEFT JOIN texts t ON t.message_id = m.id
 			LEFT JOIN files f ON f.message_id = m.id
-			WHERE m.conversation_id = ? AND m.status != ? AND mu.deleted_at IS NULL
+			WHERE m.conversation_id = ? AND m.status != ? AND mu.is_deleted = false
 			ORDER BY m.updated_at DESC`
 
 	res := db.Raw(sql, model.TEXT,
@@ -97,7 +84,7 @@ func ConversationList(userID uint64) ([]model.ConversationListResp, error) {
 		LEFT JOIN messages m ON m.id = cu.last_message_id
 		LEFT JOIN files f ON f.message_id = m.id
 		LEFT JOIN texts t ON t.message_id = m.id
-		WHERE cu.user_id = ? AND cu.deleted_at IS NULL
+		WHERE cu.user_id = ? 
 		ORDER BY cu.is_pinned DESC, cu.updated_at DESC `
 
 	res := db.Raw(sql, model.TEXT,
@@ -150,53 +137,61 @@ func getPrivateConversationID(userID, friendID uint64) (uint64, error) {
 	return conversationID, nil
 }
 
+// createPrivateConversation 创建两用户之间的私聊会话
+// 使用前需要严格确保两用户之前不存在会话，且需要确保两用户是好友关系
 func createPrivateConversation(userID, friendID uint64) (uint64, error) {
 	db := infra.GetDB()
 	newID := utils.NewUniqueID()
 
-	// 先创建出一个新 conversation
-	c := model.Conversation{}
-	c.ID = newID
-	c.Type = model.PRIVATE
-
-	res := db.Create(&c)
-	if res.Error != nil {
-		log.Println(res.Error)
-		return 0, errors.New("创建会话失败")
-	}
-
-	// 在 conversation_users 表中创建出新 conversation
-	cu := model.ConversationUser{
-		UserID:         userID,
-		ConversationID: newID,
-	}
-	res = db.Create(&cu)
-	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrDuplicatedKey) {
-			return 0, errors.New("会话已存在")
+	err := db.Transaction(func(tx *gorm.DB) error {
+		// 查询用户对好友的备注
+		userToFriendRemark, err := getFriendRemark(tx, userID, friendID)
+		if err != nil {
+			return err
 		}
-		log.Println(res.Error)
-		return 0, errors.New("服务器错误")
-	}
 
-	cu = model.ConversationUser{
-		UserID:         friendID,
-		ConversationID: newID,
-	}
-	res = db.Create(&cu)
-	if res.Error != nil {
-		if errors.Is(res.Error, gorm.ErrDuplicatedKey) {
-			return 0, errors.New("会话已存在")
+		// 查询好友对用户的备注
+		friendToUserRemark, err := getFriendRemark(tx, friendID, userID)
+		if err != nil {
+			return err
 		}
-		log.Println(res.Error)
-		return 0, errors.New("服务器错误")
+
+		// 先创建出一个新 conversation
+		c := model.Conversation{}
+		c.ID = newID
+		c.Type = model.PRIVATE
+
+		res := tx.Create(&c)
+		if res.Error != nil {
+			log.Println(res.Error)
+			return errors.New("创建会话失败")
+		}
+
+		// 在 conversation_users 表中创建出新 conversation，填入查到的备注
+		if err := createConversationUser(tx, userID, newID, userToFriendRemark); err != nil {
+			return err
+		}
+
+		if err := createConversationUser(tx, friendID, newID, friendToUserRemark); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return 0, err
 	}
 
 	return newID, nil
 }
 
-// CreateConversationUser 用于创建出一个 conversation_users 表的字段
-func CreateConversationUser(tx *gorm.DB, userID, conversationID uint64, remark string) error {
+// createConversationUser 用于创建出一个 conversation_users 表的字段
+func createConversationUser(tx *gorm.DB, userID, conversationID uint64, remark string) error {
+	if tx == nil {
+		tx = infra.GetDB()
+	}
+
 	cu := model.ConversationUser{
 		UserID:         userID,
 		ConversationID: conversationID,
@@ -212,9 +207,12 @@ func CreateConversationUser(tx *gorm.DB, userID, conversationID uint64, remark s
 	return nil
 }
 
-func DeleteConversationUser(userID, conversationID uint64) error {
-	db := infra.GetDB()
-	res := db.Where("user_id = ? AND conversation_id = ?", userID, conversationID).
+func deleteConversationUser(tx *gorm.DB, userID, conversationID uint64) error {
+	if tx == nil {
+		tx = infra.GetDB()
+	}
+
+	res := tx.Where("user_id = ? AND conversation_id = ?", userID, conversationID).
 		Delete(&model.ConversationUser{})
 
 	if res.Error != nil {

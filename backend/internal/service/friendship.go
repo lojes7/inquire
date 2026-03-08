@@ -11,6 +11,10 @@ import (
 
 // createFriendship 给两个人（传id）双向创建出好友关系
 func createFriendship(tx *gorm.DB, userID, friendID uint64) error {
+	if tx == nil {
+		tx = infra.GetDB()
+	}
+
 	var friendName, userName string
 
 	err := tx.Table("users").
@@ -153,4 +157,18 @@ func isFriend(userID, friendID uint64) (bool, error) {
 	}
 
 	return true, nil
+}
+
+// getFriendRemark 获取好友备注
+func getFriendRemark(tx *gorm.DB, userID, friendID uint64) (string, error) {
+	if tx == nil {
+		tx = infra.GetDB()
+	}
+
+	var remark string
+	err := tx.Model(&model.Friendship{}).
+		Select("friend_remark").
+		Where("user_id = ? AND friend_id = ?", userID, friendID).
+		Scan(&remark).Error
+	return remark, err
 }

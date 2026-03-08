@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict C00gRxnQfZLaRxbanPfwhFgS1xUAeVhHfaZDkMh5IGZhTswF9ZiJZf5XsCoNTwr
+\restrict ilTzUtQTduqKIsyrvDgIU6YIysCBFG0a2XeTByhc8ff8k9wkcyCOWH4dOxyrUS7
 
 -- Dumped from database version 18.1 (Homebrew)
 -- Dumped by pg_dump version 18.1 (Homebrew)
@@ -72,35 +72,16 @@ CREATE TABLE public.conversations (
 
 CREATE TABLE public.files (
     id bigint NOT NULL,
-    created_at timestamp with time zone,
-    updated_at timestamp with time zone,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone,
     file_name character varying(255) NOT NULL,
     file_type character varying(50) NOT NULL,
     file_url character varying(255) NOT NULL,
     file_size bigint NOT NULL,
     file_content text,
-    content_vector public.vector(1536),
+    content_vector public.vector,
     message_id bigint NOT NULL
 );
-
-
---
--- Name: files_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.files_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.files_id_seq OWNED BY public.files.id;
 
 
 --
@@ -109,8 +90,8 @@ ALTER SEQUENCE public.files_id_seq OWNED BY public.files.id;
 
 CREATE TABLE public.friendship_requests (
     id bigint NOT NULL,
-    created_at timestamp with time zone,
-    updated_at timestamp with time zone,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone,
     sender_id bigint NOT NULL,
     receiver_id bigint NOT NULL,
     verification_message character varying(128),
@@ -121,55 +102,17 @@ CREATE TABLE public.friendship_requests (
 
 
 --
--- Name: friendship_requests_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.friendship_requests_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: friendship_requests_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.friendship_requests_id_seq OWNED BY public.friendship_requests.id;
-
-
---
 -- Name: friendships; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.friendships (
     id bigint NOT NULL,
-    created_at timestamp with time zone,
-    updated_at timestamp with time zone,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone,
     user_id bigint NOT NULL,
     friend_id bigint NOT NULL,
     friend_remark character varying(64) NOT NULL
 );
-
-
---
--- Name: friendships_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.friendships_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: friendships_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.friendships_id_seq OWNED BY public.friendships.id;
 
 
 --
@@ -178,32 +121,13 @@ ALTER SEQUENCE public.friendships_id_seq OWNED BY public.friendships.id;
 
 CREATE TABLE public.message_users (
     id bigint NOT NULL,
-    created_at timestamp with time zone,
-    updated_at timestamp with time zone,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone,
     user_id bigint,
     message_id bigint,
     is_starred boolean DEFAULT false,
     is_deleted boolean DEFAULT false
 );
-
-
---
--- Name: message_users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.message_users_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: message_users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.message_users_id_seq OWNED BY public.message_users.id;
 
 
 --
@@ -215,28 +139,9 @@ CREATE TABLE public.messages (
     conversation_id bigint,
     status smallint DEFAULT 0,
     id bigint NOT NULL,
-    created_at timestamp with time zone,
-    updated_at timestamp with time zone
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone
 );
-
-
---
--- Name: messages_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.messages_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: messages_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.messages_id_seq OWNED BY public.messages.id;
 
 
 --
@@ -245,8 +150,8 @@ ALTER SEQUENCE public.messages_id_seq OWNED BY public.messages.id;
 
 CREATE TABLE public.texts (
     id bigint NOT NULL,
-    created_at timestamp with time zone,
-    updated_at timestamp with time zone,
+    created_at timestamp without time zone,
+    updated_at timestamp without time zone,
     text character varying(1024) NOT NULL,
     message_id bigint NOT NULL
 );
@@ -265,7 +170,7 @@ CREATE TABLE public.users (
     phone_number character varying(20) NOT NULL,
     signature character varying(128),
     gender character varying(12),
-    created_at timestamp with time zone NOT NULL,
+    created_at timestamp without time zone NOT NULL,
     CONSTRAINT chk_users_gender CHECK (((gender)::text = ANY (ARRAY[('male'::character varying)::text, ('female'::character varying)::text, (''::character varying)::text])))
 );
 
@@ -346,7 +251,14 @@ ALTER TABLE ONLY public.users
 -- Name: conversation_users_conversation_id_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX conversation_users_conversation_id_idx ON public.conversation_users USING btree (conversation_id);
+CREATE INDEX conversation_users_conversation_id_idx ON public.conversation_users USING btree (conversation_id);
+
+
+--
+-- Name: conversation_users_user_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX conversation_users_user_id_idx ON public.conversation_users USING btree (user_id);
 
 
 --
@@ -367,7 +279,28 @@ CREATE INDEX idx_conversation_type ON public.conversations USING btree (type);
 -- Name: idx_file_msg; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX idx_file_msg ON public.files USING btree (message_id);
+CREATE INDEX idx_file_msg ON public.files USING btree (message_id);
+
+
+--
+-- Name: idx_friendship; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_friendship ON public.friendships USING btree (user_id, friend_id);
+
+
+--
+-- Name: idx_friendship_request; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_friendship_request ON public.friendship_requests USING btree (sender_id, receiver_id);
+
+
+--
+-- Name: idx_friendship_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_friendship_user_id ON public.friendships USING btree (user_id);
 
 
 --
@@ -392,10 +325,17 @@ CREATE INDEX idx_messages_sender_id ON public.messages USING btree (sender_id);
 
 
 --
--- Name: idx_users_name; Type: INDEX; Schema: public; Owner: -
+-- Name: idx_receiver; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_users_name ON public.users USING btree (name);
+CREATE INDEX idx_receiver ON public.friendship_requests USING btree (receiver_id);
+
+
+--
+-- Name: idx_text_msg; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_text_msg ON public.texts USING btree (message_id);
 
 
 --
@@ -416,5 +356,5 @@ CREATE UNIQUE INDEX idx_users_uid ON public.users USING btree (uid);
 -- PostgreSQL database dump complete
 --
 
-\unrestrict C00gRxnQfZLaRxbanPfwhFgS1xUAeVhHfaZDkMh5IGZhTswF9ZiJZf5XsCoNTwr
+\unrestrict ilTzUtQTduqKIsyrvDgIU6YIysCBFG0a2XeTByhc8ff8k9wkcyCOWH4dOxyrUS7
 
