@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"log"
 	"strconv"
 
@@ -9,7 +8,7 @@ import (
 	"github.com/lojes7/inquire/internal/model"
 	"github.com/lojes7/inquire/internal/service"
 	"github.com/lojes7/inquire/pkg/response"
-	"gorm.io/gorm"
+	"github.com/lojes7/inquire/pkg/secure"
 )
 
 // FriendshipList 获取好友列表
@@ -27,7 +26,11 @@ func FriendshipList(c *gin.Context) {
 	resp, err := service.FriendshipList(id)
 
 	if err != nil {
-		response.Fail(c, 500, "服务器错误")
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 
@@ -58,8 +61,8 @@ func DeleteFriendship(c *gin.Context) {
 
 	err = service.DeleteFriendship(userID, friendID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			response.Fail(c, 400, "好友不存在")
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
 			response.Fail(c, 500, "服务器错误")
 		}
@@ -101,7 +104,11 @@ func ReviseRemark(c *gin.Context) {
 
 	err = service.ReviseRemark(userID, friendID, req.Remark)
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 

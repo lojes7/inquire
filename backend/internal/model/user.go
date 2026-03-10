@@ -2,23 +2,20 @@ package model
 
 import (
 	"strconv"
-	"time"
 
 	"github.com/lojes7/inquire/pkg/utils"
 	"gorm.io/gorm"
 )
 
 type User struct {
-	ID          uint64         `gorm:"type:bigint;primaryKey;autoIncrement:false"`
-	Name        string         `gorm:"type:varchar(64);not null"`
-	Password    string         `gorm:"type:varchar(72);not null"`
-	Uid         string         `gorm:"type:varchar(20);not null;uniqueIndex"`
-	Region      string         `gorm:"type:varchar(32)"`
-	PhoneNumber string         `gorm:"type:varchar(20);not null;uniqueIndex"`
-	Signature   string         `gorm:"type:varchar(128);"`
-	Gender      string         `gorm:"type:varchar(12);check:gender IN ('male','female','')"`
-	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	CreatedAt   time.Time      `gorm:"not null;autoCreateTime"`
+	MyModel
+	Name        string `gorm:"type:varchar(64);not null"`
+	Password    string `gorm:"type:varchar(72);not null"`
+	Uid         string `gorm:"type:varchar(20);not null;uniqueIndex"`
+	Region      string `gorm:"type:varchar(32)"`
+	PhoneNumber string `gorm:"type:varchar(20);not null;uniqueIndex"`
+	Signature   string `gorm:"type:varchar(128);"`
+	Gender      string `gorm:"type:varchar(12);check:gender IN ('male','female','')"`
 }
 
 func NewUser(name string, password string, phone string) (*User, error) {

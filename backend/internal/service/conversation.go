@@ -6,6 +6,7 @@ import (
 
 	"github.com/lojes7/inquire/internal/model"
 	"github.com/lojes7/inquire/pkg/infra"
+	"github.com/lojes7/inquire/pkg/secure"
 	"github.com/lojes7/inquire/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -62,7 +63,7 @@ func ChatHistoryList(userID, conversationID uint64) ([]model.ChatHistoryResp, er
 
 	if res.Error != nil {
 		log.Println(res.Error)
-		return nil, errors.New("服务器错误")
+		return nil, secure.Wrap(500, "加载聊天记录失败", res.Error)
 	}
 	return resp, nil
 }
@@ -95,7 +96,7 @@ func ConversationList(userID uint64) ([]model.ConversationListResp, error) {
 
 	if res.Error != nil {
 		log.Println(res.Error)
-		return nil, errors.New("服务器错误")
+		return nil, secure.Wrap(500, "加载会话列表失败", res.Error)
 	}
 
 	return resp, nil
@@ -109,7 +110,7 @@ func getPrivateConversationID(userID, friendID uint64) (uint64, error) {
 		return 0, err
 	}
 	if !ok {
-		return 0, errors.New("两用户不是好友关系")
+		return 0, secure.Wrap(400, "两用户不是好友关系", errors.New("not friend"))
 	}
 
 	db := infra.GetDB()
@@ -127,7 +128,7 @@ func getPrivateConversationID(userID, friendID uint64) (uint64, error) {
 	if res.Error != nil {
 		// 数据库出错
 		log.Println(res.Error)
-		return 0, errors.New("服务器错误")
+		return 0, secure.Wrap(500, "查询会话失败", res.Error)
 	}
 
 	if res.RowsAffected == 0 {
@@ -164,7 +165,7 @@ func createPrivateConversation(userID, friendID uint64) (uint64, error) {
 		res := tx.Create(&c)
 		if res.Error != nil {
 			log.Println(res.Error)
-			return errors.New("创建会话失败")
+			return secure.Wrap(500, "创建会话失败", res.Error)
 		}
 
 		// 在 conversation_users 表中创建出新 conversation，填入查到的备注
@@ -201,7 +202,7 @@ func createConversationUser(tx *gorm.DB, userID, conversationID uint64, remark s
 	res := tx.Create(&cu)
 	if res.Error != nil {
 		log.Println(res.Error)
-		return errors.New("服务器错误")
+		return secure.Wrap(500, "创建会话成员失败", res.Error)
 	}
 
 	return nil
@@ -217,7 +218,7 @@ func deleteConversationUser(tx *gorm.DB, userID, conversationID uint64) error {
 
 	if res.Error != nil {
 		log.Println(res.Error)
-		return errors.New("服务器错误")
+		return secure.Wrap(500, "删除会话成员失败", res.Error)
 	}
 	if res.RowsAffected == 0 {
 		log.Println("删除 conversation_users 操作影响了0行表")

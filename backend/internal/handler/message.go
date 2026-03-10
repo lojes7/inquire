@@ -16,6 +16,7 @@ import (
 	"github.com/lojes7/inquire/internal/service"
 	"github.com/lojes7/inquire/pkg/infra"
 	"github.com/lojes7/inquire/pkg/response"
+	"github.com/lojes7/inquire/pkg/secure"
 )
 
 // SendText 发送文本消息
@@ -42,7 +43,11 @@ func SendText(c *gin.Context) {
 
 	msgID, err := service.SendText(senderID, conversationID, content)
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 	response.Success(c, 201, "success", msgID)
@@ -83,7 +88,11 @@ func SendFile(c *gin.Context) {
 
 	resp, err := service.SendFile(userID, conversationID, file)
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 	response.Success(c, 201, "success", resp)
@@ -114,7 +123,11 @@ func DownloadFile(c *gin.Context) {
 
 	fileURL, err := service.DownloadFile(userID, messageID)
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 
@@ -189,7 +202,11 @@ func RecallMessage(c *gin.Context) {
 	// 撤回消息会创建一个系统级消息，这里拿到该消息的ID，返回给前端
 	systemMsgID, err := service.RecallMessage(userID, req.ID)
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 	response.Success(c, 201, "success", systemMsgID)
@@ -217,8 +234,12 @@ func DeleteMessage(c *gin.Context) {
 
 	err := service.DeleteMessage(userID, req.ID)
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
-	response.Success(c, 200, "success", nil)
+	response.Success(c, 201, "success", nil)
 }

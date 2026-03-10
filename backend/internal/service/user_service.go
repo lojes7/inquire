@@ -16,10 +16,10 @@ func getUserByUid(uid string) (*model.User, error) {
 
 	if res.Error != nil {
 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return nil, errors.New("微信号不存在！")
+			return nil, secure.Wrap(404, "微信号不存在！", res.Error)
 		}
 		log.Println(res.Error)
-		return nil, res.Error
+		return nil, secure.Wrap(500, "查询用户失败", res.Error)
 	}
 
 	return &user, nil
@@ -31,10 +31,10 @@ func getUserByPhone(phone string) (*model.User, error) {
 
 	if res.Error != nil {
 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			return nil, errors.New("手机号不存在！")
+			return nil, secure.Wrap(404, "手机号不存在！", res.Error)
 		}
 		log.Println(res.Error)
-		return nil, res.Error
+		return nil, secure.Wrap(500, "查询用户失败", res.Error)
 	}
 
 	return &user, nil
@@ -52,14 +52,15 @@ func isPKExist(id uint64) error {
 
 	if err != nil {
 		log.Println(err)
-		return err
+		return secure.Wrap(500, "查询用户失败", err)
 	}
 
 	// exists == 1 → 存在
 	if exists == 1 {
 		return nil
 	}
-	return gorm.ErrInvalidData
+	// 为了统一 辅助函数内部都会wrap
+	return secure.Wrap(404, "用户主键不存在", gorm.ErrInvalidData)
 }
 
 // RefreshToken 刷新Token
@@ -73,18 +74,18 @@ func NewTokenResp(id uint64) (*model.TokenResp, error) {
 	token, err := secure.NewToken(id)
 	if err != nil {
 		log.Println(err)
-		return nil, errors.New("token生成错误" + err.Error())
+		return nil, secure.Wrap(500, "token生成错误"+err.Error(), err)
 	}
 	refreshToken, err := secure.NewRefreshToken(id)
 	if err != nil {
 		log.Println(err)
-		return nil, errors.New("refreshToken生成错误" + err.Error())
+		return nil, secure.Wrap(500, "refreshToken生成错误"+err.Error(), err)
 	}
 
 	t := uint64(secure.GetExpiresTime().Seconds())
 	if t <= 0 {
 		log.Println("生成token时viper解析失败")
-		return nil, errors.New("生成token时viper解析失败")
+		return nil, secure.Wrap(500, "生成token时配置错误", errors.New("viper error"))
 	}
 	resp.ExpiresIn = t
 	resp.Token, resp.RefreshToken = token, refreshToken
@@ -115,18 +116,15 @@ func Register(user *model.User) error {
 	pwd, err := secure.HashString(user.Password)
 	if err != nil {
 		log.Println(err)
-		return err
+		return secure.Wrap(500, "密码加密失败", err)
 	}
 
 	user.Password = pwd
 
 	err = infra.GetDB().Create(user).Error
 	if err != nil {
-		return &secure.MyError{
-			Err:     err,
-			Message: "注册失败 uid或手机号已存在",
-			Code:    400,
-		}
+		// 这里可能是 uid 或 phone number 重复
+		return secure.Wrap(400, "注册失败 uid或手机号已存在", err)
 	}
 	return nil
 }
@@ -136,12 +134,12 @@ func LoginByUid(uid string, password string) (*model.LoginResp, error) {
 	user, err := getUserByUid(uid)
 	if err != nil {
 		log.Println(err)
-		return nil, errors.New("登陆失败 微信号或密码错误")
+		return nil, err
 	}
 
 	if err := secure.VerifyPassword(user.Password, password); err != nil {
 		log.Println(err)
-		return nil, errors.New("登陆失败 微信号或密码错误")
+		return nil, secure.Wrap(401, "登陆失败 微信号或密码错误", err)
 	}
 
 	return NewLoginResp(user.Name, user.Uid, user.ID)
@@ -152,12 +150,12 @@ func LoginByPhone(phone string, password string) (*model.LoginResp, error) {
 	user, err := getUserByPhone(phone)
 	if err != nil {
 		log.Println(err)
-		return nil, errors.New("登陆失败 手机号或密码错误")
+		return nil, secure.Wrap(401, "登陆失败 手机号或密码错误", err)
 	}
 
 	if err := secure.VerifyPassword(user.Password, password); err != nil {
 		log.Println(err)
-		return nil, errors.New("登陆失败 手机号或密码错误")
+		return nil, secure.Wrap(401, "登陆失败 手机号或密码错误", err)
 	}
 
 	return NewLoginResp(user.Name, user.Uid, user.ID)
@@ -171,11 +169,7 @@ func ReviseUid(id uint64, newUid string) error {
 		Update("uid", newUid).
 		Error
 	if err != nil {
-		return &secure.MyError{
-			Err:     err,
-			Message: "修改uid失败 uid已存在",
-			Code:    400,
-		}
+		return secure.Wrap(400, "修改uid失败 uid已存在", err)
 	}
 	return nil
 }
@@ -184,7 +178,7 @@ func ReviseUid(id uint64, newUid string) error {
 func RevisePassword(id uint64, prevPassword, newPassword string) error {
 	if prevPassword == newPassword {
 		log.Println("修改密码时传入了相同的密码")
-		return errors.New("新密码与旧密码不能相同")
+		return secure.Wrap(400, "新密码与旧密码不能相同", errors.New("same password"))
 	}
 
 	db := infra.GetDB()
@@ -196,34 +190,34 @@ func RevisePassword(id uint64, prevPassword, newPassword string) error {
 
 	if res.Error != nil {
 		log.Println(res.Error)
-		return errors.New("服务器错误")
+		return secure.Wrap(500, "服务器错误", res.Error)
 	}
 	if user.Password == "" {
 		log.Println("修改密码时查询数据库获取哈希密码失败")
-		return errors.New("服务器错误")
+		return secure.Wrap(500, "用户数据异常", errors.New("empty password hash"))
 	}
 
 	err := secure.VerifyPassword(user.Password, prevPassword)
 	if err != nil {
 		log.Println(err)
-		return errors.New("密码错误！")
+		return secure.Wrap(401, "旧密码错误！", err)
 	}
 
 	newHashPassword, err := secure.HashString(newPassword)
 	if err != nil {
 		log.Println(err)
-		return errors.New("服务器错误")
+		return secure.Wrap(500, "服务器错误", err)
 	}
 
 	res = db.Model(&user).
 		Update("password", newHashPassword)
 	if res.Error != nil {
 		log.Println(res.Error)
-		return errors.New("服务器错误")
+		return secure.Wrap(500, "服务器错误", res.Error)
 	}
 	if res.RowsAffected == 0 {
 		log.Println("修改密码操作影响了0行表")
-		return errors.New("服务器错误")
+		return secure.Wrap(500, "更新失败", errors.New("rows affected 0"))
 	}
 
 	return nil
@@ -231,7 +225,11 @@ func RevisePassword(id uint64, prevPassword, newPassword string) error {
 
 // ReviseName 修改用户名
 func ReviseName(id uint64, newName string) error {
-	return infra.GetDB().Model(model.User{}).
+	err := infra.GetDB().Model(model.User{}).
 		Where("id = ?", id).
 		Update("name", newName).Error
+	if err != nil {
+		return secure.Wrap(500, "修改用户名失败", err)
+	}
+	return nil
 }

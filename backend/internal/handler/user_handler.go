@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"log"
 	"net/http"
 
@@ -38,12 +37,10 @@ func Register(c *gin.Context) {
 
 	err = service.Register(user)
 	if err != nil {
-		var myErr *secure.MyError
-
-		if errors.As(err, &myErr) {
+		if myErr := secure.Unwrap(err); myErr != nil {
 			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "转换为 myErr 时错误")
+			response.Fail(c, 500, "服务器错误")
 		}
 
 		return
@@ -71,7 +68,11 @@ func LoginByUid(c *gin.Context) {
 
 	loginResp, err := service.LoginByUid(req.Uid, req.Password)
 	if err != nil {
-		response.Fail(c, http.StatusBadRequest, err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 	} else {
 		response.Success(c, 200, "登陆成功", loginResp)
 	}
@@ -96,7 +97,11 @@ func LoginByPhone(c *gin.Context) {
 
 	loginResp, err := service.LoginByPhone(req.PhoneNumber, req.Password)
 	if err != nil {
-		response.Fail(c, http.StatusBadRequest, err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 	} else {
 		response.Success(c, 200, "登陆成功", loginResp)
 	}
@@ -125,12 +130,10 @@ func ReviseUid(c *gin.Context) {
 
 	err := service.ReviseUid(id, newUid)
 	if err != nil {
-		var myErr *secure.MyError
-
-		if errors.As(err, &myErr) {
+		if myErr := secure.Unwrap(err); myErr != nil {
 			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "转换为 myErr 时错误")
+			response.Fail(c, 500, "服务器错误")
 		}
 		return
 	}
@@ -161,7 +164,11 @@ func RevisePassword(c *gin.Context) {
 
 	err := service.RevisePassword(id, req.PrevPassword, req.NewPassword)
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 
@@ -191,7 +198,11 @@ func ReviseName(c *gin.Context) {
 
 	err := service.ReviseName(id, req.Name)
 	if err != nil {
-		response.Fail(c, 500, "数据库错误")
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 

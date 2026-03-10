@@ -7,6 +7,7 @@ import (
 	"github.com/lojes7/inquire/internal/model"
 	"github.com/lojes7/inquire/internal/service"
 	"github.com/lojes7/inquire/pkg/response"
+	"github.com/lojes7/inquire/pkg/secure"
 )
 
 // StartPrivateConversation 新建私聊
@@ -32,7 +33,11 @@ func StartPrivateConversation(c *gin.Context) {
 
 	conversationID, err := service.StartPrivateConversation(userID, friendID)
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 	response.Success(c, 201, "success", conversationID)
@@ -61,7 +66,11 @@ func ChatHistoryList(c *gin.Context) {
 
 	resp, err := service.ChatHistoryList(userID, conversationID)
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 	response.Success(c, 200, "success", resp)
@@ -82,7 +91,11 @@ func ConversationList(c *gin.Context) {
 
 	resp, err := service.ConversationList(userID)
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 	response.Success(c, 200, "success", resp)

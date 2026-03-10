@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -25,7 +24,11 @@ func RefreshToken(c *gin.Context) {
 
 	resp, err := service.RefreshToken(id)
 	if err != nil {
-		response.Fail(c, 500, "token出现问题"+err.Error())
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 
@@ -55,12 +58,10 @@ func FriendInfoByID(c *gin.Context) {
 
 	resp, err := service.FriendInfoByID(userID, friendID)
 	if err != nil {
-		var myErr *secure.MyError
-
-		if errors.As(err, &myErr) {
+		if myErr := secure.Unwrap(err); myErr != nil {
 			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "转换为 myErr 时错误")
+			response.Fail(c, 500, "服务器错误")
 		}
 		return
 	}
@@ -89,12 +90,10 @@ func StrangerInfoByID(c *gin.Context) {
 
 	resp, err := service.StrangerInfoByID(strangerID)
 	if err != nil {
-		var myErr *secure.MyError
-
-		if errors.As(err, &myErr) {
+		if myErr := secure.Unwrap(err); myErr != nil {
 			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "转换为 myErr 时错误")
+			response.Fail(c, 500, "服务器错误")
 		}
 		return
 	}
@@ -123,12 +122,10 @@ func FriendInfoByUid(c *gin.Context) {
 
 	resp, err := service.FriendInfoByUid(userID, uid)
 	if err != nil {
-		var myErr *secure.MyError
-
-		if errors.As(err, &myErr) {
+		if myErr := secure.Unwrap(err); myErr != nil {
 			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "转换为 myErr 时错误")
+			response.Fail(c, 500, "服务器错误")
 		}
 		return
 	}
@@ -156,12 +153,10 @@ func StrangerInfoByUid(c *gin.Context) {
 
 	resp, err := service.StrangerInfoByUid(uid)
 	if err != nil {
-		var myErr *secure.MyError
-
-		if errors.As(err, &myErr) {
+		if myErr := secure.Unwrap(err); myErr != nil {
 			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "转换为 myErr 时错误")
+			response.Fail(c, 500, "服务器错误")
 		}
 		return
 	}

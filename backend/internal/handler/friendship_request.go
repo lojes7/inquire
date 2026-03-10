@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"errors"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -34,12 +33,10 @@ func SendFriendRequest(c *gin.Context) {
 
 	err := service.SendFriendRequest(senderID, req.ReceiverID, req.VerificationMessage, req.SenderName)
 	if err != nil {
-		var myErr *secure.MyError
-
-		if errors.As(err, &myErr) {
+		if myErr := secure.Unwrap(err); myErr != nil {
 			response.Fail(c, myErr.Code, myErr.Message)
 		} else {
-			response.Fail(c, 500, "转换为 myErr 时错误")
+			response.Fail(c, 500, "服务器错误")
 		}
 		return
 	}
@@ -62,7 +59,11 @@ func FriendRequestList(c *gin.Context) {
 
 	respSlice, err := service.FriendRequestList(receiverID)
 	if err != nil {
-		response.Fail(c, 500, "服务器错误")
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 
@@ -91,7 +92,11 @@ func FriendRequestAccept(c *gin.Context) {
 
 	err = service.FriendRequestAccept(id)
 	if err != nil {
-		response.Fail(c, 500, "服务器错误")
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 
@@ -120,7 +125,11 @@ func FriendRequestDelete(c *gin.Context) {
 
 	err = service.FriendRequestDelete(id)
 	if err != nil {
-		response.Fail(c, 500, "服务器错误")
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
 		return
 	}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/lojes7/inquire/internal/model"
 	"github.com/lojes7/inquire/internal/ws"
 	"github.com/lojes7/inquire/pkg/infra"
+	"github.com/lojes7/inquire/pkg/secure"
 	"github.com/lojes7/inquire/pkg/utils"
 	"gorm.io/gorm"
 )
@@ -53,10 +54,10 @@ func sendMessageAuth(userID, conversationID uint64) error {
 		Count(&cnt).Error
 	if err != nil {
 		log.Println(err)
-		return errors.New("服务器错误")
+		return secure.Wrap(500, "验证权限失败", err)
 	}
 	if cnt == 0 {
-		return errors.New("无权限在该会话中发送消息")
+		return secure.Wrap(403, "无权限在该会话中发送消息", errors.New("forbidden"))
 	}
 	return nil
 }
@@ -79,13 +80,13 @@ func createSystemMessage(tx *gorm.DB, content string, conversationID, newID uint
 	res := tx.Create(&newMsg)
 	if res.Error != nil {
 		log.Println(res.Error)
-		return errors.New("创建系统消息失败")
+		return secure.Wrap(500, "创建系统消息失败", res.Error)
 	}
 
 	res = tx.Create(&newText)
 	if res.Error != nil {
 		log.Println(res.Error)
-		return errors.New("创建系统消息失败")
+		return secure.Wrap(500, "创建系统消息失败", res.Error)
 	}
 
 	return nil
@@ -99,11 +100,12 @@ func updateUnreadCount(tx *gorm.DB, senderID, conversationID uint64) error {
 		UpdateColumn("unread_count", gorm.Expr("unread_count + ?", 1))
 	if res.Error != nil {
 		log.Println(res.Error)
-		return res.Error
+		return secure.Wrap(500, "更新未读数失败", res.Error)
 	}
+
 	if res.RowsAffected == 0 {
 		log.Println("更新unread count字段影响了0行表")
-		return errors.New("更新unread count失败")
+		return secure.Wrap(500, "更新未读数失败", errors.New("rows affected 0"))
 	}
 	return nil
 }
@@ -115,11 +117,11 @@ func updateLastMessageID(tx *gorm.DB, conversationID, msgID uint64) error {
 		Update("last_message_id", msgID)
 	if res.Error != nil {
 		log.Println(res.Error)
-		return res.Error
+		return secure.Wrap(500, "更新最新消息失败", res.Error)
 	}
 	if res.RowsAffected == 0 {
 		log.Println("更新last msg id字段影响了0行表")
-		return errors.New("更新last msg id失败")
+		return secure.Wrap(500, "更新最新消息失败", errors.New("rows affected 0"))
 	}
 	return nil
 }
@@ -148,23 +150,23 @@ func SendText(senderID, conversationID uint64, content string) (uint64, error) {
 		res := tx.Create(&newMsg)
 		if res.Error != nil {
 			log.Println(res.Error)
-			return errors.New("服务器错误")
+			return secure.Wrap(500, "发送消息失败", res.Error)
 		}
 
 		res = tx.Create(&newText)
 		if res.Error != nil {
 			log.Println(res.Error)
-			return errors.New("服务器错误")
+			return secure.Wrap(500, "发送消息失败", res.Error)
 		}
 
 		err := updateLastMessageID(tx, conversationID, newID)
 		if err != nil {
-			return errors.New("服务器错误")
+			return err
 		}
 
 		err = updateUnreadCount(tx, senderID, conversationID)
 		if err != nil {
-			return errors.New("服务器错误")
+			return err
 		}
 
 		return nil
@@ -203,7 +205,7 @@ func SendFile(senderID, conversationID uint64, file *multipart.FileHeader) (*mod
 	// 保存文件
 	if err := saveFile(file, filePath); err != nil {
 		log.Println(err)
-		return nil, errors.New("服务器错误")
+		return nil, secure.Wrap(500, "保存文件失败", err)
 	}
 
 	// 获取文件信息
@@ -237,23 +239,23 @@ func SendFile(senderID, conversationID uint64, file *multipart.FileHeader) (*mod
 		res := tx.Create(&newMsg)
 		if res.Error != nil {
 			log.Println(res.Error)
-			return errors.New("服务器错误")
+			return secure.Wrap(500, "发送文件消息失败", res.Error)
 		}
 
 		res = tx.Create(&newFile)
 		if res.Error != nil {
 			log.Println(res.Error)
-			return errors.New("服务器错误")
+			return secure.Wrap(500, "发送文件消息失败", res.Error)
 		}
 
 		err := updateLastMessageID(tx, conversationID, newID)
 		if err != nil {
-			return errors.New("服务器错误")
+			return err
 		}
 
 		err = updateUnreadCount(tx, senderID, conversationID)
 		if err != nil {
-			return errors.New("服务器错误")
+			return err
 		}
 
 		return nil
@@ -291,10 +293,10 @@ func DownloadFile(userID, messageID uint64) (string, error) {
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return "", errors.New("文件不存在或无访问权限")
+			return "", secure.Wrap(403, "文件不存在或无访问权限", err)
 		}
 		log.Println("DB error:", err)
-		return "", errors.New("服务器错误")
+		return "", secure.Wrap(500, "查询文件失败", err)
 	}
 
 	return file.FileURL, nil
@@ -310,13 +312,13 @@ func RecallMessage(userID, msgID uint64) (uint64, error) {
 		Error
 	if err != nil {
 		log.Println(err)
-		return 0, errors.New("服务器错误")
+		return 0, secure.Wrap(500, "查询消息失败", err)
 	}
 
 	senderID := temp.SenderID
 	conversationID := temp.ConversationID
 	if senderID != userID {
-		return 0, errors.New("不能撤回不是自己发的消息")
+		return 0, secure.Wrap(403, "不能撤回不是自己发的消息", errors.New("forbidden"))
 	}
 
 	newID := utils.NewUniqueID()
@@ -328,11 +330,11 @@ func RecallMessage(userID, msgID uint64) (uint64, error) {
 			Update("status", model.RECALLED)
 		if res.Error != nil {
 			log.Println(res.Error)
-			return errors.New("服务器错误")
+			return secure.Wrap(500, "撤回消息失败", res.Error)
 		}
 		if res.RowsAffected == 0 {
 			log.Println("撤回消息操作影响了0行表")
-			return errors.New("服务器错误")
+			return secure.Wrap(500, "撤回消息失败", errors.New("rows affected 0"))
 		}
 
 		var senderName string
@@ -341,7 +343,7 @@ func RecallMessage(userID, msgID uint64) (uint64, error) {
 			Pluck("name", &senderName).Error
 		if err != nil {
 			log.Println(err)
-			return errors.New("服务器错误")
+			return secure.Wrap(500, "获取用户名称失败", err)
 		}
 		newContent = senderName + "撤回了一条消息" // Assign to captured variable
 		err = createSystemMessage(tx, newContent, conversationID, newID)
@@ -384,7 +386,7 @@ func DeleteMessage(userID, messageID uint64) error {
 
 	if err != nil {
 		log.Println(err)
-		return errors.New("服务器错误")
+		return secure.Wrap(500, "查询消息失败", err)
 	}
 	conversationID := msg.ConversationID
 
@@ -394,27 +396,27 @@ func DeleteMessage(userID, messageID uint64) error {
 
 		if res.Error != nil {
 			log.Println(res.Error)
-			return errors.New("服务器错误")
+			return secure.Wrap(500, "删除消息失败", res.Error)
 		}
 		if res.RowsAffected == 0 {
 			log.Println("删除消息操作影响了0行表")
-			return errors.New("服务器错误")
+			return secure.Wrap(500, "删除消息失败", errors.New("rows affected 0"))
 		}
 
 		var lastID uint64
 		sql := `SELECT m.id FROM messages m 
 			LEFT JOIN message_users mu ON mu.message_id = m.id AND mu.user_id = ?
-			WHERE m.status != ? AND mu.deleted_at IS NULL
+			WHERE m.status != ? AND mu.is_deleted = false
 			ORDER BY m.created_at DESC 
 			LIMIT 1`
 		res = tx.Raw(sql, userID, model.RECALLED).Scan(&lastID)
 		if res.Error != nil {
 			log.Println(res.Error)
-			return errors.New("服务器错误")
+			return secure.Wrap(500, "更新最新消息失败", res.Error)
 		}
 		if res.RowsAffected == 0 {
 			log.Println("删除消息更新最后消息id 时没有查到id")
-			return errors.New("服务器错误")
+			return secure.Wrap(500, "更新最新消息失败", errors.New("rows affected 0"))
 		}
 
 		err = updateLastMessageID(tx, conversationID, lastID)

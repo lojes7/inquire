@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ilTzUtQTduqKIsyrvDgIU6YIysCBFG0a2XeTByhc8ff8k9wkcyCOWH4dOxyrUS7
+\restrict N4wx3PCg3U9QJ3bXPG2qBCpCK7OAIIPdThaJpWEPcNesjE6HVcpav0s7LBK3UhB
 
 -- Dumped from database version 18.1 (Homebrew)
 -- Dumped by pg_dump version 18.1 (Homebrew)
@@ -171,6 +171,7 @@ CREATE TABLE public.users (
     signature character varying(128),
     gender character varying(12),
     created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
     CONSTRAINT chk_users_gender CHECK (((gender)::text = ANY (ARRAY[('male'::character varying)::text, ('female'::character varying)::text, (''::character varying)::text])))
 );
 
@@ -356,5 +357,5 @@ CREATE UNIQUE INDEX idx_users_uid ON public.users USING btree (uid);
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ilTzUtQTduqKIsyrvDgIU6YIysCBFG0a2XeTByhc8ff8k9wkcyCOWH4dOxyrUS7
+\unrestrict N4wx3PCg3U9QJ3bXPG2qBCpCK7OAIIPdThaJpWEPcNesjE6HVcpav0s7LBK3UhB
 
