@@ -10,21 +10,21 @@ import (
 )
 
 const (
-	TEXT uint8 = iota
+	TEXT int = iota
 	RECALLED
 	SYSTEM
 	FILE
 )
 
 const (
-	PRIVATE uint8 = iota
+	PRIVATE int = iota
 	GROUP
 )
 
 type Message struct {
 	SenderID       uint64 `gorm:"bigint;index"`
 	ConversationID uint64 `gorm:"bigint;index"`
-	Status         uint8  `gorm:"smallint;default:0"`
+	Status         int    `gorm:"smallint;default:0"`
 	MyModel
 }
 
@@ -38,7 +38,7 @@ type MessageUser struct {
 
 type Conversation struct {
 	MyModel
-	Type uint8 `gorm:"smallint;not null"`
+	Type int `gorm:"smallint;not null"`
 }
 type ConversationUser struct {
 	MyModel

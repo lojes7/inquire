@@ -35,9 +35,9 @@ func ChatHistoryList(userID, conversationID uint64) ([]model.ChatHistoryResp, er
        		u.name AS sender_name,
 			m.status, 
 			m.updated_at,
-			CASE m.status
-			WHEN ? OR ? THEN t.text
-			WHEN ? THEN json_build_object(
+			CASE 
+			WHEN m.status IN (?, ?) THEN t.text
+			WHEN m.status = ? THEN json_build_object(
                'file_name', f.file_name,
                'file_url', f.file_url,
                'file_size', f.file_size,
@@ -76,10 +76,10 @@ func ConversationList(userID uint64) ([]model.ConversationListResp, error) {
 	sql := `SELECT cu.remark, 
        	cu.conversation_id,
        	cu.unread_count,
-       	CASE m.status
-		WHEN ? OR ? THEN t.text
-		WHEN ? THEN f.file_name
-		ELSE ''
+       	CASE 
+  			WHEN m.status IN (?, ?) THEN t.text
+  			WHEN m.status = ? THEN f.file_name
+  			ELSE ''
 		END AS content
 		FROM conversation_users cu 
 		LEFT JOIN messages m ON m.id = cu.last_message_id
