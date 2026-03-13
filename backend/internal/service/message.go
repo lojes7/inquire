@@ -220,6 +220,8 @@ func SendFile(senderID, conversationID uint64, file *multipart.FileHeader) (*mod
 			ID: newID,
 		},
 	}
+
+	// 新文件
 	newFile := model.File{
 		FileName:  fileName,
 		FileType:  fileType,
@@ -228,6 +230,7 @@ func SendFile(senderID, conversationID uint64, file *multipart.FileHeader) (*mod
 		MessageID: newID,
 	}
 
+	// 保存到数据库
 	db := infra.GetDB()
 	resp := &model.SendFileResp{
 		MessageID: newID,

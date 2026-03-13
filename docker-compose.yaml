@@ -36,6 +36,7 @@ services:
       JWT_EXPIRE_TIME: ${JWT_EXPIRE_TIME}
       JWT_REFRESH_TIME: ${JWT_REFRESH_TIME}
       QWEN_API_KEY: ${QWEN_API_KEY}
+      QWEN_BASE_URL: ${QWEN_BASE_URL}
     volumes:
       - file_assets:/assets
     ports:
