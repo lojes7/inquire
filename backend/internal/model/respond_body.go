@@ -83,3 +83,14 @@ type SendFileResp struct {
 	FileSize  int64  `json:"file_size,string"`
 	FileType  string `json:"file_type"`
 }
+
+// FileSemanticSearchItemResp 文件语义检索返回体
+type FileSemanticSearchItemResp struct {
+	MessageID      uint64  `json:"message_id,string"`
+	ConversationID uint64  `json:"conversation_id,string"`
+	FileName       string  `json:"file_name"`
+	FileURL        string  `json:"file_url"`
+	FileSize       int64   `json:"file_size,string"`
+	FileType       string  `json:"file_type"`
+	Score          float64 `json:"score"`
+}

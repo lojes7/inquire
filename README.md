@@ -10,6 +10,10 @@
    $ docker compose up --build -d
    ```
 
-   即可启动项目
+   即可启动整个project
 
    服务器将 listening and serving on http://localhost:${BACKEND_PORT} （请根据 `.env` 文件中的配置进行访问）
+
+## 后端API文档
+
+   启动后端服务后，访问 http://localhost:${BACKEND_PORT}/swagger/index.html

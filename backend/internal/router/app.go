@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	_ "github.com/lojes7/inquire/docs"
 	"github.com/lojes7/inquire/internal/handler"
 	"github.com/lojes7/inquire/internal/ws"
 	"github.com/lojes7/inquire/pkg/middleware"
@@ -99,7 +100,8 @@ func Launch() *gin.Engine {
 			// 文件相关
 			file := auth.Group("/files")
 			{
-				file.GET("/:message_id", handler.DownloadFile) // 下载文件
+				file.GET("/:message_id", handler.DownloadFile)    // 下载文件
+				file.POST("/search", handler.SemanticSearchFiles) // 语义化搜索文件
 			}
 		}
 	}

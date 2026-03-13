@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -186,7 +187,7 @@ func SendText(senderID, conversationID uint64, content string) (uint64, error) {
 	return newID, err
 }
 
-func SendFile(senderID, conversationID uint64, file *multipart.FileHeader) (*model.SendFileResp, error) {
+func SendFile(ctx context.Context, senderID, conversationID uint64, file *multipart.FileHeader) (*model.SendFileResp, error) {
 	err := sendMessageAuth(senderID, conversationID)
 	if err != nil {
 		return nil, err
@@ -211,6 +212,10 @@ func SendFile(senderID, conversationID uint64, file *multipart.FileHeader) (*mod
 	// 获取文件信息
 	fileSize := file.Size
 	fileType := getFileType(filePath)
+	fileContent, contentVector, err := buildFileIndex(ctx, filePath, fileName, fileType)
+	if err != nil {
+		return nil, err
+	}
 
 	newMsg := model.Message{
 		SenderID:       senderID,
@@ -223,11 +228,13 @@ func SendFile(senderID, conversationID uint64, file *multipart.FileHeader) (*mod
 
 	// 新文件
 	newFile := model.File{
-		FileName:  fileName,
-		FileType:  fileType,
-		FileURL:   filePath,
-		FileSize:  fileSize,
-		MessageID: newID,
+		FileName:      fileName,
+		FileType:      fileType,
+		FileURL:       filePath,
+		FileSize:      fileSize,
+		MessageID:     newID,
+		FileContent:   fileContent,
+		ContentVector: contentVector,
 	}
 
 	// 保存到数据库

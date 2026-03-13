@@ -172,6 +172,74 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/files/search": {
+            "post": {
+                "description": "根据自然语言查询，返回用户可访问且最匹配的文件列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "file"
+                ],
+                "summary": "语义检索文件",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "语义检索请求体",
+                        "name": "req",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.FileSemanticSearchReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "检索成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/model.FileSemanticSearchItemResp"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/files/{message_id}": {
             "get": {
                 "description": "Download a file by message ID",
@@ -1471,6 +1539,54 @@ const docTemplate = `{
                 }
             }
         },
+        "model.FileSemanticSearchItemResp": {
+            "type": "object",
+            "properties": {
+                "conversation_id": {
+                    "type": "string",
+                    "example": "0"
+                },
+                "file_name": {
+                    "type": "string"
+                },
+                "file_size": {
+                    "type": "string",
+                    "example": "0"
+                },
+                "file_type": {
+                    "type": "string"
+                },
+                "file_url": {
+                    "type": "string"
+                },
+                "message_id": {
+                    "type": "string",
+                    "example": "0"
+                },
+                "score": {
+                    "type": "number"
+                }
+            }
+        },
+        "model.FileSemanticSearchReq": {
+            "type": "object",
+            "required": [
+                "query"
+            ],
+            "properties": {
+                "limit": {
+                    "description": "ConversationID uint64 ` + "`" + `json:\"conversation_id,string\"` + "`" + `",
+                    "type": "integer",
+                    "maximum": 20,
+                    "minimum": 1
+                },
+                "query": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "minLength": 1
+                }
+            }
+        },
         "model.FriendInfoResp": {
             "type": "object",
             "properties": {
@@ -1690,7 +1806,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "expires_in": {
-                    "type": "integer"
+                    "type": "string",
+                    "example": "0"
                 },
                 "refresh_token": {
                     "type": "string"

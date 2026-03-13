@@ -86,7 +86,7 @@ func SendFile(c *gin.Context) {
 		return
 	}
 
-	resp, err := service.SendFile(userID, conversationID, file)
+	resp, err := service.SendFile(c.Request.Context(), userID, conversationID, file)
 	if err != nil {
 		if myErr := secure.Unwrap(err); myErr != nil {
 			response.Fail(c, myErr.Code, myErr.Message)

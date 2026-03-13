@@ -43,6 +43,40 @@ definitions:
       unread_count:
         type: integer
     type: object
+  model.FileSemanticSearchItemResp:
+    properties:
+      conversation_id:
+        example: "0"
+        type: string
+      file_name:
+        type: string
+      file_size:
+        example: "0"
+        type: string
+      file_type:
+        type: string
+      file_url:
+        type: string
+      message_id:
+        example: "0"
+        type: string
+      score:
+        type: number
+    type: object
+  model.FileSemanticSearchReq:
+    properties:
+      limit:
+        description: ConversationID uint64 `json:"conversation_id,string"`
+        maximum: 20
+        minimum: 1
+        type: integer
+      query:
+        maxLength: 2048
+        minLength: 1
+        type: string
+    required:
+    - query
+    type: object
   model.FriendInfoResp:
     properties:
       friend_remark:
@@ -196,7 +230,8 @@ definitions:
   model.TokenResp:
     properties:
       expires_in:
-        type: integer
+        example: "0"
+        type: string
       refresh_token:
         type: string
       token:
@@ -380,6 +415,48 @@ paths:
       summary: 下载文件
       tags:
       - message
+  /auth/files/search:
+    post:
+      consumes:
+      - application/json
+      description: 根据自然语言查询，返回用户可访问且最匹配的文件列表
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 语义检索请求体
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.FileSemanticSearchReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 检索成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.FileSemanticSearchItemResp'
+                  type: array
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 语义检索文件
+      tags:
+      - file
   /auth/friendship_requests:
     get:
       consumes:

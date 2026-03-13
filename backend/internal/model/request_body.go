@@ -56,3 +56,10 @@ type SendTextReq struct {
 	ConversationID uint64 `json:"conversation_id,string" binding:"required,gt=0"`
 	Content        string `json:"content" binding:"required,max=1024"`
 }
+
+// FileSemanticSearchReq 文件语义检索请求体
+type FileSemanticSearchReq struct {
+	Query string `json:"query" binding:"required,min=1,max=2048"`
+	//ConversationID uint64 `json:"conversation_id,string"`
+	Limit int `json:"limit" binding:"omitempty,min=1,max=20"`
+}
