@@ -226,3 +226,174 @@ func deleteConversationUser(tx *gorm.DB, userID, conversationID uint64) error {
 
 	return nil
 }
+
+// CreateGroupConversation 创建群聊
+func CreateGroupConversation(ownerID uint64, groupName string, memberIDs []uint64) (uint64, error) {
+	db := infra.GetDB()
+	newID := utils.NewUniqueID()
+
+	// 必须包含群主自己
+	memberIDs = append(memberIDs, ownerID)
+	// 去重
+	uniqueIDs := make(map[uint64]bool)
+	// 最终的成员ID列表，保持原有顺序但去重
+	finalIDs := make([]uint64, 0)
+	for _, id := range memberIDs {
+		if !uniqueIDs[id] {
+			uniqueIDs[id] = true
+			finalIDs = append(finalIDs, id)
+		}
+	}
+
+	err := db.Transaction(func(tx *gorm.DB) error {
+		// 创建 Conversation
+		c := model.Conversation{
+			Type:      model.GROUP,
+			OwnerID:   ownerID,
+			GroupName: groupName,
+		}
+		c.ID = newID
+
+		if err := tx.Create(&c).Error; err != nil {
+			return secure.Wrap(500, "创建群聊失败", err)
+		}
+
+		// 创建成员
+		for _, uid := range finalIDs {
+			// 将群名称作为所有成员的备注
+			if err := createConversationUser(tx, uid, newID, groupName); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		return 0, err
+	}
+	return newID, nil
+}
+
+// BanUser 禁言/拉黑用户
+// 私聊：A 拉黑 B -> B 的 is_banned = true
+// 群聊：群主拉黑 B -> B 的 is_banned = true
+func BanUser(operatorID, conversationID, targetUserID uint64) error {
+	db := infra.GetDB()
+	var conversation model.Conversation
+	if err := db.First(&conversation, conversationID).Error; err != nil {
+		return secure.Wrap(404, "会话不存在", err)
+	}
+
+	if conversation.Type == model.PRIVATE {
+		// 私聊：验证 operatorID 是否在对话中
+		// 获取双方UID
+		var userIDs []uint64
+		if err := db.Model(&model.ConversationUser{}).Where("conversation_id = ?", conversationID).Pluck("user_id", &userIDs).Error; err != nil {
+			return secure.Wrap(500, "获取会话成员失败", err)
+		}
+
+		isParticipant := false
+		for _, uid := range userIDs {
+			if uid == operatorID {
+				isParticipant = true
+				break
+			}
+		}
+		if !isParticipant {
+			return secure.Wrap(403, "无权操作", errors.New("not participant"))
+		}
+
+		// 目标必须是对方
+		if operatorID == targetUserID {
+			return secure.Wrap(400, "不能拉黑自己", errors.New("cannot ban self"))
+		}
+
+		// 验证 targetUserID 是否也在对话中
+		targetIn := false
+		for _, uid := range userIDs {
+			if uid == targetUserID {
+				targetIn = true
+				break
+			}
+		}
+		if !targetIn {
+			return secure.Wrap(400, "目标不在会话中", errors.New("target not in conversation"))
+		}
+
+	} else if conversation.Type == model.GROUP {
+		// 群聊：验证 operatorID 是否是群主
+		if conversation.OwnerID != operatorID {
+			return secure.Wrap(403, "非群主无权禁言", errors.New("not owner"))
+		}
+	}
+
+	// 执行禁言
+	res := db.Model(&model.ConversationUser{}).
+		Where("conversation_id = ? AND user_id = ?", conversationID, targetUserID).
+		Update("is_banned", true)
+
+	if res.Error != nil {
+		return secure.Wrap(500, "禁言失败", res.Error)
+	}
+	if res.RowsAffected == 0 {
+		return secure.Wrap(404, "目标用户不在会话中", errors.New("user not found in conversation"))
+	}
+
+	return nil
+}
+
+// KickUser 踢出群聊
+// 仅群主可用
+func KickUser(operatorID, conversationID, targetUserID uint64) error {
+	db := infra.GetDB()
+	var conversation model.Conversation
+	if err := db.First(&conversation, conversationID).Error; err != nil {
+		return secure.Wrap(404, "会话不存在", err)
+	}
+
+	if conversation.Type != model.GROUP {
+		return secure.Wrap(400, "非群聊不能踢人", errors.New("not group chat"))
+	}
+
+	if conversation.OwnerID != operatorID {
+		return secure.Wrap(403, "非群主无权踢人", errors.New("not owner"))
+	}
+
+	if operatorID == targetUserID {
+		return secure.Wrap(400, "不能踢自己", errors.New("cannot kick self"))
+	}
+
+	return deleteConversationUser(db, targetUserID, conversationID)
+}
+
+// LeaveGroup 退出群聊
+// 如果是群主退出，则解散群聊
+func LeaveGroup(userID, conversationID uint64) error {
+	db := infra.GetDB()
+	var conversation model.Conversation
+	if err := db.First(&conversation, conversationID).Error; err != nil {
+		return secure.Wrap(404, "会话不存在", err)
+	}
+
+	if conversation.Type == model.PRIVATE {
+		return secure.Wrap(400, "私聊无法退出", errors.New("cannot leave private chat"))
+	}
+
+	// 如果是群主，解散群聊
+	if conversation.OwnerID == userID {
+		return db.Transaction(func(tx *gorm.DB) error {
+			// 删除所有成员记录
+			if err := tx.Where("conversation_id = ?", conversationID).Delete(&model.ConversationUser{}).Error; err != nil {
+				return err
+			}
+			// 删除会话
+			if err := tx.Delete(&conversation).Error; err != nil {
+				return err
+			}
+			return nil
+		})
+	}
+
+	// 普通成员直接退出
+	return deleteConversationUser(db, userID, conversationID)
+}

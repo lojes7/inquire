@@ -5,6 +5,10 @@ type IDReq struct {
 	ID uint64 `json:"id,string" binding:"required,gt=0"`
 }
 
+type IDSliceReq struct {
+	IDs []uint64 `json:"ids" binding:"required,min=1,unique"`
+}
+
 type RemarkReq struct {
 	Remark string `json:"remark" binding:"required,max=64"`
 }
@@ -62,4 +66,9 @@ type FileSemanticSearchReq struct {
 	Query string `json:"query" binding:"required,min=1,max=2048"`
 	//ConversationID uint64 `json:"conversation_id,string"`
 	Limit int `json:"limit" binding:"omitempty,min=1,max=20"`
+}
+
+type CreateGroupReq struct {
+	GroupName string   `json:"group_name" binding:"required,min=1,max=64"`
+	MemberIDs []uint64 `json:"member_ids" binding:"required,min=1,unique"`
 }

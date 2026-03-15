@@ -91,10 +91,13 @@ func Launch() *gin.Engine {
 			// 会话相关
 			converse := auth.Group("/conversations")
 			{
-				converse.GET("", handler.ConversationList)                  // 加载聊天列表
-				converse.POST("/private", handler.StartPrivateConversation) // 发起私聊
-				converse.POST("/group")                                     //创建群聊
-				converse.GET("/:conversation_id", handler.ChatHistoryList)  // 加载聊天记录
+				converse.GET("", handler.ConversationList)                   // 加载聊天列表
+				converse.POST("/private", handler.StartPrivateConversation)  // 发起私聊
+				converse.POST("/group", handler.CreateGroup)                 // 创建群聊
+				converse.POST("/:conversation_id/ban", handler.BanUser)      // 禁言/拉黑
+				converse.POST("/:conversation_id/kick", handler.KickUser)    // 踢人
+				converse.POST("/:conversation_id/leave", handler.LeaveGroup) // 退出群聊
+				converse.GET("/:conversation_id", handler.ChatHistoryList)   // 加载聊天记录
 			}
 
 			// 文件相关

@@ -47,19 +47,23 @@ func notifyConversationUsers(conversationID uint64, msgType string, data any) {
 
 // sendMessageAuth 验证用户是否有权限在该会话中发送消息
 func sendMessageAuth(userID, conversationID uint64) error {
-	// 检查 conversation_users 表中是否存在该用户和会话
-	var cnt int64
+	// 检查 conversation_users 表中是否存在该用户和会话，且未被禁言
+	var cu model.ConversationUser
 	db := infra.GetDB()
-	err := db.Model(&model.ConversationUser{}).
-		Where("user_id = ? AND conversation_id = ?", userID, conversationID).
-		Count(&cnt).Error
+	err := db.Where("user_id = ? AND conversation_id = ?", userID, conversationID).
+		First(&cu).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return secure.Wrap(403, "无权限在该会话中发送消息", errors.New("forbidden"))
+		}
 		log.Println(err)
 		return secure.Wrap(500, "验证权限失败", err)
 	}
-	if cnt == 0 {
-		return secure.Wrap(403, "无权限在该会话中发送消息", errors.New("forbidden"))
+
+	if cu.IsBanned {
+		return secure.Wrap(403, "您已被禁言/拉黑，无法发送消息", errors.New("banned"))
 	}
+
 	return nil
 }
 

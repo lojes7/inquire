@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict N4wx3PCg3U9QJ3bXPG2qBCpCK7OAIIPdThaJpWEPcNesjE6HVcpav0s7LBK3UhB
+\restrict pGdbOfn0W8Y2s2jIQzqf5RG19emTHQewfCiuInPEgtn2dXIkSHKeT8r5JxQmxnB
 
 -- Dumped from database version 18.1 (Homebrew)
 -- Dumped by pg_dump version 18.1 (Homebrew)
@@ -50,7 +50,8 @@ CREATE TABLE public.conversation_users (
     unread_count bigint DEFAULT 0,
     is_pinned boolean DEFAULT false,
     remark text,
-    last_message_id bigint
+    last_message_id bigint,
+    is_banned boolean DEFAULT false
 );
 
 
@@ -62,7 +63,8 @@ CREATE TABLE public.conversations (
     id bigint NOT NULL,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
-    type smallint
+    type smallint,
+    owner_id bigint
 );
 
 
@@ -270,6 +272,13 @@ CREATE UNIQUE INDEX idx_conv_user ON public.conversation_users USING btree (user
 
 
 --
+-- Name: idx_conversation_owner; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_conversation_owner ON public.conversations USING btree (owner_id);
+
+
+--
 -- Name: idx_conversation_type; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -357,5 +366,5 @@ CREATE UNIQUE INDEX idx_users_uid ON public.users USING btree (uid);
 -- PostgreSQL database dump complete
 --
 
-\unrestrict N4wx3PCg3U9QJ3bXPG2qBCpCK7OAIIPdThaJpWEPcNesjE6HVcpav0s7LBK3UhB
+\unrestrict pGdbOfn0W8Y2s2jIQzqf5RG19emTHQewfCiuInPEgtn2dXIkSHKeT8r5JxQmxnB
 

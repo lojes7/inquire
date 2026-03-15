@@ -38,8 +38,11 @@ type MessageUser struct {
 
 type Conversation struct {
 	MyModel
-	Type int `gorm:"smallint;not null"`
+	Type      int    `gorm:"smallint;not null"`
+	OwnerID   uint64 `gorm:"bigint;index"`
+	GroupName string `gorm:"varchar(64)"`
 }
+
 type ConversationUser struct {
 	MyModel
 	UserID         uint64 `gorm:"type:bigint;uniqueIndex:idx_conv_user"`
@@ -48,6 +51,7 @@ type ConversationUser struct {
 	Remark         string `gorm:"varchar(32)"`
 	LastMessageID  uint64 `gorm:"type:bigint;index"`
 	IsPinned       bool   `gorm:"type:boolean;default:false"`
+	IsBanned       bool   `gorm:"type:boolean;default:false"`
 }
 
 type Text struct {
