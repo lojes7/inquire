@@ -2,13 +2,17 @@ FROM golang:1.25 AS builder
 
 WORKDIR /app
 
+# 下载依赖项
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
 
-# Build the application
+# 编译 app
 RUN go build -o main cmd/main.go
+# 编译 worker
+RUN go build -o worker cmd/worker/main.go
+
 
 FROM debian:bookworm-slim
 
@@ -28,8 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/main .
+COPY --from=builder /app/worker .
 RUN mkdir -p /assets
-
-EXPOSE 8080
 
 CMD ["./main"]

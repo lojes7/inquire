@@ -25,6 +25,11 @@ func Init() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	err = InitRabbitMQ()
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 var (

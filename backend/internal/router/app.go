@@ -31,6 +31,9 @@ func Launch() *gin.Engine {
 	// RESTful API
 	api := r.Group("/api")
 	{
+		// MQ 测试路由
+		api.GET("/mq", handler.SendMessageHandler)
+
 		api.POST("/register", handler.Register)               // 注册
 		api.POST("/login/uid", handler.LoginByUid)            // 微信号登陆
 		api.POST("/login/phone_number", handler.LoginByPhone) // 手机号登陆
