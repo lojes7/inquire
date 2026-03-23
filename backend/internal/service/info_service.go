@@ -93,3 +93,23 @@ func StrangerInfoByUid(strangerUid string) (*model.StrangerInfoResp, error) {
 
 	return &resp, nil
 }
+
+// StrangerInfoByPhone 查看陌生人信息通过手机号
+func StrangerInfoByPhone(strangerPhone string) (*model.StrangerInfoResp, error) {
+	var resp model.StrangerInfoResp
+	db := infra.GetDB()
+
+	res := db.Table("users").
+		Select("id, name").
+		Where("phone_number = ?", strangerPhone).
+		First(&resp)
+	if res.Error != nil {
+		log.Println(res.Error)
+		return nil, secure.Wrap(500, "服务器错误", res.Error)
+	}
+	if res.RowsAffected == 0 {
+		return nil, secure.Wrap(404, "没有找到该用户", gorm.ErrRecordNotFound)
+	}
+
+	return &resp, nil
+}

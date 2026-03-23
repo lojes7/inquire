@@ -59,10 +59,11 @@ func Launch() *gin.Engine {
 			// 查看他人信息
 			info := auth.Group("/info")
 			{
-				info.GET("/friends/id/:id", handler.FriendInfoByID)        // 根据ID 查看好友信息
-				info.GET("/strangers/id/:id", handler.StrangerInfoByID)    // 根据ID 查看陌生人信息
-				info.GET("/friends/uid/:uid", handler.FriendInfoByUid)     // 根据Uid 查看好友信息
-				info.GET("/strangers/uid/:uid", handler.StrangerInfoByUid) // 根据Uid 查看陌生人信息
+				info.GET("/friends/id/:id", handler.FriendInfoByID)                            // 根据ID 查看好友信息
+				info.GET("/strangers/id/:id", handler.StrangerInfoByID)                        // 根据ID 查看陌生人信息
+				info.GET("/friends/uid/:uid", handler.FriendInfoByUid)                         // 根据Uid 查看好友信息
+				info.GET("/strangers/uid/:uid", handler.StrangerInfoByUid)                     // 根据Uid 查看陌生人信息
+				info.GET("/strangers/phone_number/:phone_number", handler.StrangerInfoByPhone) // 根据手机号 查看陌生人信息
 			}
 
 			// 好友申请相关

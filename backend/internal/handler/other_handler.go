@@ -162,3 +162,30 @@ func StrangerInfoByUid(c *gin.Context) {
 	}
 	response.Success(c, 200, "success", resp)
 }
+
+// StrangerInfoByPhone 查看陌生人信息
+// @Summary      根据手机号查看陌生人信息
+// @Description  根据用户手机号获取陌生人信息
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        phone path      string     true  "陌生人手机号"
+// @Success      200  {object}  response.Response{data=model.StrangerInfoResp} "获取成功"
+// @Failure      400  {object}  response.Response   "手机号错误或找不到此人"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/info/strangers/phone/{phone} [get]
+func StrangerInfoByPhone(c *gin.Context) {
+	phone := c.Param("phone_number")
+
+	resp, err := service.StrangerInfoByPhone(phone)
+	if err != nil {
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
+		return
+	}
+	response.Success(c, 200, "success", resp)
+}
