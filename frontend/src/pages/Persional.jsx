@@ -22,7 +22,7 @@ export default function EditProfilePage() {
 
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const res = await fetch("http://localhost:8000/api/auth/me/uid", {
         method: "POST",
@@ -54,11 +54,11 @@ export default function EditProfilePage() {
         <h2 className="profile-title">修改个人资料</h2>
 
         <form onSubmit={handleSubmit} className="profile-form">
-          <label className="profile-label">微信号</label>
+          <label className="profile-label">UID</label>
           <input
             type="text"
             className="profile-input"
-            placeholder="请输入新的微信号"
+            placeholder="请输入新的UID"
             value={uid}
             onChange={(e) => setUid(e.target.value)}
             disabled={loading}

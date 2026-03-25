@@ -29,8 +29,9 @@ export default function Register() {
 
     if (data.code === 200) {
       // 登录成功
-      localStorage.setItem("token", data.data.token_class.token);
-      localStorage.setItem("refresh_token", data.data.token_class.refresh_token);
+      sessionStorage.setItem("token", data.data.token_class.token);
+      sessionStorage.setItem("refresh_token", data.data.token_class.refresh_token);
+      sessionStorage.setItem("user", JSON.stringify(data.data.user_info));
 
       // 再跳转
       navigate("/chat"); // 原来你跳转的页面
@@ -56,7 +57,8 @@ export default function Register() {
         <div className="logo">
           <img src={logo} alt="logo" className="logo-icon" />
           <span className="logo-text">
-        高效办公，文件<span className="logo-highlight">询觅</span>
+        高效办公
+        文件<span className="logo-highlight">询觅</span>
         </span>
 
         </div>
