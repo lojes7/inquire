@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import '../styles/ChatApp.css';
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 const ChatApp = () => {
   const navigate = useNavigate();
@@ -13,7 +14,12 @@ const ChatApp = () => {
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
-  const token = localStorage.getItem('token'); // 假设登录时保存了 token
+  const token = sessionStorage.getItem('token'); // 假设登录时保存了 token
+  const location = useLocation();
+
+  const friendId = location.state?.friendId;
+  const friendName = location.state?.friendName;
+  const conversationId = location.state?.conversationId;
 
   // ===================== 获取联系人列表 =====================
   const fetchContacts = async () => {
@@ -38,25 +44,36 @@ const ChatApp = () => {
   };
 
   useEffect(() => {
-    fetchContacts();
-  }, []);
+    if (conversationId) {
+      const tempContact = {
+        conversation_id: conversationId,
+        name: friendName || "聊天对象",
+      };
+
+      setActiveContact(tempContact);
+      fetchMessages(conversationId);
+    }
+  }, [conversationId]);
 
   // ===================== 获取聊天记录 =====================
   const fetchMessages = async (conversation_id) => {
     try {
       setLoadingMessages(true);
-      const res = await fetch(`http://localhost:8000/api/auth/conversations/${conversation_id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+
+      const res = await fetch(
+        `http://localhost:8000/api/auth/conversations/${conversation_id}`, // ✅ 注意这里也改了
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       const data = await res.json();
-      if (data.code === 200) {
-        setMessages(data.data);
-      } else {
-        console.error('加载聊天记录失败:', data.message);
-      }
+
+      // ✅ 正确解析：data 本身就是数组
+      setMessages(data);
+
     } catch (err) {
       console.error(err);
     } finally {
@@ -95,7 +112,7 @@ const ChatApp = () => {
           {
             message_id: data.data,
             sender_id: 'me',
-            sender_name: '我',
+            sender_name: user.id,
             status: 0,
             updated_at: new Date().toISOString(),
             content: input,

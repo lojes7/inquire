@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/AddFriendPage.css";
+import axios from "axios";
 
 export default function AddFriendPage() {
   const navigate = useNavigate();
@@ -18,10 +19,12 @@ export default function AddFriendPage() {
   const [searchType, setSearchType] = useState("id");  // 搜索类型: "id" | "uid"
   const [stranger, setStranger] = useState(null);      // 搜索结果
   const [searching, setSearching] = useState(false);   // 搜索 loading
+  const [friends, setFriends] = useState([]);
+  const [loadingFriends, setLoadingFriends] = useState(false);
 
   // ===== 获取 token 的安全方法 =====
   const getToken = () => {
-    const stored = localStorage.getItem("token");
+    const stored = sessionStorage.getItem("token");
     if (!stored) return null;
 
     try {
@@ -93,10 +96,10 @@ export default function AddFriendPage() {
     }
   };
 
-  // ===== 搜索陌生人（支持 id / uid） =====
+  // ===== 搜索陌生人（支持 手机号 / UID） =====
   const handleSearchUser = async () => {
     if (!keyword.trim()) {
-      alert("请输入 ID 或 UID");
+      alert("请输入 手机号 或 UID");
       return;
     }
 
@@ -129,54 +132,142 @@ export default function AddFriendPage() {
 
   // ===== 发送好友申请 =====
   const handleSendFriendRequest = async (receiverId, receiverName) => {
-  // 从 localStorage 获取当前账号昵称，如果没有就用默认
-  const senderName = localStorage.getItem("nickname") || "我的昵称";
+  // 👉 弹出输入框
+    const message = prompt("请输入好友申请备注：", "你好，我们加个好友吧");
 
-  // 构建请求 body
-  const body = {
-    receiver_id: receiverId,            // 接收方 ID 或 UID
-    sender_name: senderName,            // 当前账号昵称
-    verification_message: "你好，我们加个好友吧",
-  };
+    // 👉 用户点取消
+    if (message === null) return;
 
-  // ===== 调试打印：发送前 =====
-  console.log("即将发送给后端的请求体:", JSON.stringify(body, null, 2));
+    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+    const senderName = user.name || "我的昵称";
 
-  try {
-    const token = getToken();
-    if (!token) throw new Error("缺少登录 token");
+    const body = {
+      receiver_id: receiverId,
+      sender_name: senderName,
+      verification_message: message, // ✅ 用用户输入
+    };
 
-    const res = await fetch("http://localhost:8000/api/auth/friendship_requests", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
-    });
+    console.log("发送请求体:", body);
 
-    // ===== 调试打印：后端返回 =====
-    const result = await res.json();
-    console.log("后端返回结果:", result);
+    try {
+      const token = getToken();
+      if (!token) throw new Error("缺少登录 token");
 
-    if (result.code === 201) {
-      alert("好友申请发送成功");
-      // 如果当前在好友申请页，刷新列表
-      if (activeTab === "request") fetchFriendRequests();
-    } else {
-      alert(`发送失败: ${result.message || "未知原因"}`);
+      const res = await fetch("http://localhost:8000/api/auth/friendship_requests", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const result = await res.json();
+      console.log("后端返回:", result);
+
+      if (result.code === 201) {
+        alert("好友申请发送成功");
+        if (activeTab === "request") fetchFriendRequests();
+      } else {
+        alert(`发送失败: ${result.message || "未知原因"}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("网络错误或 token 无效");
     }
-  } catch (err) {
-    console.error("发送好友申请出错:", err);
-    alert("网络错误或 token 无效");
-  }
+  };
+  //点击聊天按钮自动切到聊天页面并加载与该好友的聊天记录//
+  const handleChat = async (friendId, friendName) => {
+    try {
+      const token = getToken();
+      if (!token) throw new Error("缺少 token");
+
+      console.log("准备发送聊天请求");
+      console.log("friendId:", friendId, "friendName:", friendName);
+      console.log("token:", token);
+
+      // 确保 id 是字符串
+      const body = { id: String(friendId) };
+      console.log("请求体 body:", body);
+
+      const res = await fetch("http://localhost:8000/api/auth/conversations/private", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      console.log("fetch 完成，状态码:", res.status);
+
+      const text = await res.text();
+      console.log("返回原始文本:", text);
+
+      let result;
+      try {
+        result = JSON.parse(text);
+        console.log("解析后的 JSON:", result);
+      } catch (err) {
+        console.error("JSON 解析失败", err);
+        alert("返回的 JSON 解析失败，请检查后端返回值");
+        return;
+      }
+
+      if (result.code === 201 || result.code === 0) {
+        const conversationId = result.data;
+        console.log("会话创建成功，conversationId:", conversationId);
+
+        // 跳转到 Chat 页面并传递 conversationId + friendName
+        navigate("/chat", {
+          state: { conversationId, friendId, friendName },
+        });
+      } else {
+        console.error("创建会话失败，后端返回:", result);
+        alert(`创建会话失败: ${result.message || "未知错误"}`);
+      }
+    } catch (err) {
+      console.error("handleChat 出错:", err);
+      alert("网络错误或 token 无效");
+    }
 };
 
   // ===== 切到「好友申请」自动加载 =====
   useEffect(() => {
-    if (activeTab === "request")  fetchFriendRequests();
-  }, [activeTab]);
+  if (activeTab === "request") fetchFriendRequests();
+  if (activeTab === "list") fetchFriends();
+}, [activeTab]);
+  //获取好友函数//
+  const fetchFriends = async () => {
+    setLoadingFriends(true);
 
+    try {
+      const token = getToken();
+      if (!token) throw new Error("缺少 token");
+
+      const res = await fetch("http://localhost:8000/api/auth/friendships", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await res.json();
+
+      if (result.code === 200) {
+        setFriends(result.data);
+      } else {
+        alert(result.message || "获取好友失败");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("网络错误或 token 无效");
+    } finally {
+      setLoadingFriends(false);
+    }
+  };
+
+  console.log("当前tab:", activeTab);
+  console.log("好友列表:", friends);
   return (
     <div className="chatpage-app">
       {/* 左侧导航栏 */}
@@ -240,12 +331,12 @@ export default function AddFriendPage() {
                     value={searchType}
                     onChange={(e) => setSearchType(e.target.value)}
                   >
-                    <option value="id">通过 ID</option>
+                    <option value="id">通过 手机号</option>
                     <option value="uid">通过 UID</option>
                   </select>
 
                   <input
-                    placeholder="请输入用户 ID 或 UID"
+                    placeholder="请输入用户 手机号 或 UID"
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
                   />
@@ -297,7 +388,9 @@ export default function AddFriendPage() {
                 <div className="user-item" key={item.request_id}>
                   <div className="avatar" />
                   <div className="user-info">
-                    <div className="name">{item.sender_name}</div>
+                    <div className="name">
+                      {item.sender_name || item.sender_nickname || item.sender_id || "未知用户"}
+                    </div>
                     <div className="desc">
                       {item.verification_message || "请求添加你为好友"}
                     </div>
@@ -325,22 +418,32 @@ export default function AddFriendPage() {
           {activeTab === "list" && (
             <div className="card">
               <h4>好友列表</h4>
-              <div className="user-item">
-                <div className="avatar" />
-                <div className="user-info">
-                  <div className="name">刘洋</div>
-                  <div className="desc online">在线</div>
+
+              {loadingFriends && <div className="tip">加载中...</div>}
+
+              {!loadingFriends && friends.length === 0 && (
+                <div className="tip">暂无好友</div>
+              )}
+
+              {friends.map((item) => (
+                <div className="user-item" key={item.friendship_id}>
+                  <div className="avatar" />
+
+                  <div className="user-info">
+                    <div className="name">
+                      {item.friend_remark || item.friend_id}
+                    </div>
+                    <div className="desc offline">离线</div>
+                  </div>
+
+                  <button
+                    className="ghost-btn"
+                    onClick={() => handleChat(item.friend_id, item.friend_remark)}//待确定字样
+                  >
+                    聊天
+                  </button>
                 </div>
-                <button className="ghost-btn">聊天</button>
-              </div>
-              <div className="user-item">
-                <div className="avatar" />
-                <div className="user-info">
-                  <div className="name">陈琳</div>
-                  <div className="desc offline">离线</div>
-                </div>
-                <button className="ghost-btn">聊天</button>
-              </div>
+              ))}
             </div>
           )}
         </section>

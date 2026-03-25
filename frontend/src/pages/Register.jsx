@@ -100,10 +100,10 @@ export default function Register() {
             onChange={(e) => setPhone(e.target.value)}
           />
 
-          <label>微信号</label>
+          <label>昵称</label>
           <input
             type="text"
-            placeholder="输入你的微信号"
+            placeholder="输入你的昵称"
             value={wechat}
             onChange={(e) => setWechat(e.target.value)}
           />
