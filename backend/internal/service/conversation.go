@@ -36,14 +36,14 @@ func ChatHistoryList(userID, conversationID uint64) ([]model.ChatHistoryResp, er
 			m.status, 
 			m.updated_at,
 			CASE 
-			WHEN m.status IN (?, ?) THEN t.text
+			WHEN m.status IN (?, ?) THEN json_build_object('text', t.text)
 			WHEN m.status = ? THEN json_build_object(
                'file_name', f.file_name,
                'file_url', f.file_url,
                'file_size', f.file_size,
                'file_type', f.file_type
            )
-			ELSE ''
+			ELSE '{}'::json
 			END AS content
 			FROM messages m
 			LEFT JOIN users u ON u.id = m.sender_id

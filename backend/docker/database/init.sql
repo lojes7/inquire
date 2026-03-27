@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict pGdbOfn0W8Y2s2jIQzqf5RG19emTHQewfCiuInPEgtn2dXIkSHKeT8r5JxQmxnB
+\restrict MEWDCBhaKYTHbu6C9on52BgkQi5rOaSrMPgFRdpmv9ni18SHHklPahc16TKsvmZ
 
 -- Dumped from database version 18.1 (Homebrew)
 -- Dumped by pg_dump version 18.1 (Homebrew)
@@ -64,7 +64,8 @@ CREATE TABLE public.conversations (
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
     type smallint,
-    owner_id bigint
+    owner_id bigint,
+    group_name character varying(64)
 );
 
 
@@ -366,5 +367,5 @@ CREATE UNIQUE INDEX idx_users_uid ON public.users USING btree (uid);
 -- PostgreSQL database dump complete
 --
 
-\unrestrict pGdbOfn0W8Y2s2jIQzqf5RG19emTHQewfCiuInPEgtn2dXIkSHKeT8r5JxQmxnB
+\unrestrict MEWDCBhaKYTHbu6C9on52BgkQi5rOaSrMPgFRdpmv9ni18SHHklPahc16TKsvmZ
 
