@@ -10,6 +10,7 @@ type IDResp struct {
 
 // UserInfoResp 用户信息返回体
 type UserInfoResp struct {
+	ID   uint64 `json:"id,string"`
 	Name string `json:"name"`
 	Uid  string `json:"uid"`
 }

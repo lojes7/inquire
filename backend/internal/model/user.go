@@ -16,6 +16,7 @@ type User struct {
 	PhoneNumber string `gorm:"type:varchar(20);not null;uniqueIndex"`
 	Signature   string `gorm:"type:varchar(128);"`
 	Gender      string `gorm:"type:varchar(12);check:gender IN ('male','female','')"`
+	Head        string `gorm:"type:varchar(255)"`
 }
 
 func NewUser(name string, password string, phone string) (*User, error) {

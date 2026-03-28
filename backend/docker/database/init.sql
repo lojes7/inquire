@@ -173,6 +173,7 @@ CREATE TABLE public.users (
     phone_number character varying(20) NOT NULL,
     signature character varying(128),
     gender character varying(12),
+    head character varying(255),
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     CONSTRAINT chk_users_gender CHECK (((gender)::text = ANY (ARRAY[('male'::character varying)::text, ('female'::character varying)::text, (''::character varying)::text])))

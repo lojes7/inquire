@@ -42,10 +42,14 @@ func StrangerInfoByID(strangerID uint64) (*model.StrangerInfoResp, error) {
 	res := db.Table("users").
 		Select("name").
 		Where("id = ?", strangerID).
-		First(&resp)
+		Scan(&resp)
+
 	if res.Error != nil {
 		log.Println(res.Error)
 		return nil, secure.Wrap(500, "服务器错误", res.Error)
+	}
+	if res.RowsAffected == 0 {
+		return nil, secure.Wrap(404, "用户不存在", gorm.ErrRecordNotFound)
 	}
 
 	return &resp, nil
@@ -82,7 +86,8 @@ func StrangerInfoByUid(strangerUid string) (*model.StrangerInfoResp, error) {
 	res := db.Table("users").
 		Select("id, name").
 		Where("uid = ?", strangerUid).
-		First(&resp)
+		Scan(&resp)
+
 	if res.Error != nil {
 		log.Println(res.Error)
 		return nil, secure.Wrap(500, "服务器错误", res.Error)
@@ -102,7 +107,8 @@ func StrangerInfoByPhone(strangerPhone string) (*model.StrangerInfoResp, error) 
 	res := db.Table("users").
 		Select("id, name").
 		Where("phone_number = ?", strangerPhone).
-		First(&resp)
+		Scan(&resp)
+
 	if res.Error != nil {
 		log.Println(res.Error)
 		return nil, secure.Wrap(500, "服务器错误", res.Error)

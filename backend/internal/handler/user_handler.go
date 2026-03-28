@@ -3,6 +3,7 @@ package handler
 import (
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lojes7/inquire/internal/model"
@@ -207,4 +208,69 @@ func ReviseName(c *gin.Context) {
 	}
 
 	response.Success(c, 201, "success", nil)
+}
+
+// UploadHead 上传头像
+// @Summary      上传头像
+// @Description  上传用户头像图片
+// @Tags         user
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        Authorization header string true "Bearer Token"
+// @Param        file formData file true "头像文件"
+// @Success      201  {object}  response.Response   "上传成功"
+// @Failure      400  {object}  response.Response   "请求参数错误"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/me/head [post]
+func UploadHead(c *gin.Context) {
+	id := c.GetUint64("id")
+	file, err := c.FormFile("file")
+	if err != nil {
+		response.Fail(c, 400, "获取头像文件失败")
+		return
+	}
+
+	err = service.UploadHead(id, file)
+	if err != nil {
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
+		return
+	}
+
+	response.Success(c, 201, "上传成功", nil)
+}
+
+// GetHead 获取用户头像
+// @Summary      获取用户头像
+// @Description  获取指定用户的头像文件（流式传输）
+// @Tags         user
+// @Produce      image/png,image/jpeg,image/gif
+// @Param        Authorization header string true "Bearer Token"
+// @Param        user_id path int true "用户ID"
+// @Success      200  {file}  binary   "头像文件"
+// @Failure      404  {object}  response.Response   "用户未设置头像"
+// @Failure      500  {object}  response.Response   "服务器错误"
+// @Router       /auth/head/{user_id} [get]
+func GetHead(c *gin.Context) {
+	userIDStr := c.Param("user_id")
+	userID, err := strconv.ParseUint(userIDStr, 10, 64)
+	if err != nil {
+		response.Fail(c, 400, "用户ID错误")
+		return
+	}
+
+	headPath, err := service.GetHeadPath(userID)
+	if err != nil {
+		if myErr := secure.Unwrap(err); myErr != nil {
+			response.Fail(c, myErr.Code, myErr.Message)
+		} else {
+			response.Fail(c, 500, "服务器错误")
+		}
+		return
+	}
+
+	c.File(headPath)
 }

@@ -2,11 +2,15 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"mime/multipart"
+	"path/filepath"
 
 	"github.com/lojes7/inquire/internal/model"
 	"github.com/lojes7/inquire/pkg/infra"
 	"github.com/lojes7/inquire/pkg/secure"
+	"github.com/lojes7/inquire/pkg/utils"
 	"gorm.io/gorm"
 )
 
@@ -106,6 +110,7 @@ func NewLoginResp(name string, uid string, id uint64) (*model.LoginResp, error) 
 	resp.TokenClass.Token = tokenClass.Token
 	resp.TokenClass.RefreshToken = tokenClass.RefreshToken
 
+	resp.UserInfo.ID = id
 	resp.UserInfo.Name, resp.UserInfo.Uid = name, uid
 
 	return &resp, nil
@@ -230,6 +235,45 @@ func ReviseName(id uint64, newName string) error {
 		Update("name", newName).Error
 	if err != nil {
 		return secure.Wrap(500, "修改用户名失败", err)
+	}
+	return nil
+}
+
+// GetHeadPath 获取用户头像路径
+func GetHeadPath(userID uint64) (string, error) {
+	var headPath string
+	err := infra.GetDB().Model(&model.User{}).
+		Select("head").
+		Where("id = ?", userID).
+		Scan(&headPath).Error
+	if err != nil {
+		log.Println(err)
+		return "", secure.Wrap(500, "查询头像失败", err)
+	}
+	if headPath == "" {
+		return "", secure.Wrap(404, "用户未设置头像", errors.New("no avatar"))
+	}
+	return headPath, nil
+}
+
+// UploadHead 上传头像
+func UploadHead(userID uint64, file *multipart.FileHeader) error {
+	uploadDir := infra.GetFilePath()
+	ext := filepath.Ext(file.Filename)
+	newID := utils.NewUniqueID()
+	filePath := filepath.Join(uploadDir, fmt.Sprintf("head_%d%s", newID, ext))
+
+	if err := saveFile(file, filePath); err != nil {
+		log.Println(err)
+		return secure.Wrap(500, "保存头像文件失败", err)
+	}
+
+	err := infra.GetDB().Model(&model.User{}).
+		Where("id = ?", userID).
+		Update("head", filePath).Error
+	if err != nil {
+		log.Println(err)
+		return secure.Wrap(500, "更新头像路径失败", err)
 	}
 	return nil
 }

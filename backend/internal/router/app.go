@@ -54,7 +54,11 @@ func Launch() *gin.Engine {
 				me.POST("/uid", handler.ReviseUid)           //修改微信号
 				me.POST("/password", handler.RevisePassword) // 修改密码
 				me.POST("/name", handler.ReviseName)         // 修改用户名
+				me.POST("/head", handler.UploadHead)         // 上传头像
 			}
+
+			// 获取头像（流式传输）
+			auth.GET("/head/:user_id", handler.GetHead)
 
 			// 查看他人信息
 			info := auth.Group("/info")
