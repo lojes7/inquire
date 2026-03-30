@@ -1,38 +1,47 @@
 // src/pages/ChatApp.jsx
 import { useState, useEffect } from 'react';
 import '../styles/ChatApp.css';
-import { useNavigate } from "react-router-dom";
-import { useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 
 const ChatApp = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams();
 
-  const [contacts, setContacts] = useState([]); // 联系人列表从后端获取
+  // ===== token 获取统一方法 =====
+  const getToken = () => {
+    const stored = sessionStorage.getItem("token");
+    if (!stored) return null;
+    try {
+      const parsed = JSON.parse(stored);
+      return parsed?.token || stored;
+    } catch {
+      return stored;
+    }
+  };
+  const token = getToken();
+
+  // ===== 页面状态 =====
+  const [contacts, setContacts] = useState([]);
   const [activeContact, setActiveContact] = useState(null);
-  const [messages, setMessages] = useState([]); // 当前会话消息
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
 
-  const token = sessionStorage.getItem('token'); // 假设登录时保存了 token
-  const location = useLocation();
-
-  const friendId = location.state?.friendId;
   const friendName = location.state?.friendName;
-  const conversationId = location.state?.conversationId;
+  const conversationIdFromState = location.state?.conversationId;
 
-  // ===================== 获取联系人列表 =====================
+  // ===== 获取联系人列表 =====
   const fetchContacts = async () => {
     try {
       setLoadingContacts(true);
       const res = await fetch('http://localhost:8000/api/auth/conversations', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
       const data = await res.json();
       if (data.code === 200) {
-        setContacts(data.data); // data.data 假设是数组 [{conversation_id, name, last_message, time}, ...]
+        setContacts(data.data);
       } else {
         console.error('加载联系人失败:', data.message);
       }
@@ -43,76 +52,83 @@ const ChatApp = () => {
     }
   };
 
-  useEffect(() => {
-    if (conversationId) {
-      const tempContact = {
-        conversation_id: conversationId,
-        name: friendName || "聊天对象",
-      };
-
-      setActiveContact(tempContact);
-      fetchMessages(conversationId);
-    }
-  }, [conversationId]);
-
-  // ===================== 获取聊天记录 =====================
+  // ===== 获取聊天记录 =====
   const fetchMessages = async (conversation_id) => {
+    if (!conversation_id) return;
     try {
       setLoadingMessages(true);
-
       const res = await fetch(
-        `http://localhost:8000/api/auth/conversations/${conversation_id}`, // ✅ 注意这里也改了
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        `http://localhost:8000/api/auth/conversations/${conversation_id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       const data = await res.json();
-
-      // ✅ 正确解析：data 本身就是数组
-      setMessages(data);
-
+      if (data.code === 200) {
+        setMessages(data.data);
+      } else {
+        console.error('加载消息失败:', data.message);
+        setMessages([]);
+      }
     } catch (err) {
       console.error(err);
+      setMessages([]);
     } finally {
       setLoadingMessages(false);
     }
   };
 
-  // ===================== 点击联系人 =====================
+  // ===== 初始化和点击联系人 =====
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  useEffect(() => {
+    // 选择要激活的会话
+    const id = params.conversationId || conversationIdFromState;
+    if (!id || contacts.length === 0) return;
+
+    const contact = contacts.find(c => c.conversation_id === id) || {
+      conversation_id: id,
+      name: friendName || "聊天对象",
+    };
+
+    setActiveContact(contact);
+    fetchMessages(id);
+  }, [params.conversationId, conversationIdFromState, contacts]);
+
+  // ===== 点击联系人 =====
   const handleSelectContact = (contact) => {
     setActiveContact(contact);
     fetchMessages(contact.conversation_id);
+    navigate(`/chat/${contact.conversation_id}`); // 更新 URL
   };
 
-  // ===================== 发送消息 =====================
+  // ===== 发送消息 =====
   const sendMessage = async () => {
-    if (!input.trim() || !activeContact) return;
+    if (!input.trim() || !activeContact || !activeContact.conversation_id) return;
 
     try {
-      const res = await fetch('http://localhost:8000/api/auth/messages/texts', {
+      const res = await fetch('http://localhost:8000/api/auth/messages/text', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          conversation_id: activeContact.conversation_id,
+          conversation_id: String(activeContact.conversation_id),
           content: input,
         }),
       });
 
       const data = await res.json();
+      console.log("发送消息返回:", data);
+
       if (data.code === 201) {
-        // 将消息加入本地显示
         setMessages([
           ...messages,
           {
             message_id: data.data,
             sender_id: 'me',
-            sender_name: user.id,
+            sender_name: '我',
             status: 0,
             updated_at: new Date().toISOString(),
             content: input,
@@ -123,7 +139,7 @@ const ChatApp = () => {
         console.error('发送失败:', data.message);
       }
     } catch (err) {
-      console.error(err);
+      console.error('请求异常:', err);
     }
   };
 
@@ -139,8 +155,7 @@ const ChatApp = () => {
         </div>
         <div className="sidebar-footer">
           <button>🔔</button>
-           <button onClick={() => navigate("/persional")}>
-            ⚙️</button>
+          <button onClick={() => navigate("/persional")}>⚙️</button>
         </div>
       </div>
 
@@ -149,7 +164,6 @@ const ChatApp = () => {
         <div className="search">
           <input type="text" placeholder="🔍搜索联系人" />
         </div>
-
         {loadingContacts ? (
           <p>加载联系人中...</p>
         ) : (
@@ -185,7 +199,6 @@ const ChatApp = () => {
           </div>
         ) : (
           <div className="chat-panel">
-            {/* 顶部 */}
             <div className="chat-top">
               <span className="chat-name">{activeContact.name}</span>
               <button className="chat-back" onClick={() => setActiveContact(null)}>
@@ -193,7 +206,6 @@ const ChatApp = () => {
               </button>
             </div>
 
-            {/* 消息区 */}
             <div className="chat-body">
               {loadingMessages ? (
                 <p>加载消息中...</p>
@@ -216,14 +228,12 @@ const ChatApp = () => {
               )}
             </div>
 
-            {/* 输入区 */}
             <div className="chat-footer">
               <div className="chat-tools">
                 <button title="文件检索">📎</button>
                 <button title="表情">😊</button>
                 <button title="链接">🔗</button>
               </div>
-
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
