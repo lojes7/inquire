@@ -69,3 +69,15 @@
   font-size: 13px;
   margin-bottom: 8px;
 }
+
+.profile-select {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;   /* 关键：按钮之间的间距 */
+}
+
+.profile-btn-group {
+  display: flex;
+  gap: 12px;        /* 按钮之间的间距 */
+  margin-top: 12px; /* 和上面的输入框拉开距离 */
+}
