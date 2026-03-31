@@ -1,4 +1,3 @@
-// src/pages/ChatApp.jsx
 import { useState, useEffect } from 'react';
 import '../styles/ChatApp.css';
 import { useNavigate, useLocation, useParams } from "react-router-dom";
@@ -52,16 +51,30 @@ const ChatApp = () => {
     }
   };
 
-  // ===== 获取聊天记录 =====
+  // ===== 获取聊天记录（已加防御）=====
   const fetchMessages = async (conversation_id) => {
     if (!conversation_id) return;
+
+    // 🔥 防止 object
+    if (typeof conversation_id === "object" && conversation_id !== null) {
+      conversation_id = conversation_id.id;
+    }
+
+    // 🔥 强制字符串（防精度问题）
+    conversation_id = String(conversation_id);
+
     try {
       setLoadingMessages(true);
+
+      console.log("请求会话ID:", conversation_id, typeof conversation_id);
+
       const res = await fetch(
         `http://localhost:8000/api/auth/conversations/${conversation_id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       const data = await res.json();
+
       if (data.code === 200) {
         setMessages(data.data);
       } else {
@@ -76,35 +89,53 @@ const ChatApp = () => {
     }
   };
 
-  // ===== 初始化和点击联系人 =====
+  // ===== 初始化联系人 =====
   useEffect(() => {
     fetchContacts();
   }, []);
 
+  // ===== 初始化会话（已彻底修复）=====
   useEffect(() => {
-    // 选择要激活的会话
-    const id = params.conversationId || conversationIdFromState;
+    let id = params.conversationId || conversationIdFromState;
+
+    // 🔥 关键修复：防止 object
+    if (typeof id === "object" && id !== null) {
+      id = id.id;
+    }
+
+    // 🔥 强制转字符串
+    if (id) id = String(id);
+
+    console.log("最终使用的会话ID:", id, typeof id);
+
     if (!id || contacts.length === 0) return;
 
-    const contact = contacts.find(c => c.conversation_id === id) || {
-      conversation_id: id,
-      name: friendName || "聊天对象",
-    };
+    const contact =
+      contacts.find(c => String(c.conversation_id) === id) || {
+        conversation_id: id,
+        name: friendName || "聊天对象",
+      };
 
     setActiveContact(contact);
     fetchMessages(id);
+
   }, [params.conversationId, conversationIdFromState, contacts]);
 
   // ===== 点击联系人 =====
   const handleSelectContact = (contact) => {
+    const id = String(contact.conversation_id);
+
     setActiveContact(contact);
-    fetchMessages(contact.conversation_id);
-    navigate(`/chat/${contact.conversation_id}`); // 更新 URL
+    fetchMessages(id);
+
+    navigate(`/chat/${id}`); // ✅ 保证是字符串
   };
 
   // ===== 发送消息 =====
   const sendMessage = async () => {
     if (!input.trim() || !activeContact || !activeContact.conversation_id) return;
+
+    const conversationId = String(activeContact.conversation_id);
 
     try {
       const res = await fetch('http://localhost:8000/api/auth/messages/text', {
@@ -114,7 +145,7 @@ const ChatApp = () => {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          conversation_id: String(activeContact.conversation_id),
+          conversation_id: conversationId,
           content: input,
         }),
       });
@@ -126,7 +157,7 @@ const ChatApp = () => {
         setMessages([
           ...messages,
           {
-            message_id: data.data,
+            message_id: data.data.id,
             sender_id: 'me',
             sender_name: '我',
             status: 0,
@@ -170,8 +201,8 @@ const ChatApp = () => {
           <div className="contacts">
             {contacts.map((c) => (
               <div
-                key={c.conversation_id}
-                className={`contact ${activeContact?.conversation_id === c.conversation_id ? 'active' : ''}`}
+                key={String(c.conversation_id)}
+                className={`contact ${String(activeContact?.conversation_id) === String(c.conversation_id) ? 'active' : ''}`}
                 onClick={() => handleSelectContact(c)}
               >
                 <div className="contact-avatar"></div>
@@ -194,8 +225,7 @@ const ChatApp = () => {
           <div className="main-content">
             <div className="icon">💬</div>
             <h2>高效办公，文件秒寻</h2>
-            <p>选择一个会话开始聊天，或使用AI检索快速找到文件</p>
-            <button>+ 创建会话</button>
+            <p>选择一个会话开始聊天</p>
           </div>
         ) : (
           <div className="chat-panel">
@@ -229,11 +259,6 @@ const ChatApp = () => {
             </div>
 
             <div className="chat-footer">
-              <div className="chat-tools">
-                <button title="文件检索">📎</button>
-                <button title="表情">😊</button>
-                <button title="链接">🔗</button>
-              </div>
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -245,7 +270,7 @@ const ChatApp = () => {
                   }
                 }}
               />
-              <button className="send-btn" onClick={sendMessage}>发送</button>
+              <button onClick={sendMessage}>发送</button>
             </div>
           </div>
         )}
