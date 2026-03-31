@@ -112,6 +112,14 @@ func (f *File) BeforeCreate(db *gorm.DB) error {
 	return nil
 }
 
+func (f *Text) BeforeCreate(db *gorm.DB) error {
+	if f.ID == 0 {
+		f.ID = utils.NewUniqueID()
+	}
+
+	return nil
+}
+
 func (v Vector) Value() (driver.Value, error) {
 	if len(v) == 0 {
 		return "[]", nil

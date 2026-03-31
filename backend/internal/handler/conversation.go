@@ -40,7 +40,10 @@ func StartPrivateConversation(c *gin.Context) {
 		}
 		return
 	}
-	response.Success(c, 201, "success", conversationID)
+
+	resp := model.IDResp{ID: conversationID}
+
+	response.Success(c, 201, "success", resp)
 }
 
 // ChatHistoryList 加载聊天记录
