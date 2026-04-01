@@ -50,7 +50,7 @@ func ChatHistoryList(userID, conversationID uint64) ([]model.ChatHistoryResp, er
 			LEFT JOIN message_users mu ON mu.message_id = m.id AND mu.user_id = ? 
 			LEFT JOIN texts t ON t.message_id = m.id
 			LEFT JOIN files f ON f.message_id = m.id
-			WHERE m.conversation_id = ? AND m.status != ? AND mu.is_deleted = false
+			WHERE m.conversation_id = ? AND m.status != ? AND (mu.is_deleted = false OR mu.is_deleted IS NULL)
 			ORDER BY m.updated_at DESC`
 
 	res := db.Raw(sql, model.TEXT,

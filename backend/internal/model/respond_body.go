@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // IDResp 通用返回体
 // 返回一个uint64的ID
@@ -69,12 +72,12 @@ type ConversationListResp struct {
 
 // ChatHistoryResp 聊天记录返回体
 type ChatHistoryResp struct {
-	MessageID  uint64    `json:"message_id,string"`
-	SenderID   uint64    `json:"sender_id,string"`
-	SenderName string    `json:"sender_name"`
-	Status     uint8     `json:"status"`
-	UpdatedAt  time.Time `json:"updated_at"`
-	Content    any       `json:"content"`
+	MessageID  uint64          `json:"message_id,string"`
+	SenderID   uint64          `json:"sender_id,string"`
+	SenderName string          `json:"sender_name"`
+	Status     uint8           `json:"status"`
+	UpdatedAt  time.Time       `json:"updated_at"`
+	Content    json.RawMessage `json:"content"`
 }
 
 // SendFileResp 发送文件返回体

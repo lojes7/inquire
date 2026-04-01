@@ -27,3 +27,6 @@ vvechat.iml
 
 # .env文件
 .env
+
+# 其他文件
+/backend/assets

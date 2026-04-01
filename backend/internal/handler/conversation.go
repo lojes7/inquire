@@ -41,7 +41,9 @@ func StartPrivateConversation(c *gin.Context) {
 		return
 	}
 
-	resp := model.IDResp{ID: conversationID}
+	resp := model.IDResp{
+		ID: conversationID,
+	}
 
 	response.Success(c, 201, "success", resp)
 }
