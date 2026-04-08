@@ -2,7 +2,7 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	_ "github.com/lojes7/inquire/docs"
+	_ "github.com/lojes7/inquire/api-docs"
 	"github.com/lojes7/inquire/internal/handler"
 	"github.com/lojes7/inquire/internal/ws"
 	"github.com/lojes7/inquire/pkg/middleware"
