@@ -45,6 +45,7 @@ CREATE TABLE public.conversation_users (
     id bigint NOT NULL,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
     user_id bigint,
     conversation_id bigint,
     unread_count bigint DEFAULT 0,
@@ -63,6 +64,7 @@ CREATE TABLE public.conversations (
     id bigint NOT NULL,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
     type smallint,
     owner_id bigint,
     group_name character varying(64)
@@ -77,6 +79,7 @@ CREATE TABLE public.files (
     id bigint NOT NULL,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
     file_name character varying(255) NOT NULL,
     file_type character varying(50) NOT NULL,
     file_url character varying(255) NOT NULL,
@@ -95,6 +98,7 @@ CREATE TABLE public.friendship_requests (
     id bigint NOT NULL,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
     sender_id bigint NOT NULL,
     receiver_id bigint NOT NULL,
     verification_message character varying(128),
@@ -112,6 +116,7 @@ CREATE TABLE public.friendships (
     id bigint NOT NULL,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
     user_id bigint NOT NULL,
     friend_id bigint NOT NULL,
     friend_remark character varying(64) NOT NULL
@@ -126,6 +131,7 @@ CREATE TABLE public.message_users (
     id bigint NOT NULL,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
     user_id bigint,
     message_id bigint,
     is_starred boolean DEFAULT false,
@@ -143,6 +149,7 @@ CREATE TABLE public.messages (
     status smallint DEFAULT 0,
     id bigint NOT NULL,
     created_at timestamp without time zone,
+    deleted_at timestamp without time zone,
     updated_at timestamp without time zone
 );
 
@@ -155,6 +162,7 @@ CREATE TABLE public.texts (
     id bigint NOT NULL,
     created_at timestamp without time zone,
     updated_at timestamp without time zone,
+    deleted_at timestamp without time zone,
     text character varying(1024) NOT NULL,
     message_id bigint NOT NULL
 );
@@ -176,6 +184,7 @@ CREATE TABLE public.users (
     head character varying(255),
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
+    deleted_at timestamp without time zone,
     CONSTRAINT chk_users_gender CHECK (((gender)::text = ANY (ARRAY[('male'::character varying)::text, ('female'::character varying)::text, (''::character varying)::text])))
 );
 

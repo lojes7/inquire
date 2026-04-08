@@ -58,7 +58,7 @@ func Launch() *gin.Engine {
 			}
 
 			// 获取头像（流式传输）
-			auth.GET("/head/:user_id", handler.GetHead)
+			auth.GET("/head/:user_id", handler.GetHead) // 查看头像
 
 			// 查看他人信息
 			info := auth.Group("/info")

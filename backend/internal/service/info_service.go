@@ -18,8 +18,8 @@ func FriendInfoByID(userID, friendID uint64) (*model.FriendInfoResp, error) {
 	res := db.Raw(`SELECT f.friend_remark, u.uid, u.name
 		FROM friendships f
 		JOIN users u 
-		ON u.id = f.friend_id
-		WHERE f.user_id = ? AND f.friend_id = ?
+		ON u.id = f.friend_id AND u.deleted_at IS NULL
+		WHERE f.user_id = ? AND f.friend_id = ? AND f.deleted_at IS NULL
 	`, userID, friendID).Scan(&resp)
 
 	if res.Error != nil {
@@ -63,8 +63,8 @@ func FriendInfoByUid(userID uint64, friendUid string) (*model.FriendInfoResp, er
 	res := db.Raw(`SELECT f.friend_remark, u.uid, u.name, u.id
 		FROM friendships f
 		JOIN users u 
-		ON u.id = f.friend_id
-		WHERE f.user_id = ? AND u.uid = ?
+		ON u.id = f.friend_id AND u.deleted_at IS NULL
+		WHERE f.user_id = ? AND u.uid = ? AND f.deleted_at IS NULL
 	`, userID, friendUid).Scan(&resp)
 
 	if res.Error != nil {

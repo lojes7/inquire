@@ -46,11 +46,11 @@ func ChatHistoryList(userID, conversationID uint64) ([]model.ChatHistoryResp, er
 			ELSE '{}'::json
 			END AS content
 			FROM messages m
-			LEFT JOIN users u ON u.id = m.sender_id
-			LEFT JOIN message_users mu ON mu.message_id = m.id AND mu.user_id = ? 
-			LEFT JOIN texts t ON t.message_id = m.id
-			LEFT JOIN files f ON f.message_id = m.id
-			WHERE m.conversation_id = ? AND m.status != ? AND (mu.is_deleted = false OR mu.is_deleted IS NULL)
+			LEFT JOIN users u ON u.id = m.sender_id AND u.deleted_at IS NULL
+			LEFT JOIN message_users mu ON mu.message_id = m.id AND mu.user_id = ? AND mu.deleted_at IS NULL
+			LEFT JOIN texts t ON t.message_id = m.id AND t.deleted_at IS NULL
+			LEFT JOIN files f ON f.message_id = m.id AND f.deleted_at IS NULL
+			WHERE m.conversation_id = ? AND m.status != ? AND m.deleted_at IS NULL AND (mu.is_deleted = false OR mu.is_deleted IS NULL)
 			ORDER BY m.updated_at DESC`
 
 	res := db.Raw(sql, model.TEXT,
@@ -82,10 +82,10 @@ func ConversationList(userID uint64) ([]model.ConversationListResp, error) {
   			ELSE ''
 		END AS content
 		FROM conversation_users cu 
-		LEFT JOIN messages m ON m.id = cu.last_message_id
-		LEFT JOIN files f ON f.message_id = m.id
-		LEFT JOIN texts t ON t.message_id = m.id
-		WHERE cu.user_id = ? 
+		LEFT JOIN messages m ON m.id = cu.last_message_id AND m.deleted_at IS NULL
+		LEFT JOIN files f ON f.message_id = m.id AND f.deleted_at IS NULL
+		LEFT JOIN texts t ON t.message_id = m.id AND t.deleted_at IS NULL
+		WHERE cu.user_id = ? AND cu.deleted_at IS NULL
 		ORDER BY cu.is_pinned DESC, cu.updated_at DESC `
 
 	res := db.Raw(sql, model.TEXT,
