@@ -250,7 +250,7 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 			return secure.Wrap(500, "发送文件消息失败", res.Error)
 		}
 
-		res = tx.Create(&newFile)
+		res = tx.Omit("ContentVector").Create(&newFile)
 		if res.Error != nil {
 			log.Println(res.Error)
 			return secure.Wrap(500, "发送文件消息失败", res.Error)
@@ -412,9 +412,11 @@ func DeleteMessage(userID, messageID uint64) error {
 		}
 
 		var lastID uint64
-		sql := `SELECT m.id FROM messages m 
-			LEFT JOIN message_users mu ON mu.message_id = m.id AND mu.user_id = ?
-			WHERE m.status != ? AND mu.is_deleted = false
+		sql := `SELECT m.id 
+			FROM messages m 
+			LEFT JOIN message_users mu 
+			    ON mu.message_id = m.id AND mu.user_id = ? AND mu.deleted_at IS NULL
+			WHERE m.status != ? AND mu.is_deleted = false AND m.deleted_at IS NULL
 			ORDER BY m.created_at DESC 
 			LIMIT 1`
 		res = tx.Raw(sql, userID, model.RECALLED).Scan(&lastID)
