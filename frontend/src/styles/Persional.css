@@ -81,3 +81,13 @@
   gap: 12px;        /* 按钮之间的间距 */
   margin-top: 12px; /* 和上面的输入框拉开距离 */
 }
+
+.crop-container {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin: 20px auto;
+  background: #222;
+  border-radius: 12px;
+  overflow: hidden;
+}

@@ -1,114 +1,124 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import Cropper from "react-easy-crop";
 import "../styles/Persional.css";
 
 export default function EditProfilePage() {
   const navigate = useNavigate();
 
-  // ===== 选择修改类型 =====
   const [selectedType, setSelectedType] = useState("");
 
-  // ===== UID 表单状态 =====
-  const [uid, setUid] = useState("");
-  const [uidLoading, setUidLoading] = useState(false);
-  const [uidError, setUidError] = useState("");
-  const [uidSuccess, setUidSuccess] = useState(false);
+  // ===== 头像 =====
+  const [avatar, setAvatar] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
 
-  // ===== 昵称表单状态 =====
-  const [nickname, setNickname] = useState("");
-  const [nicknameLoading, setNicknameLoading] = useState(false);
-  const [nicknameError, setNicknameError] = useState("");
-  const [nicknameSuccess, setNicknameSuccess] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
+  const [avatarSuccess, setAvatarSuccess] = useState(false);
 
-  // ===== 密码表单状态 =====
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [passwordLoading, setPasswordLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  // ===== 裁剪 =====
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
 
-  // 通用提交函数
-  const handleSubmit = async (e, type) => {
+  const [zoom, setZoom] = useState(1);
+
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+
+  const onCropComplete = useCallback((_, croppedPixels) => {
+    setCroppedAreaPixels(croppedPixels);
+  }, []);
+
+  // 图片选择
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    setAvatar(file);
+
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  // 裁剪图片函数
+  const getCroppedImg = async (imageSrc, crop) => {
+    const image = new Image();
+
+    image.src = imageSrc;
+
+    await new Promise((resolve) => (image.onload = resolve));
+
+    const canvas = document.createElement("canvas");
+
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+
+    ctx.drawImage(
+      image,
+      crop.x,
+      crop.y,
+      crop.width,
+      crop.height,
+      0,
+      0,
+      crop.width,
+      crop.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, "image/jpeg");
+    });
+  };
+
+  // 上传头像
+  const handleAvatarUpload = async (e) => {
     e.preventDefault();
 
-    let url = "";
-    let body = {};
-    let setLoading;
-    let setError;
-    let setSuccess;
+    setAvatarError("");
+    setAvatarSuccess(false);
 
-    switch (type) {
-      case "uid":
-        setLoading = setUidLoading;
-        setError = setUidError;
-        setSuccess = setUidSuccess;
-        setUidError("");
-        setUidSuccess(false);
-        if (!uid.trim()) {
-          setUidError("UID不能为空");
-          return;
-        }
-        url = "http://localhost:8000/api/auth/me/uid";
-        body = { uid };
-        break;
-      case "nickname":
-        setLoading = setNicknameLoading;
-        setError = setNicknameError;
-        setSuccess = setNicknameSuccess;
-        setNicknameError("");
-        setNicknameSuccess(false);
-        if (!nickname.trim()) {
-          setNicknameError("昵称不能为空");
-          return;
-        }
-        url = "http://localhost:8000/api/auth/me/name";
-        body = { name: nickname };
-        break;
-      case "password":
-        setLoading = setPasswordLoading;
-        setError = setPasswordError;
-        setSuccess = setPasswordSuccess;
-        setPasswordError("");
-        setPasswordSuccess(false);
-        if (!password || !confirmPassword) {
-          setPasswordError("密码不能为空");
-          return;
-        }
-        if (password !== confirmPassword) {
-          setPasswordError("两次输入的密码不一致");
-          return;
-        }
-        url = "http://localhost:8000/api/auth/me/password";
-        body = { password };
-        break;
-      default:
-        return;
+    if (!avatarPreview || !croppedAreaPixels) {
+      setAvatarError("请选择头像");
+      return;
     }
 
     try {
-      setLoading(true);
+      setAvatarLoading(true);
+
+      const croppedBlob = await getCroppedImg(
+        avatarPreview,
+        croppedAreaPixels
+      );
+
+      const formData = new FormData();
+
+      formData.append("file", croppedBlob, "avatar.jpg");
+
       const token = sessionStorage.getItem("token");
 
-      const res = await fetch(url, {
+      const res = await fetch("http://localhost:8000/api/auth/me/head", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(body),
+        body: formData,
       });
 
       const data = await res.json();
-      if (!res.ok || (type === "uid" && data.code !== 201)) {
-        throw new Error(data.message || "修改失败");
+
+      if (!res.ok) {
+        throw new Error(data.message || "上传失败");
       }
 
-      setSuccess(true);
+      setAvatarSuccess(true);
+
       setTimeout(() => navigate(-1), 1200);
     } catch (err) {
-      setError(err.message);
+      setAvatarError(err.message);
     } finally {
-      setLoading(false);
+      setAvatarLoading(false);
     }
   };
 
@@ -117,127 +127,69 @@ export default function EditProfilePage() {
       <div className="profile-card">
         <h2 className="profile-title">修改个人资料</h2>
 
-        {/* ===== 选择修改类型 ===== */}
         {!selectedType && (
           <div className="profile-select">
             <button
               className="profile-btn"
-              onClick={() => setSelectedType("uid")}
+              onClick={() => setSelectedType("avatar")}
             >
-              修改 UID
-            </button>
-            <button
-              className="profile-btn"
-              onClick={() => setSelectedType("nickname")}
-            >
-              修改昵称
-            </button>
-            <button
-              className="profile-btn"
-              onClick={() => setSelectedType("password")}
-            >
-              修改密码
+              修改头像
             </button>
           </div>
         )}
 
-        {/* ===== 修改 UID ===== */}
-        {selectedType === "uid" && (
-          <form onSubmit={(e) => handleSubmit(e, "uid")} className="profile-form">
-            <label className="profile-label">UID</label>
+        {selectedType === "avatar" && (
+          <form onSubmit={handleAvatarUpload} className="profile-form">
+            <label className="profile-label">上传头像</label>
+
             <input
-              type="text"
+              type="file"
+              accept="image/*"
               className="profile-input"
-              placeholder="请输入新的UID"
-              value={uid}
-              onChange={(e) => setUid(e.target.value)}
-              disabled={uidLoading}
+              onChange={handleAvatarChange}
             />
-            {uidError && <div className="profile-error">{uidError}</div>}
-            {uidSuccess && <div className="profile-success">UID修改成功</div>}
+
+            {avatarPreview && (
+              <div className="crop-container">
+                <Cropper
+                  image={avatarPreview}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={1}
+                  cropShape="round"
+                  showGrid={false}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={onCropComplete}
+                />
+              </div>
+            )}
+
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(e) => setZoom(e.target.value)}
+            />
+
+            {avatarError && <div className="profile-error">{avatarError}</div>}
+            {avatarSuccess && (
+              <div className="profile-success">头像上传成功</div>
+            )}
+
             <div className="profile-btn-group">
-              <button type="submit" className="profile-btn" disabled={uidLoading}>
-                {uidLoading ? "提交中..." : "保存UID修改"}
+              <button className="profile-btn" disabled={avatarLoading}>
+                {avatarLoading ? "上传中..." : "保存头像"}
               </button>
+
               <button
                 type="button"
                 className="profile-btn secondary"
                 onClick={() => setSelectedType("")}
               >
-                返回选择
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* ===== 修改昵称 ===== */}
-        {selectedType === "nickname" && (
-          <form
-            onSubmit={(e) => handleSubmit(e, "nickname")}
-            className="profile-form"
-          >
-            <label className="profile-label">昵称</label>
-            <input
-              type="text"
-              className="profile-input"
-              placeholder="请输入新的昵称"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
-              disabled={nicknameLoading}
-            />
-            {nicknameError && <div className="profile-error">{nicknameError}</div>}
-            {nicknameSuccess && <div className="profile-success">昵称修改成功</div>}
-           <div className="profile-btn-group">
-            <button type="submit" className="profile-btn" disabled={nicknameLoading}>
-              {nicknameLoading ? "提交中..." : "保存昵称修改"}
-            </button>
-            <button
-              type="button"
-              className="profile-btn secondary"
-              onClick={() => setSelectedType("")}
-            >
-              返回选择
-            </button>
-          </div>
-          </form>
-        )}
-
-        {/* ===== 修改密码 ===== */}
-        {selectedType === "password" && (
-          <form
-            onSubmit={(e) => handleSubmit(e, "password")}
-            className="profile-form"
-          >
-            <label className="profile-label">新密码</label>
-            <input
-              type="password"
-              className="profile-input"
-              placeholder="请输入新密码"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={passwordLoading}
-            />
-            <label className="profile-label">确认新密码</label>
-            <input
-              type="password"
-              className="profile-input"
-              placeholder="请再次输入新密码"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={passwordLoading}
-            />
-            {passwordError && <div className="profile-error">{passwordError}</div>}
-            {passwordSuccess && <div className="profile-success">密码修改成功</div>}
-            <div className="profile-btn-group">
-              <button type="submit" className="profile-btn" disabled={passwordLoading}>
-                {passwordLoading ? "提交中..." : "保存密码修改"}
-              </button>
-              <button
-                type="button"
-                className="profile-btn secondary"
-                onClick={() => setSelectedType("")}
-              >
-                返回选择
+                返回
               </button>
             </div>
           </form>
