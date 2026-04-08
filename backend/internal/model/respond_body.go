@@ -77,7 +77,7 @@ type ChatHistoryResp struct {
 	SenderName string          `json:"sender_name"`
 	Status     uint8           `json:"status"`
 	UpdatedAt  time.Time       `json:"updated_at"`
-	Content    json.RawMessage `json:"content"`
+	Content    json.RawMessage `json:"content" swaggertype:"object"`
 }
 
 // SendFileResp 发送文件返回体

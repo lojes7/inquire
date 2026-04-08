@@ -111,8 +111,8 @@ func Launch() *gin.Engine {
 			// 文件相关
 			file := auth.Group("/files")
 			{
-				file.GET("/:message_id", handler.DownloadFile)    // 下载文件
-				file.POST("/search", handler.SemanticSearchFiles) // 语义化搜索文件
+				file.GET("/:message_id", handler.DownloadFile) // 下载文件
+				file.POST("/search")                           // 语义化搜索文件
 			}
 		}
 	}

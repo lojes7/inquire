@@ -216,10 +216,6 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 	// 获取文件信息
 	fileSize := file.Size
 	fileType := getFileType(filePath)
-	fileContent, contentVector, err := buildFileIndex(ctx, filePath, fileName, fileType)
-	if err != nil {
-		return nil, err
-	}
 
 	newMsg := model.Message{
 		SenderID:       senderID,
@@ -232,13 +228,11 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 
 	// 新文件
 	newFile := model.File{
-		FileName:      fileName,
-		FileType:      fileType,
-		FileURL:       filePath,
-		FileSize:      fileSize,
-		MessageID:     newID,
-		FileContent:   fileContent,
-		ContentVector: contentVector,
+		FileName:  fileName,
+		FileType:  fileType,
+		FileURL:   filePath,
+		FileSize:  fileSize,
+		MessageID: newID,
 	}
 
 	// 保存到数据库

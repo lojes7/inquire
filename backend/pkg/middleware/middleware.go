@@ -22,7 +22,7 @@ func RefreshAuth() gin.HandlerFunc {
 		// 2. 检查 Bearer 前缀
 		const prefix = "Bearer "
 		if !strings.HasPrefix(authHeader, prefix) {
-			response.Fail(c, 401, "Type错误")
+			response.Fail(c, 401, "鉴权Type错误")
 			c.Abort()
 			return
 		}
@@ -65,7 +65,7 @@ func JWTAuth() gin.HandlerFunc {
 		// 2. 检查 Bearer 前缀
 		const prefix = "Bearer "
 		if !strings.HasPrefix(authHeader, prefix) {
-			response.Fail(c, 401, "Type错误")
+			response.Fail(c, 401, "鉴权Type错误")
 			c.Abort()
 			return
 		}

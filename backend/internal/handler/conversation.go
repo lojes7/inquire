@@ -146,7 +146,7 @@ func CreateGroup(c *gin.Context) {
 // @Produce      json
 // @Param        Authorization header string true "Bearer Token"
 // @Param        conversation_id path string true "会话ID"
-// @Param        req  body      model.GroupManageReq  true  "目标用户ID"
+// @Param        req  body      model.IDReq  true  "目标用户ID"
 // @Success      200  {object}  response.Response   "操作成功"
 // @Failure      400  {object}  response.Response   "参数错误"
 // @Failure      403  {object}  response.Response   "无权限"
@@ -187,7 +187,7 @@ func BanUser(c *gin.Context) {
 // @Produce      json
 // @Param        Authorization header string true "Bearer Token"
 // @Param        conversation_id path string true "会话ID"
-// @Param        req  body      model.GroupManageReq  true  "目标用户ID"
+// @Param        req  body      model.IDReq  true  "目标用户ID"
 // @Success      200  {object}  response.Response   "操作成功"
 // @Failure      400  {object}  response.Response   "参数错误"
 // @Failure      403  {object}  response.Response   "无权限"
