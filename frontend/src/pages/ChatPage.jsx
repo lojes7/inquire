@@ -12,13 +12,7 @@ const navigate = useNavigate();
           <button onClick={() => navigate("/chat")}>💬</button>
           <button onClick={() => navigate("/addfriend")}>👥</button>
           <button onClick={() => navigate("/chatpage")}>📝</button>
-          <button>➕</button>
-        </div>
-        {/* 底部设置按钮 */}
-        <div className="sidebar-footer">
-          <button>🔔</button>
-           <button onClick={() => navigate("/persional")}>
-            ⚙️</button>
+          <button onClick={() => navigate("/persional")}>⚙️</button>
         </div>
       </div>
 
