@@ -26,7 +26,7 @@ type NameReq struct {
 // RegisterReq 注册请求体
 type RegisterReq struct {
 	Name        string `json:"name" binding:"required,min=1,max=64"`
-	Password    string `json:"password" binding:"required,min=6,max=72"`
+	Password    string `json:"password" binding:"required,min=6,max=72,printascii"`
 	PhoneNumber string `json:"phone_number" binding:"required,len=11,numeric"`
 }
 

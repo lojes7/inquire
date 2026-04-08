@@ -247,10 +247,14 @@ const ChatApp = () => {
                     {msg.sender_id !== 'me' && <div className="avatar other" />}
                     <div className="bubble">
                       {msg.status === 0
-                        ? msg.content
-                        : msg.status === 3
-                        ? <a href={msg.content.file_url} target="_blank" rel="noreferrer">{msg.content.file_name}</a>
-                        : '[系统消息]'}
+                          ? (typeof msg.content === "string"
+                              ? msg.content
+                              : msg.content?.text)
+                          : msg.status === 3
+                              ? <a href= "_blank" rel="noreferrer">
+                                {msg.content.file_name}
+                              </a >
+                              : '[系统消息]'}
                     </div>
                     {msg.sender_id === 'me' && <div className="avatar self" />}
                   </div>
