@@ -117,6 +117,11 @@ func FriendRequestAccept(id uint64) error {
 			return secure.Wrap(500, "更新申请状态失败", err)
 		}
 
+		if err := FriendRequestDelete(tx, id); err != nil {
+			log.Println(err)
+			return err
+		}
+
 		err := createFriendship(tx, req.SenderID, req.ReceiverID)
 		if err != nil {
 			log.Println(err)
@@ -128,13 +133,15 @@ func FriendRequestAccept(id uint64) error {
 }
 
 // FriendRequestDelete 删除好友申请
-func FriendRequestDelete(requestID uint64) error {
-	db := infra.GetDB()
+func FriendRequestDelete(tx *gorm.DB, requestID uint64) error {
+	if tx == nil {
+		tx = infra.GetDB()
+	}
 
 	var req model.FriendshipRequest
 	req.ID = requestID
 
-	res := db.Delete(&req)
+	res := tx.Delete(&req)
 	if res.Error != nil {
 		log.Println(res.Error)
 		return secure.Wrap(500, "删除申请失败", res.Error)

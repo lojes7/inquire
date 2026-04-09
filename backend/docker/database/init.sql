@@ -279,7 +279,8 @@ CREATE INDEX conversation_users_user_id_idx ON public.conversation_users USING b
 -- Name: idx_conv_user; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX idx_conv_user ON public.conversation_users USING btree (user_id, conversation_id);
+CREATE UNIQUE INDEX idx_conv_user 
+    ON public.conversation_users USING btree (user_id, conversation_id) WHERE deleted_at IS NULL;
 
 
 --
@@ -307,14 +308,16 @@ CREATE INDEX idx_file_msg ON public.files USING btree (message_id);
 -- Name: idx_friendship; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX idx_friendship ON public.friendships USING btree (user_id, friend_id);
+CREATE UNIQUE INDEX idx_friendship 
+    ON public.friendships USING btree (user_id, friend_id) WHERE deleted_at IS NULL;
 
 
 --
 -- Name: idx_friendship_request; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX idx_friendship_request ON public.friendship_requests USING btree (sender_id, receiver_id);
+CREATE UNIQUE INDEX idx_friendship_request 
+    ON public.friendship_requests USING btree (sender_id, receiver_id) WHERE deleted_at IS NULL;
 
 
 --
@@ -328,7 +331,8 @@ CREATE INDEX idx_friendship_user_id ON public.friendships USING btree (user_id);
 -- Name: idx_message_user; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX idx_message_user ON public.message_users USING btree (user_id, message_id);
+CREATE UNIQUE INDEX idx_message_user 
+    ON public.message_users USING btree (user_id, message_id) WHERE deleted_at IS NULL;
 
 
 --
@@ -363,14 +367,16 @@ CREATE INDEX idx_text_msg ON public.texts USING btree (message_id);
 -- Name: idx_users_phone_number; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX idx_users_phone_number ON public.users USING btree (phone_number);
+CREATE UNIQUE INDEX idx_users_phone_number 
+    ON public.users USING btree (phone_number) WHERE deleted_at IS NULL;
 
 
 --
 -- Name: idx_users_uid; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX idx_users_uid ON public.users USING btree (uid);
+CREATE UNIQUE INDEX idx_users_uid 
+    ON public.users USING btree (uid) WHERE deleted_at IS NULL;
 
 
 --
