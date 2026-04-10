@@ -27,7 +27,7 @@ func SendFriendRequest(senderID, receiverID uint64, msg string, senderName strin
 	if senderID == receiverID {
 		return secure.Wrap(400, "不能给自己发送好友请求", gorm.ErrInvalidData)
 	}
-	if err := isPKExist(receiverID); err != nil {
+	if err := isUserExist(receiverID); err != nil {
 		log.Println(err)
 		return secure.Wrap(400, "接收者不存在", err)
 	}
@@ -128,13 +128,15 @@ func FriendRequestAccept(id uint64) error {
 }
 
 // FriendRequestDelete 删除好友申请
-func FriendRequestDelete(requestID uint64) error {
-	db := infra.GetDB()
+func FriendRequestDelete(tx *gorm.DB, requestID uint64) error {
+	if tx == nil {
+		tx = infra.GetDB()
+	}
 
 	var req model.FriendshipRequest
 	req.ID = requestID
 
-	res := db.Delete(&req)
+	res := tx.Delete(&req)
 	if res.Error != nil {
 		log.Println(res.Error)
 		return secure.Wrap(500, "删除申请失败", res.Error)

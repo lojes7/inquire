@@ -123,7 +123,7 @@ func FriendRequestDelete(c *gin.Context) {
 		return
 	}
 
-	err = service.FriendRequestDelete(id)
+	err = service.FriendRequestDelete(nil, id)
 	if err != nil {
 		if myErr := secure.Unwrap(err); myErr != nil {
 			response.Fail(c, myErr.Code, myErr.Message)

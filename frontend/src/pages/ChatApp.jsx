@@ -102,7 +102,7 @@ const ChatApp = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:8000/api/auth/head/${sId}`,
+        `http://localhost:8000/api/auth/info/head/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`

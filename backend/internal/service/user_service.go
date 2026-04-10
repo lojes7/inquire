@@ -45,7 +45,7 @@ func getUserByPhone(phone string) (*model.User, error) {
 }
 
 // 如果数据库查询未出现问题且主键存在返回nil，主键不存在返回invalidData，数据库问题直接返回Error
-func isPKExist(id uint64) error {
+func isUserExist(id uint64) error {
 	var exists int
 	err := infra.GetDB().
 		Model(&model.User{}).
