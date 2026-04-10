@@ -325,3 +325,39 @@
 .chat-tools button:hover {
   color: #6b21a8;
 }
+
+.chat-message {
+  max-width: 60%;
+  padding: 8px 12px;
+  margin: 6px 0;
+  border-radius: 12px;
+  word-break: break-word;
+}
+
+.chat-message.me {
+  background-color: #4caf50;
+  color: #fff;
+  margin-left: auto;
+  text-align: right;
+}
+
+.chat-message.friend {
+  background-color: #f1f0f0;
+  color: #000;
+  margin-right: auto;
+  text-align: left;
+}
+
+.chat-image {
+  max-width: 200px;
+  border-radius: 8px;
+}
+
+.chat-file {
+  display: inline-block;
+  padding: 6px 10px;
+  background-color: #e0e0e0;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #333;
+}

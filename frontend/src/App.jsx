@@ -6,6 +6,7 @@ import Login1 from './pages/Login1';
 import ChatPage from './pages/ChatPage';
 import AddFriendPage from './pages/AddFriendPage';
 import Persional from './pages/Persional';
+import CalendarPage from './pages/CalendarPage';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
       <Route path="/chatpage" element={<ChatPage />} />
       <Route path="/addfriend" element={<AddFriendPage />} />
       <Route path="/persional" element={<Persional />} />
+      <Route path="/calendar" element={<CalendarPage />} />
     </Routes>
   );
 }

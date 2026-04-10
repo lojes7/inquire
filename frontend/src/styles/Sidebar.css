@@ -1,0 +1,151 @@
+.sidebar {
+  width: 260px;   /* 原220 改大 */
+  height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid #e5e5e5;
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== Logo ===== */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 22px 18px;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+.logo-icon {
+  width: 45px;
+  height: 45px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #8f6ae1;
+
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-text {
+  font-size: 22px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* ===== 用户信息 ===== */
+.sidebar-user {
+  margin: 16px;
+  padding: 14px;
+
+  background: #f8f5ff;
+  border-radius: 12px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 45px;
+  height: 45px;
+
+  min-width: 45px;
+  min-height: 45px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #8f6ae1;
+
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+  color: #333;
+}
+
+.user-email {
+  margin: 0;
+  font-size: 12px;
+  color: #888;
+}
+
+/* ===== 导航 ===== */
+.sidebar-nav {
+  flex: 1;
+  padding: 0 12px;
+}
+
+.sidebar-item {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 15px 18px;
+  margin-bottom: 8px;
+
+  border-radius: 10px;
+
+  color: #444;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+
+  transition: all 0.25s ease;
+}
+
+.sidebar-item:hover {
+  background: #f0ebff;
+  color: #6b4bd9;
+}
+
+.sidebar-item.active {
+  background: #f0ebff;
+  color: #6b4bd9;
+  font-weight: 600;
+}
+
+/* ===== 底部 ===== */
+.sidebar-bottom {
+  padding: 16px 12px;
+  border-top: 1px solid #f1f1f1;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #d9534f;
+}
+
+.logout-btn:hover {
+  background: #fff1f0;
+  color: #c9302c;
+}
