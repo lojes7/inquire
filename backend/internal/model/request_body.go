@@ -6,7 +6,7 @@ type IDReq struct {
 }
 
 type IDSliceReq struct {
-	IDs []uint64 `json:"ids" binding:"required,min=1,unique"`
+	IDs []string `json:"ids" binding:"required,min=1,unique"`
 }
 
 type RemarkReq struct {
@@ -70,5 +70,5 @@ type FileSemanticSearchReq struct {
 
 type CreateGroupReq struct {
 	GroupName string   `json:"group_name" binding:"required,min=1,max=64"`
-	MemberIDs []uint64 `json:"member_ids" binding:"required,min=1,unique"`
+	MemberIDs []string `json:"member_ids" binding:"required,min=1,unique"`
 }

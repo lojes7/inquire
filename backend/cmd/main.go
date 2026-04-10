@@ -39,7 +39,7 @@ func main() {
 	infra.GetDB().AutoMigrate(&model.File{})*/
 	r := router.Launch()
 
-	address := ":" + os.Getenv("PORT")
+	address := "0.0.0.0:" + os.Getenv("PORT")
 
 	err := r.Run(address)
 	if err != nil {

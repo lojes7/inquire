@@ -126,7 +126,30 @@ func CreateGroup(c *gin.Context) {
 		return
 	}
 
-	conversationID, err := service.CreateGroupConversation(userID, req.GroupName, req.MemberIDs)
+	var memberIDsUint []uint64
+	for _, idStr := range req.MemberIDs {
+		id, err := strconv.ParseUint(idStr, 10, 64)
+		if err != nil {
+			response.Fail(c, 400, "成员ID格式错误")
+			return
+		}
+		memberIDsUint = append(memberIDsUint, id)
+	}
+
+	// 必须包含群主自己
+	memberIDsUint = append(memberIDsUint, userID)
+	// 去重
+	uniqueIDs := make(map[uint64]bool)
+	// 最终的成员ID列表，保持原有顺序但去重
+	finalIDs := make([]uint64, 0)
+	for _, id := range memberIDsUint {
+		if !uniqueIDs[id] {
+			uniqueIDs[id] = true
+			finalIDs = append(finalIDs, id)
+		}
+	}
+
+	conversationID, err := service.CreateGroupConversation(userID, req.GroupName, finalIDs)
 	if err != nil {
 		if myErr := secure.Unwrap(err); myErr != nil {
 			response.Fail(c, myErr.Code, myErr.Message)

@@ -193,6 +193,28 @@ func createConversationUser(tx *gorm.DB, userID, conversationID uint64, remark s
 		tx = infra.GetDB()
 	}
 
+	// 检查用户是否存在
+	var userCount int64
+	if err := tx.Model(&model.User{}).
+		Where("id = ?", userID).
+		Count(&userCount).Error; err != nil {
+		return secure.Wrap(500, "检查用户存在状态失败", err)
+	}
+	if userCount == 0 {
+		return secure.Wrap(404, "用户不存在", errors.New("user not found"))
+	}
+
+	// 检查会话是否存在
+	var convCount int64
+	if err := tx.Model(&model.Conversation{}).
+		Where("id = ?", conversationID).
+		Count(&convCount).Error; err != nil {
+		return secure.Wrap(500, "检查会话存在状态失败", err)
+	}
+	if convCount == 0 {
+		return secure.Wrap(404, "会话不存在", errors.New("conversation not found"))
+	}
+
 	cu := model.ConversationUser{
 		UserID:         userID,
 		ConversationID: conversationID,
@@ -232,19 +254,6 @@ func CreateGroupConversation(ownerID uint64, groupName string, memberIDs []uint6
 	db := infra.GetDB()
 	newID := utils.NewUniqueID()
 
-	// 必须包含群主自己
-	memberIDs = append(memberIDs, ownerID)
-	// 去重
-	uniqueIDs := make(map[uint64]bool)
-	// 最终的成员ID列表，保持原有顺序但去重
-	finalIDs := make([]uint64, 0)
-	for _, id := range memberIDs {
-		if !uniqueIDs[id] {
-			uniqueIDs[id] = true
-			finalIDs = append(finalIDs, id)
-		}
-	}
-
 	err := db.Transaction(func(tx *gorm.DB) error {
 		// 创建 Conversation
 		c := model.Conversation{
@@ -259,7 +268,7 @@ func CreateGroupConversation(ownerID uint64, groupName string, memberIDs []uint6
 		}
 
 		// 创建成员
-		for _, uid := range finalIDs {
+		for _, uid := range memberIDs {
 			// 将群名称作为所有成员的备注
 			if err := createConversationUser(tx, uid, newID, groupName); err != nil {
 				return err
