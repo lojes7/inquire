@@ -48,7 +48,7 @@ const ChatApp = () => {
 
   /*
   =========================
-  状态 (严格保持原样)
+  状态 (保持原样)
   =========================
   */
   const [contacts, setContacts] = useState([]);
@@ -69,7 +69,7 @@ const ChatApp = () => {
 
   /*
   =========================
-  群聊功能状态 (严格保持原样)
+  群聊功能状态 (保持原样)
   =========================
   */
   const [showGroupModal, setShowGroupModal] = useState(false);
@@ -90,36 +90,23 @@ const ChatApp = () => {
 
   /*
   =========================
-  获取头像 (仅修复判断逻辑，不动功能)
+  获取头像
   =========================
   */
   const fetchAvatar = async (userId) => {
     if (!userId || userId === "undefined") return;
     const sId = String(userId);
-    
-    // 如果已经有 URL 了才跳过，否则继续请求
     if (avatarMap[sId] && avatarMap[sId].startsWith("blob:")) return;
 
     try {
       const res = await fetch(
         `http://localhost:8000/api/auth/info/head/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       if (!res.ok) return;
-
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
-
-      setAvatarMap(prev => ({
-        ...prev,
-        [sId]: url
-      }));
-
+      setAvatarMap(prev => ({ ...prev, [sId]: url }));
     } catch (err) {
       console.error("头像加载异常", sId);
     }
@@ -127,41 +114,35 @@ const ChatApp = () => {
 
   /*
   =========================
-  获取会话好友信息
+  获取会话好友信息 (已优化：支持群聊名称显示)
   =========================
   */
-  const fetchConversationFriendInfo = async (conversationId) => {
-    const safeId = (typeof conversationId === 'object') ? conversationId.conversation_id : conversationId;
+  const fetchConversationFriendInfo = async (contact) => {
+    const safeId = contact.conversation_id;
     if (!safeId) return;
+
+    // 如果是群聊且已有群名，直接保存名称并跳过详情拉取
+    if (contact.group_name) {
+      setConversationNameMap(prev => ({ ...prev, [safeId]: contact.group_name }));
+      return;
+    }
 
     try {
       const res = await fetch(
         `http://localhost:8000/api/auth/conversations/${safeId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       const data = await res.json();
 
       if (data.code === 200 && Array.isArray(data.data)) {
-        const otherMsg = data.data.find(
-          msg => String(msg.sender_id) !== currentUserId
-        );
-
+        // 私聊：寻找对方的信息
+        const otherMsg = data.data.find(msg => String(msg.sender_id) !== currentUserId);
         if (otherMsg) {
           const uId = String(otherMsg.sender_id);
           const uName = otherMsg.sender_name || otherMsg.name || otherMsg.username || friendName || "未知好友";
-
           setConversationAvatarMap(prev => ({ ...prev, [safeId]: uId }));
           setConversationNameMap(prev => ({ ...prev, [safeId]: uName }));
-          
-          // 获取 ID 后立即拉取头像
           fetchAvatar(uId);
-        } else if (friendName) {
-          setConversationNameMap(prev => ({ ...prev, [safeId]: friendName }));
         }
       }
     } catch (err) {
@@ -178,11 +159,7 @@ const ChatApp = () => {
     try {
       const res = await fetch(
         `http://localhost:8000/api/auth/files/${messageId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       if (!res.ok) throw new Error("下载失败");
       const blob = await res.blob();
@@ -194,33 +171,24 @@ const ChatApp = () => {
 
   /*
   =========================
-  获取联系人
+  获取联系人 (已优化：好友在线即可通过此接口发现新群组)
   =========================
   */
   const fetchContacts = async () => {
     try {
-      setLoadingContacts(true);
       const res = await fetch(
         'http://localhost:8000/api/auth/conversations',
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       const data = await res.json();
-
       if (data.code === 200) {
         setContacts(data.data);
         data.data.forEach(contact => {
-          fetchConversationFriendInfo(contact.conversation_id);
+          fetchConversationFriendInfo(contact);
         });
       }
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoadingContacts(false);
     }
   };
 
@@ -229,21 +197,16 @@ const ChatApp = () => {
   获取消息
   =========================
   */
-  const fetchMessages = async (conversation_id) => {
+  const fetchMessages = async (conversation_id, silent = false) => {
     const safeId = (typeof conversation_id === 'object') ? conversation_id.conversation_id : conversation_id;
     if (!safeId) return;
 
     try {
-      setLoadingMessages(true);
+      if (!silent) setLoadingMessages(true);
       const res = await fetch(
         `http://localhost:8000/api/auth/conversations/${safeId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       const data = await res.json();
 
       if (data.code === 200 && Array.isArray(data.data)) {
@@ -253,8 +216,7 @@ const ChatApp = () => {
             try {
               content = typeof msg.content === "string" ? JSON.parse(msg.content) : msg.content;
             } catch {}
-
-            if (content.file_name) {
+            if (content.file_name && !content.file_url) {
               content.file_url = await getFileBlobUrl(msg.message_id);
             }
             fetchAvatar(String(msg.sender_id));
@@ -265,18 +227,20 @@ const ChatApp = () => {
             };
           })
         );
-        setMessages(parsedMessages.reverse());
+        // 如果消息长度没变，不触发状态更新以减少闪烁
+        const newMsgs = parsedMessages.reverse();
+        setMessages(prev => JSON.stringify(prev) === JSON.stringify(newMsgs) ? prev : newMsgs);
       }
     } catch (err) {
       console.error(err);
     } finally {
-      setLoadingMessages(false);
+      if (!silent) setLoadingMessages(false);
     }
   };
 
   /*
   =========================
-  群聊逻辑 (严格保持原样)
+  群聊逻辑
   =========================
   */
   const fetchFriendsForGroup = async () => {
@@ -285,11 +249,8 @@ const ChatApp = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setFriendRequests(data);
-      } else if (data.data) {
-        setFriendRequests(data.data);
-      }
+      if (Array.isArray(data)) setFriendRequests(data);
+      else if (data.data) setFriendRequests(data.data);
     } catch (err) {
       console.error(err);
     }
@@ -328,14 +289,17 @@ const ChatApp = () => {
 
   /*
   =========================
-  初始化
+  生命周期与同步 (核心修改：引入轮询)
   =========================
   */
   useEffect(() => {
     fetchContacts();
-    if (currentUserId) {
-      fetchAvatar(currentUserId);
-    }
+    if (currentUserId) fetchAvatar(currentUserId);
+
+    // 核心：设置每 3 秒刷新一次联系人列表
+    // 这样好友才能在不刷新页面的情况下“看到”新群聊
+    const contactTimer = setInterval(fetchContacts, 3000);
+    return () => clearInterval(contactTimer);
   }, []);
 
   useEffect(() => {
@@ -345,9 +309,11 @@ const ChatApp = () => {
     const contact = contacts.find(c => String(c.conversation_id) === String(id));
     setActiveContact(contact || { conversation_id: id, name: friendName || "聊天中" });
     
-    fetchConversationFriendInfo(id);
     fetchMessages(id);
 
+    // 核心：如果处于某个聊天窗口，每 3 秒刷新一次消息
+    const msgTimer = setInterval(() => fetchMessages(id, true), 3000);
+    return () => clearInterval(msgTimer);
   }, [params.conversationId, conversationIdFromState, contacts.length]); 
 
   useEffect(() => {
@@ -356,7 +322,7 @@ const ChatApp = () => {
 
   /*
   =========================
-  交互逻辑 (严格保持原样)
+  交互逻辑
   =========================
   */
   const handleSelectContact = (contact) => {
@@ -371,10 +337,7 @@ const ChatApp = () => {
       'http://localhost:8000/api/auth/messages/text',
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           conversation_id: activeContact.conversation_id,
           content: input
@@ -383,14 +346,11 @@ const ChatApp = () => {
     );
     const data = await res.json();
     if (data.code === 201) {
-      setMessages(prev => [
-        ...prev,
-        {
-          message_id: data.data,
-          sender_id: currentUserId,
-          content: { text: input }
-        }
-      ]);
+      setMessages(prev => [...prev, {
+        message_id: data.data,
+        sender_id: currentUserId,
+        content: { text: input }
+      }]);
       setInput('');
     }
   };
@@ -402,26 +362,19 @@ const ChatApp = () => {
     formData.append("file", file);
     const res = await fetch(
       'http://localhost:8000/api/auth/messages/file',
-      {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
-      }
+      { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData }
     );
     const data = await res.json();
     if (data.code === 201) {
-      setMessages(prev => [
-        ...prev,
-        {
-          message_id: data.data,
-          sender_id: currentUserId,
-          content: {
-            file_name: file.name,
-            file_type: file.type,
-            file_url: URL.createObjectURL(file)
-          }
+      setMessages(prev => [...prev, {
+        message_id: data.data,
+        sender_id: currentUserId,
+        content: {
+          file_name: file.name,
+          file_type: file.type,
+          file_url: URL.createObjectURL(file)
         }
-      ]);
+      }]);
       setFile(null);
     }
   };
@@ -454,7 +407,7 @@ const ChatApp = () => {
                   onError={(e) => e.currentTarget.src = "https://img.icons8.com/color/96/user.png"} />
                 <div className="contact-info">
                   <div className="contact-name">
-                    {c.group_name || conversationNameMap[c.conversation_id] || c.name || "未知会话"}
+                    {c.group_name || conversationNameMap[c.conversation_id] || "未知会话"}
                   </div>
                   <div className="contact-message">{c.last_message || "暂无消息"}</div>
                 </div>
