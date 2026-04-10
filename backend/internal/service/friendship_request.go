@@ -27,7 +27,7 @@ func SendFriendRequest(senderID, receiverID uint64, msg string, senderName strin
 	if senderID == receiverID {
 		return secure.Wrap(400, "不能给自己发送好友请求", gorm.ErrInvalidData)
 	}
-	if err := isPKExist(receiverID); err != nil {
+	if err := isUserExist(receiverID); err != nil {
 		log.Println(err)
 		return secure.Wrap(400, "接收者不存在", err)
 	}
@@ -115,11 +115,6 @@ func FriendRequestAccept(id uint64) error {
 			Error; err != nil {
 			log.Println(err)
 			return secure.Wrap(500, "更新申请状态失败", err)
-		}
-
-		if err := FriendRequestDelete(tx, id); err != nil {
-			log.Println(err)
-			return err
 		}
 
 		err := createFriendship(tx, req.SenderID, req.ReceiverID)

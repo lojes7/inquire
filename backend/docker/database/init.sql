@@ -104,7 +104,7 @@ CREATE TABLE public.friendship_requests (
     verification_message character varying(128),
     status character varying(16) NOT NULL,
     sender_name character varying(64) NOT NULL,
-    CONSTRAINT chk_friendship_requests_status CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('accepted'::character varying)::text, ('rejected'::character varying)::text, ('canceled'::character varying)::text])))
+    CONSTRAINT chk_friendship_requests_status CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('accepted'::character varying)::text, ('canceled'::character varying)::text])))
 );
 
 
@@ -317,7 +317,7 @@ CREATE UNIQUE INDEX idx_friendship
 --
 
 CREATE UNIQUE INDEX idx_friendship_request 
-    ON public.friendship_requests USING btree (sender_id, receiver_id) WHERE deleted_at IS NULL;
+    ON public.friendship_requests USING btree (sender_id, receiver_id) WHERE deleted_at IS NULL AND status = 'pending';
 
 
 --

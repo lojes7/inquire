@@ -101,7 +101,7 @@ const ChatApp = () => {
   const fetchAvatar = async (userId) => {
     try {
       const res = await fetch(
-        `http://localhost:8000/api/auth/head/${userId}`,
+        `http://localhost:8000/api/auth/info/head/${userId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
