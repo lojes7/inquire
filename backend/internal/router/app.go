@@ -57,9 +57,6 @@ func Launch() *gin.Engine {
 				me.POST("/head", handler.UploadHead)         // 上传头像
 			}
 
-			// 获取头像（流式传输）
-			auth.GET("/head/:user_id", handler.GetHead) // 查看头像
-
 			// 查看他人信息
 			info := auth.Group("/info")
 			{
@@ -68,6 +65,7 @@ func Launch() *gin.Engine {
 				info.GET("/friends/uid/:uid", handler.FriendInfoByUid)                         // 根据Uid 查看好友信息
 				info.GET("/strangers/uid/:uid", handler.StrangerInfoByUid)                     // 根据Uid 查看陌生人信息
 				info.GET("/strangers/phone_number/:phone_number", handler.StrangerInfoByPhone) // 根据手机号 查看陌生人信息
+				info.GET("/head/:user_id", handler.GetHead)                                    // 获取用户头像文件
 			}
 
 			// 好友申请相关
@@ -111,9 +109,10 @@ func Launch() *gin.Engine {
 			// 文件相关
 			file := auth.Group("/files")
 			{
-				file.GET("/:message_id", handler.DownloadFile) // 下载文件
+				file.GET("/:message_id", handler.DownloadFile) // 下载聊天中的文件
 				file.POST("/search")                           // 语义化搜索文件
 			}
+
 		}
 	}
 	return r

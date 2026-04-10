@@ -253,7 +253,7 @@ func UploadHead(c *gin.Context) {
 // @Success      200  {file}  binary   "头像文件"
 // @Failure      404  {object}  response.Response   "用户未设置头像"
 // @Failure      500  {object}  response.Response   "服务器错误"
-// @Router       /auth/head/{user_id} [get]
+// @Router       /auth/info/head/{user_id} [get]
 func GetHead(c *gin.Context) {
 	userIDStr := c.Param("user_id")
 	userID, err := strconv.ParseUint(userIDStr, 10, 64)
