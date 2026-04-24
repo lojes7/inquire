@@ -123,6 +123,36 @@ func updateLastMessageID(tx *gorm.DB, conversationID, msgID uint64) error {
 	return nil
 }
 
+func createUserFileRelations(tx *gorm.DB, conversationID, fileID uint64) error {
+	var userIDs []uint64
+	err := tx.Model(&model.ConversationUser{}).
+		Where("conversation_id = ? AND deleted_at IS NULL", conversationID).
+		Pluck("user_id", &userIDs).Error
+	if err != nil {
+		log.Println(err)
+		return secure.Wrap(500, "查询会话成员失败", err)
+	}
+
+	if len(userIDs) == 0 {
+		return secure.Wrap(500, "会话成员为空", errors.New("conversation has no members"))
+	}
+
+	userFiles := make([]model.UserFile, 0, len(userIDs))
+	for _, userID := range userIDs {
+		userFiles = append(userFiles, model.UserFile{
+			UserID: userID,
+			FileID: fileID,
+		})
+	}
+
+	if err := tx.Create(&userFiles).Error; err != nil {
+		log.Println(err)
+		return secure.Wrap(500, "写入 user_files 关系失败", err)
+	}
+
+	return nil
+}
+
 func SendText(senderID, conversationID uint64, content string) (uint64, error) {
 	err := sendMessageAuth(senderID, conversationID)
 	if err != nil {
@@ -246,6 +276,11 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 		if res.Error != nil {
 			log.Println(res.Error)
 			return secure.Wrap(500, "发送文件消息失败", res.Error)
+		}
+
+		err = createUserFileRelations(tx, conversationID, newFileID)
+		if err != nil {
+			return err
 		}
 
 		err := updateLastMessageID(tx, conversationID, newMsgID)

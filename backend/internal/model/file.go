@@ -35,6 +35,14 @@ func (f *File) BeforeCreate(db *gorm.DB) error {
 	return nil
 }
 
+func (uf *UserFile) BeforeCreate(db *gorm.DB) error {
+	if uf.ID == 0 {
+		uf.ID = utils.NewUniqueID()
+	}
+
+	return nil
+}
+
 func (v Vector) Value() (driver.Value, error) {
 	if len(v) == 0 {
 		return "[]", nil

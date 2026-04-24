@@ -49,8 +49,6 @@ services:
       JWT_KEY: ${JWT_KEY}
       JWT_EXPIRE_TIME: ${JWT_EXPIRE_TIME}
       JWT_REFRESH_TIME: ${JWT_REFRESH_TIME}
-      QWEN_API_KEY: ${QWEN_API_KEY}
-      QWEN_BASE_URL: ${QWEN_BASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
     volumes:
       - file_assets:/assets
@@ -92,8 +90,9 @@ services:
       - "${AI_SERVICE_PORT:-8001}:${AI_SERVICE_PORT:-8001}"
     environment:
       - DASHSCOPE_API_KEY=${QWEN_API_KEY}
-      - DASHSCOPE_APP_ID=${QWEN_APP_ID}
       - PORT=${AI_SERVICE_PORT:-8001}
+    volumes:
+      - file_assets:/assets    
     restart: unless-stopped
 
   frontend:
