@@ -394,7 +394,7 @@ func DeleteMessage(userID, messageID uint64) error {
 
 	if err != nil {
 		log.Println(err)
-		return secure.Wrap(500, "查询消息失败", err)
+		return secure.Wrap(500, "没有找到该条消息", err)
 	}
 	conversationID := msg.ConversationID
 
@@ -407,8 +407,18 @@ func DeleteMessage(userID, messageID uint64) error {
 			return secure.Wrap(500, "删除消息失败", res.Error)
 		}
 		if res.RowsAffected == 0 {
-			log.Println("删除消息操作影响了0行表")
-			return secure.Wrap(500, "删除消息失败", errors.New("rows affected 0"))
+			log.Println("删除消息操作影响了0行表，自动创建删除记录")
+			newID := utils.NewUniqueID()
+			newMU := model.MessageUser{
+				MyModel:   model.MyModel{ID: newID},
+				UserID:    userID,
+				MessageID: messageID,
+				IsDeleted: true,
+			}
+			if err := tx.Create(&newMU).Error; err != nil {
+				log.Println("创建已删除的MessageUser失败:", err)
+				return secure.Wrap(500, "删除消息失败", err)
+			}
 		}
 
 		var lastID uint64
@@ -425,7 +435,7 @@ func DeleteMessage(userID, messageID uint64) error {
 			return secure.Wrap(500, "更新最新消息失败", res.Error)
 		}
 		if res.RowsAffected == 0 {
-			log.Println("删除消息更新最后消息id 时没有查到id")
+			log.Println("删除消息 更新最后消息id时没有查到id")
 			return secure.Wrap(500, "更新最新消息失败", errors.New("rows affected 0"))
 		}
 

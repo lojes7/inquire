@@ -84,7 +84,6 @@ CREATE TABLE public.files (
     file_type character varying(50) NOT NULL,
     file_url character varying(255) NOT NULL,
     file_size bigint NOT NULL,
-    file_content text,
     content_vector public.vector,
     message_id bigint NOT NULL
 );

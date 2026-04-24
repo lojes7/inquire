@@ -9,18 +9,6 @@ import (
 	"gorm.io/gorm"
 )
 
-const (
-	TEXT int = iota
-	RECALLED
-	SYSTEM
-	FILE
-)
-
-const (
-	PRIVATE int = iota
-	GROUP
-)
-
 type Message struct {
 	SenderID       uint64 `gorm:"bigint;index"`
 	ConversationID uint64 `gorm:"bigint;index"`

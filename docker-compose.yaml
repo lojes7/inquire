@@ -84,6 +84,18 @@ services:
         condition: service_started
     restart: always
 
+  ai-service:
+    build:
+      context: ./ai
+    container_name: inquire-ai-service
+    ports:
+      - "${AI_SERVICE_PORT:-8001}:${AI_SERVICE_PORT:-8001}"
+    environment:
+      - DASHSCOPE_API_KEY=${QWEN_API_KEY}
+      - DASHSCOPE_APP_ID=${QWEN_APP_ID}
+      - PORT=${AI_SERVICE_PORT:-8001}
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
