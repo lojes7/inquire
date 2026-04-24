@@ -44,7 +44,7 @@ services:
     container_name: worker
     command: ["./worker"]
     environment:
-      DATABASE_URL: "host=${DB_HOST} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} port=${DB_PORT} sslmode=${POSTGRES_SSLMODE}"
+      DATABASE_URL: "host=${DB_HOST} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} port=${DB_PORT} sslmode=${POSTGRES_SSLMODE} timezone=Asia/Shanghai"
       PORT: ${BACKEND_PORT}
       JWT_KEY: ${JWT_KEY}
       JWT_EXPIRE_TIME: ${JWT_EXPIRE_TIME}
@@ -67,7 +67,7 @@ services:
       dockerfile: ./docker/Dockerfile
     container_name: backend
     environment:
-      DATABASE_URL: "host=${DB_HOST} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} port=${DB_PORT} sslmode=${POSTGRES_SSLMODE}"
+      DATABASE_URL: "host=${DB_HOST} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} port=${DB_PORT} sslmode=${POSTGRES_SSLMODE} timezone=Asia/Shanghai"
       PORT: ${BACKEND_PORT}
       JWT_KEY: ${JWT_KEY} 
       JWT_EXPIRE_TIME: ${JWT_EXPIRE_TIME}

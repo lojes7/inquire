@@ -19,6 +19,8 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+SET timezone = 'Asia/Shanghai';
+
 --
 -- Name: vector; Type: EXTENSION; Schema: -; Owner: -
 --
@@ -43,11 +45,11 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.conversation_users (
     id bigint NOT NULL,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    deleted_at timestamp without time zone,
-    user_id bigint,
-    conversation_id bigint,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone,
+    user_id bigint NOT NULL,
+    conversation_id bigint NOT NULL,
     unread_count bigint DEFAULT 0,
     is_pinned boolean DEFAULT false,
     remark text,
@@ -62,12 +64,12 @@ CREATE TABLE public.conversation_users (
 
 CREATE TABLE public.conversations (
     id bigint NOT NULL,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    deleted_at timestamp without time zone,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone,
     type smallint,
-    owner_id bigint,
-    group_name character varying(64)
+    owner_id bigint DEFAULT 0,
+    group_name varchar(64) DEFAULT NULL
 );
 
 
@@ -77,15 +79,14 @@ CREATE TABLE public.conversations (
 
 CREATE TABLE public.files (
     id bigint NOT NULL,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    deleted_at timestamp without time zone,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone,
     file_name character varying(255) NOT NULL,
     file_type character varying(50) NOT NULL,
     file_url character varying(255) NOT NULL,
     file_size bigint NOT NULL,
-    content_vector public.vector,
-    message_id bigint NOT NULL
+    content_vector public.vector
 );
 
 
@@ -95,14 +96,15 @@ CREATE TABLE public.files (
 
 CREATE TABLE public.friendship_requests (
     id bigint NOT NULL,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    deleted_at timestamp without time zone,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone,
     sender_id bigint NOT NULL,
     receiver_id bigint NOT NULL,
     verification_message character varying(128),
     status character varying(16) NOT NULL,
     sender_name character varying(64) NOT NULL,
+    
     CONSTRAINT chk_friendship_requests_status CHECK (((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('accepted'::character varying)::text, ('canceled'::character varying)::text])))
 );
 
@@ -113,9 +115,9 @@ CREATE TABLE public.friendship_requests (
 
 CREATE TABLE public.friendships (
     id bigint NOT NULL,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    deleted_at timestamp without time zone,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone,
     user_id bigint NOT NULL,
     friend_id bigint NOT NULL,
     friend_remark character varying(64) NOT NULL
@@ -128,11 +130,11 @@ CREATE TABLE public.friendships (
 
 CREATE TABLE public.message_users (
     id bigint NOT NULL,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    deleted_at timestamp without time zone,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone,
     user_id bigint,
-    message_id bigint,
+    message_id bigint NOT NULL,
     is_starred boolean DEFAULT false,
     is_deleted boolean DEFAULT false
 );
@@ -147,25 +149,12 @@ CREATE TABLE public.messages (
     conversation_id bigint,
     status smallint DEFAULT 0,
     id bigint NOT NULL,
-    created_at timestamp without time zone,
-    deleted_at timestamp without time zone,
-    updated_at timestamp without time zone
+    file_id bigint DEFAULT 0,
+    content varchar(1024) NOT NULL,
+    created_at timestamp with time zone,
+    deleted_at timestamp with time zone,
+    updated_at timestamp with time zone
 );
-
-
---
--- Name: texts; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.texts (
-    id bigint NOT NULL,
-    created_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    deleted_at timestamp without time zone,
-    text character varying(1024) NOT NULL,
-    message_id bigint NOT NULL
-);
-
 
 --
 -- Name: users; Type: TABLE; Schema: public; Owner: -
@@ -181,12 +170,32 @@ CREATE TABLE public.users (
     signature character varying(128),
     gender character varying(12),
     head character varying(255),
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone NOT NULL,
-    deleted_at timestamp without time zone,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    deleted_at timestamp with time zone,
+    
     CONSTRAINT chk_users_gender CHECK (((gender)::text = ANY (ARRAY[('male'::character varying)::text, ('female'::character varying)::text, (''::character varying)::text])))
 );
 
+
+--
+-- Name: user_files; Type: TABLE; Schema: public; Owner: -
+--
+CREATE TABLE public.user_files (
+    id bigint NOT NULL,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone,
+    user_id bigint NOT NULL,
+    file_id bigint NOT NULL
+);
+
+--
+-- Name: user_files user_files_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.user_files
+    ADD CONSTRAINT user_files_pkey PRIMARY KEY (id);
 
 --
 -- Name: conversation_users conversation_users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -243,15 +252,6 @@ ALTER TABLE ONLY public.message_users
 ALTER TABLE ONLY public.messages
     ADD CONSTRAINT messages_pkey PRIMARY KEY (id);
 
-
---
--- Name: texts texts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.texts
-    ADD CONSTRAINT texts_pkey PRIMARY KEY (id);
-
-
 --
 -- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
@@ -294,14 +294,6 @@ CREATE INDEX idx_conversation_owner ON public.conversations USING btree (owner_i
 --
 
 CREATE INDEX idx_conversation_type ON public.conversations USING btree (type);
-
-
---
--- Name: idx_file_msg; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_file_msg ON public.files USING btree (message_id);
-
 
 --
 -- Name: idx_friendship; Type: INDEX; Schema: public; Owner: -
@@ -349,18 +341,16 @@ CREATE INDEX idx_messages_sender_id ON public.messages USING btree (sender_id);
 
 
 --
+-- Name: idx_messages_file_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_messages_file_id ON public.messages USING btree (file_id);
+
+--
 -- Name: idx_receiver; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_receiver ON public.friendship_requests USING btree (receiver_id);
-
-
---
--- Name: idx_text_msg; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_text_msg ON public.texts USING btree (message_id);
-
 
 --
 -- Name: idx_users_phone_number; Type: INDEX; Schema: public; Owner: -
@@ -377,6 +367,11 @@ CREATE UNIQUE INDEX idx_users_phone_number
 CREATE UNIQUE INDEX idx_users_uid 
     ON public.users USING btree (uid) WHERE deleted_at IS NULL;
 
+--
+-- Name: idx_user_files_user; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_user_files_user ON public.user_files USING btree (user_id);
 
 --
 -- PostgreSQL database dump complete

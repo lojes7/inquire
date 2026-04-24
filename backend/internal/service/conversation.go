@@ -36,7 +36,7 @@ func ChatHistoryList(userID, conversationID uint64) ([]model.ChatHistoryResp, er
 			m.status, 
 			m.updated_at,
 			CASE 
-			WHEN m.status IN (?, ?) THEN json_build_object('text', t.text)
+			WHEN m.status IN (?, ?) THEN json_build_object('text', m.content)
 			WHEN m.status = ? THEN json_build_object(
                'file_name', f.file_name,
                'file_url', f.file_url,
@@ -48,8 +48,7 @@ func ChatHistoryList(userID, conversationID uint64) ([]model.ChatHistoryResp, er
 			FROM messages m
 			LEFT JOIN users u ON u.id = m.sender_id AND u.deleted_at IS NULL
 			LEFT JOIN message_users mu ON mu.message_id = m.id AND mu.user_id = ? AND mu.deleted_at IS NULL
-			LEFT JOIN texts t ON t.message_id = m.id AND t.deleted_at IS NULL
-			LEFT JOIN files f ON f.message_id = m.id AND f.deleted_at IS NULL
+			LEFT JOIN files f ON f.id = m.file_id AND f.deleted_at IS NULL
 			WHERE m.conversation_id = ? AND m.status != ? AND m.deleted_at IS NULL AND (mu.is_deleted = false OR mu.is_deleted IS NULL)
 			ORDER BY m.updated_at DESC`
 
@@ -77,14 +76,13 @@ func ConversationList(userID uint64) ([]model.ConversationListResp, error) {
        	cu.conversation_id,
        	cu.unread_count,
        	CASE 
-  			WHEN m.status IN (?, ?) THEN t.text
+  			WHEN m.status IN (?, ?) THEN m.content
   			WHEN m.status = ? THEN f.file_name
   			ELSE ''
 		END AS content
 		FROM conversation_users cu 
 		LEFT JOIN messages m ON m.id = cu.last_message_id AND m.deleted_at IS NULL
-		LEFT JOIN files f ON f.message_id = m.id AND f.deleted_at IS NULL
-		LEFT JOIN texts t ON t.message_id = m.id AND t.deleted_at IS NULL
+		LEFT JOIN files f ON f.id = m.file_id AND f.deleted_at IS NULL
 		WHERE cu.user_id = ? AND cu.deleted_at IS NULL
 		ORDER BY cu.is_pinned DESC, cu.updated_at DESC `
 

@@ -76,19 +76,11 @@ func createSystemMessage(tx *gorm.DB, content string, conversationID, newID uint
 		MyModel: model.MyModel{
 			ID: newID,
 		},
-		Status: model.SYSTEM,
-	}
-	newText := model.Text{
-		Text:      content,
-		MessageID: newID,
-	}
-	res := tx.Create(&newMsg)
-	if res.Error != nil {
-		log.Println(res.Error)
-		return secure.Wrap(500, "创建系统消息失败", res.Error)
+		Status:  model.SYSTEM,
+		Content: content,
 	}
 
-	res = tx.Create(&newText)
+	res := tx.Create(&newMsg)
 	if res.Error != nil {
 		log.Println(res.Error)
 		return secure.Wrap(500, "创建系统消息失败", res.Error)
@@ -145,20 +137,12 @@ func SendText(senderID, conversationID uint64, content string) (uint64, error) {
 		MyModel: model.MyModel{
 			ID: newID,
 		},
+		Content: content,
 	}
-	newText := model.Text{
-		Text:      content,
-		MessageID: newID,
-	}
+
 	db := infra.GetDB()
 	err = db.Transaction(func(tx *gorm.DB) error {
 		res := tx.Create(&newMsg)
-		if res.Error != nil {
-			log.Println(res.Error)
-			return secure.Wrap(500, "发送消息失败", res.Error)
-		}
-
-		res = tx.Create(&newText)
 		if res.Error != nil {
 			log.Println(res.Error)
 			return secure.Wrap(500, "发送消息失败", res.Error)
@@ -197,15 +181,17 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 		return nil, err
 	}
 
-	newID := utils.NewUniqueID()
-
+	// 此为新文件的 id
+	newFileID := utils.NewUniqueID()
+	// 新消息的 id
+	newMsgID := utils.NewUniqueID()
 	// 获取 uploads 目录
 	uploadDir := infra.GetFilePath()
 
-	// 生成文件路径，使用newID作为文件名，保持原扩展名
+	// 生成文件路径，使用newID即文件表中的id作为文件名，保持原扩展名
 	ext := filepath.Ext(file.Filename)
 	fileName := strings.TrimSuffix(file.Filename, ext) // 原文件名
-	filePath := filepath.Join(uploadDir, fmt.Sprintf("%d%s", newID, ext))
+	filePath := filepath.Join(uploadDir, fmt.Sprintf("%d%s", newFileID, ext))
 
 	// 保存文件
 	if err := saveFile(file, filePath); err != nil {
@@ -217,33 +203,39 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 	fileSize := file.Size
 	fileType := getFileType(filePath)
 
+	// 新消息
 	newMsg := model.Message{
+		MyModel: model.MyModel{
+			ID: newMsgID,
+		},
 		SenderID:       senderID,
 		ConversationID: conversationID,
 		Status:         model.FILE,
-		MyModel: model.MyModel{
-			ID: newID,
-		},
+		FileID:         newFileID,
 	}
 
 	// 新文件
 	newFile := model.File{
-		FileName:  fileName,
-		FileType:  fileType,
-		FileURL:   filePath,
-		FileSize:  fileSize,
-		MessageID: newID,
+		MyModel: model.MyModel{
+			ID: newFileID,
+		},
+		FileName: fileName,
+		FileType: fileType,
+		FileURL:  filePath,
+		FileSize: fileSize,
 	}
 
 	// 保存到数据库
 	db := infra.GetDB()
 	resp := &model.SendFileResp{
-		MessageID: newID,
+		MessageID: newFileID,
 		FileName:  fileName,
 		FileSize:  fileSize,
 		FileType:  fileType,
 	}
+
 	err = db.Transaction(func(tx *gorm.DB) error {
+
 		res := tx.Create(&newMsg)
 		if res.Error != nil {
 			log.Println(res.Error)
@@ -256,7 +248,7 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 			return secure.Wrap(500, "发送文件消息失败", res.Error)
 		}
 
-		err := updateLastMessageID(tx, conversationID, newID)
+		err := updateLastMessageID(tx, conversationID, newMsgID)
 		if err != nil {
 			return err
 		}
@@ -274,7 +266,7 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 		// actually frontend might need different structure
 		// resp is: MessageID, FileName, FileSize, FileType
 		notifyConversationUsers(conversationID, "new_message", map[string]any{
-			"message_id":      newID,
+			"message_id":      newMsgID,
 			"conversation_id": conversationID,
 			"sender_id":       senderID,
 			"content":         resp,       // Sending the file response object as content
@@ -293,7 +285,7 @@ func DownloadFile(userID, messageID uint64) (string, error) {
 	var file model.File
 	err := db.Model(&model.File{}).
 		Select("files.file_url").
-		Joins("JOIN messages m ON m.id = files.message_id").
+		Joins("JOIN messages m ON m.file_id = files.id").
 		Joins("JOIN conversation_users cu ON cu.conversation_id = m.conversation_id").
 		Where("files.message_id = ? AND cu.user_id = ? AND m.status = ?",
 			messageID, userID, model.FILE).
