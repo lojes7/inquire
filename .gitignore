@@ -30,3 +30,5 @@ vvechat.iml
 
 # 其他文件
 /backend/assets
+task.md
+env_conf.sh

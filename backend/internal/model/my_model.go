@@ -6,6 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
+// 消息状态常量
 const (
 	TEXT int = iota
 	RECALLED
@@ -13,6 +14,7 @@ const (
 	FILE
 )
 
+// 会话类型常量
 const (
 	PRIVATE int = iota
 	GROUP

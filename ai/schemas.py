@@ -29,10 +29,6 @@ class MultiModalInputItem(BaseModel):
 
 
 class AskRequest(BaseModel):
-    mode: Literal["multimodal_fusion"] = Field(
-        default="multimodal_fusion",
-        description="Request mode, only multimodal_fusion is supported",
-    )
     input_data: list[MultiModalInputItem] = Field(
         ...,
         min_length=1,
@@ -46,7 +42,7 @@ class AskRequest(BaseModel):
     @model_validator(mode="after")
     def validate_mode_payload(self) -> "AskRequest":
         if not self.input_data:
-            raise ValueError("input_data cannot be empty when mode=multimodal_fusion.")
+            raise ValueError("input_data cannot be empty.")
         return self
 
 

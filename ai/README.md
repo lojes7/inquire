@@ -31,7 +31,7 @@
 
 ### POST `/ask`
 
-仅支持 `mode=multimodal_fusion`。
+接口固定执行多模态融合向量
 
 ### 多模态融合向量请求（本地绝对路径）
 
@@ -39,7 +39,6 @@
 curl -X POST http://localhost:8001/ask \
    -H "Content-Type: application/json" \
    -d '{
-      "mode": "multimodal_fusion",
       "input_data": [
          {"text": "这是一段测试文本，用于生成多模态融合向量"},
          {"image": "/data/inquire/media/demo.png"},
