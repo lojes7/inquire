@@ -5,7 +5,10 @@ import traceback
 from schemas import AskRequest, AskResponse
 from service import process_ask_request
 from config import settings
-app = FastAPI(title="Inquire AI Service", description="AI embedding layer using DashScope TextEmbedding API")
+app = FastAPI(
+    title="Inquire AI Service",
+    description="AI embedding layer using DashScope MultiModalEmbedding API",
+)
 @app.post("/ask", response_model=AskResponse)
 async def ask_endpoint(request: AskRequest):
     try:

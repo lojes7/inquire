@@ -1,23 +1,63 @@
-# Inquire AI Service 
+# Inquire AI Service
 
-## 至少需要
+## 功能说明
+
+本服务支持多模态融合向量（`qwen3-vl-embedding`）。
+
+多模态融合向量固定使用以下参数：
+
+- `enable_fusion=true`
+- `dimension=1024`
+
+## 环境要求
+
 - Python 3.11+
-- Aliyun DashScope API Key
+- DashScope API Key
 
-## How to run locally
+## 配置说明
+
+在 .env 中配置（未配置则使用默认值）：
+
+- `DASHSCOPE_API_KEY`：必填
+- `PORT`：服务端口，默认 `8001`
+
+## 本地运行
+
 1. `cd ai`
-2. 在 `.env` 文件中配置：
-   - `DASHSCOPE_API_KEY`
-3. `pip install -r requirements.txt`
-4. `python main.py`
+2. `pip install -r requirements.txt`
+3. `python main.py`
 
-## 请求示例
+## 接口说明
 
-### Text Embedding
+### POST `/ask`
+
+仅支持 `mode=multimodal_fusion`。
+
+### 多模态融合向量请求（本地绝对路径）
+
 ```bash
 curl -X POST http://localhost:8001/ask \
-     -H "Content-Type: application/json" \
-     -d '{"input_text": "衣服的质量杠杠的"}'
+   -H "Content-Type: application/json" \
+   -d '{
+      "mode": "multimodal_fusion",
+      "input_data": [
+         {"text": "这是一段测试文本，用于生成多模态融合向量"},
+         {"image": "/data/inquire/media/demo.png"},
+         {"video": "/data/inquire/media/demo.mp4"}
+      ]
+   }'
 ```
 
-返回的 `answer` 字段包含 `model`、`output`、`usage` 和 `request_id`。
+## 返回结构
+
+`status=success` 时，`answer` 中包含：
+
+- `model`
+- `output`
+- `usage`
+- `request_id`
+
+多模态请求还会返回：
+
+- `enable_fusion`（固定为 `true`）
+- `dimension`（固定为 `1024`）
