@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"mime/multipart"
-	"path/filepath"
-	"strings"
+	"os"
 	"time"
 
 	"github.com/lojes7/inquire/internal/model"
@@ -215,23 +213,11 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 	newFileID := utils.NewUniqueID()
 	// 新消息的 id
 	newMsgID := utils.NewUniqueID()
-	// 获取 uploads 目录
-	uploadDir := infra.GetFilePath()
 
-	// 生成文件路径，使用newID即文件表中的id作为文件名，保持原扩展名
-	ext := filepath.Ext(file.Filename)
-	fileName := strings.TrimSuffix(file.Filename, ext) // 原文件名
-	filePath := filepath.Join(uploadDir, fmt.Sprintf("%d%s", newFileID, ext))
-
-	// 保存文件
-	if err := saveFile(file, filePath); err != nil {
-		log.Println(err)
-		return nil, secure.Wrap(500, "保存文件失败", err)
+	savedFileInfo, err := SaveFileIntoServer(file)
+	if err != nil {
+		return nil, err
 	}
-
-	// 获取文件信息
-	fileSize := file.Size
-	fileType := getFileType(filePath)
 
 	// 新消息
 	newMsg := model.Message{
@@ -249,19 +235,19 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 		MyModel: model.MyModel{
 			ID: newFileID,
 		},
-		FileName: fileName,
-		FileType: fileType,
-		FileURL:  filePath,
-		FileSize: fileSize,
+		FileName: savedFileInfo.FileName,
+		FileType: savedFileInfo.FileType,
+		FileURL:  savedFileInfo.FilePath,
+		FileSize: savedFileInfo.FileSize,
 	}
 
 	// 保存到数据库
 	db := infra.GetDB()
 	resp := &model.SendFileResp{
 		MessageID: newFileID,
-		FileName:  fileName,
-		FileSize:  fileSize,
-		FileType:  fileType,
+		FileName:  savedFileInfo.FileName,
+		FileSize:  savedFileInfo.FileSize,
+		FileType:  savedFileInfo.FileType,
 	}
 
 	err = db.Transaction(func(tx *gorm.DB) error {
@@ -272,7 +258,8 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 			return secure.Wrap(500, "发送文件消息失败", res.Error)
 		}
 
-		res = tx.Omit("ContentVector").Create(&newFile)
+		res = tx.Omit("ContentVector").
+			Create(&newFile)
 		if res.Error != nil {
 			log.Println(res.Error)
 			return secure.Wrap(500, "发送文件消息失败", res.Error)
@@ -295,6 +282,12 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 
 		return nil
 	})
+
+	if err != nil {
+		if removeErr := os.Remove(savedFileInfo.FilePath); removeErr != nil && !errors.Is(removeErr, os.ErrNotExist) {
+			log.Printf("数据库写入失败后清理文件失败: %v", removeErr)
+		}
+	}
 
 	if err == nil {
 		// 发送 websocket 通知
