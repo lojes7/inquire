@@ -16,6 +16,7 @@ type File struct {
 	FileType      string `gorm:"type:varchar(50);not null"`
 	FileURL       string `gorm:"type:varchar(255);not null"`
 	FileSize      int64  `gorm:"not null"`
+	HashValue     string `gorm:"type:char(64);not null;"`
 	ContentVector Vector `gorm:"type:vector(1536)"`
 }
 

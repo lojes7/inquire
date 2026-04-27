@@ -86,6 +86,7 @@ CREATE TABLE public.files (
     file_type character varying(50) NOT NULL,
     file_url character varying(255) NOT NULL,
     file_size bigint NOT NULL,
+    hash_value character(64) NOT NULL,
     content_vector public.vector
 );
 
@@ -347,6 +348,13 @@ CREATE INDEX idx_messages_sender_id ON public.messages USING btree (sender_id);
 CREATE INDEX idx_messages_file_id ON public.messages USING btree (file_id);
 
 --
+-- Name: idx_files_hash_value; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_files_hash_value
+    ON public.files USING btree (hash_value) WHERE deleted_at IS NULL;
+
+--
 -- Name: idx_receiver; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -374,8 +382,14 @@ CREATE UNIQUE INDEX idx_users_uid
 CREATE INDEX idx_user_files_user ON public.user_files USING btree (user_id);
 
 --
+-- Name: idx_user_file_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_user_file_unique
+    ON public.user_files USING btree (user_id, file_id) WHERE deleted_at IS NULL;
+
+--
 -- PostgreSQL database dump complete
 --
 
 \unrestrict MEWDCBhaKYTHbu6C9on52BgkQi5rOaSrMPgFRdpmv9ni18SHHklPahc16TKsvmZ
-
