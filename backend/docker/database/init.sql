@@ -86,8 +86,22 @@ CREATE TABLE public.files (
     file_type character varying(50) NOT NULL,
     file_url character varying(255) NOT NULL,
     file_size bigint NOT NULL,
-    hash_value character(64) NOT NULL,
-    content_vector public.vector
+    hash_value character(64) NOT NULL
+);
+
+
+--
+-- Name: file_vectors; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.file_vectors (
+    id bigint NOT NULL,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone,
+    file_id bigint NOT NULL,
+    vector public.vector(1024) NOT NULL,
+    number integer NOT NULL
 );
 
 
@@ -223,6 +237,14 @@ ALTER TABLE ONLY public.files
 
 
 --
+-- Name: file_vectors file_vectors_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.file_vectors
+    ADD CONSTRAINT file_vectors_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: friendship_requests friendship_requests_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -353,6 +375,20 @@ CREATE INDEX idx_messages_file_id ON public.messages USING btree (file_id);
 
 CREATE UNIQUE INDEX idx_files_hash_value
     ON public.files USING btree (hash_value) WHERE deleted_at IS NULL;
+
+--
+-- Name: idx_file_vectors_file_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_file_vectors_file_id
+    ON public.file_vectors USING btree (file_id);
+
+--
+-- Name: idx_file_vectors_file_id_number; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX idx_file_vectors_file_id_number
+    ON public.file_vectors USING btree (file_id, number) WHERE deleted_at IS NULL;
 
 --
 -- Name: idx_receiver; Type: INDEX; Schema: public; Owner: -

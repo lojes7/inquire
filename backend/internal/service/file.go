@@ -33,6 +33,7 @@ type SavedFileInfo struct {
 	FileExt          string
 }
 
+// sanitizeFilename 进行基本的文件名清理，防止路径穿越和非法字符。
 func sanitizeFilename(fileName string) string {
 	cleaned := strings.TrimSpace(fileName)
 	cleaned = strings.ReplaceAll(cleaned, "\\", "/")
@@ -46,6 +47,7 @@ func sanitizeFilename(fileName string) string {
 	return cleaned
 }
 
+// SaveFileIntoServer 负责将上传的文件保存到服务器磁盘，并返回保存后的文件信息。
 func SaveFileIntoServer(file *multipart.FileHeader) (*SavedFileInfo, error) {
 	if file == nil {
 		return nil, secure.Wrap(400, "文件不能为空", errors.New("nil file header"))
@@ -99,6 +101,7 @@ func SaveFileIntoServer(file *multipart.FileHeader) (*SavedFileInfo, error) {
 	return nil, secure.Wrap(500, "保存文件失败", errors.New("文件名冲突重试失败"))
 }
 
+// saveFile SaveFileIntoServer 的 helper-func
 func saveFile(file *multipart.FileHeader, dst string) error {
 	src, err := file.Open()
 	if err != nil {
@@ -124,6 +127,7 @@ func saveFile(file *multipart.FileHeader, dst string) error {
 	return nil
 }
 
+// getFileType 基于文件内容检测 MIME 类型，fallback 到 application/octet-stream。
 func getFileType(fileName string) string {
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -155,6 +159,7 @@ func getFileType(fileName string) string {
 	return contentType
 }
 
+// computeFileHash 计算上传文件的 SHA-256 哈希值，用于后续的去重逻辑。
 func computeFileHash(file *multipart.FileHeader) (string, error) {
 	if file == nil {
 		return "", secure.Wrap(400, "文件不能为空", errors.New("nil file header"))
@@ -181,6 +186,7 @@ func computeFileHash(file *multipart.FileHeader) (string, error) {
 	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
+// getExistingFileByHash 根据文件哈希查询数据库，判断是否已有相同内容的文件记录。
 func getExistingFileByHash(tx *gorm.DB, hashValue string) (*model.File, error) {
 	var file model.File
 	// model.File 使用了 gorm 软删除，默认查询会自动附带 deleted_at IS NULL，
@@ -199,6 +205,7 @@ func getExistingFileByHash(tx *gorm.DB, hashValue string) (*model.File, error) {
 	return &file, nil
 }
 
+// isFileHashUniqueViolation 判断数据库错误是否由 files.hash_value 唯一索引冲突引起。
 func isFileHashUniqueViolation(err error) bool {
 	if err == nil {
 		return false
@@ -213,6 +220,7 @@ func isFileHashUniqueViolation(err error) bool {
 	return pgErr.Code == "23505" && strings.Contains(pgErr.ConstraintName, fileHashUniqueIndexName)
 }
 
+// createFileRecord 在数据库中创建新的文件记录，返回创建的记录或特定错误。
 func createFileRecord(tx *gorm.DB, hashValue string, savedFileInfo *SavedFileInfo) (*model.File, error) {
 	if savedFileInfo == nil {
 		return nil, secure.Wrap(500, "创建文件记录失败", errors.New("saved file info is nil"))
@@ -236,8 +244,6 @@ func createFileRecord(tx *gorm.DB, hashValue string, savedFileInfo *SavedFileInf
 		return nil, secure.Wrap(500, "创建文件记录失败", errors.New("file path is empty"))
 	}
 
-	// 这里改为“先落盘，再写 files”：写入时直接保存完整文件元信息，
-	// 不再出现 file_url 为空的中间状态，流程更清晰。
 	newFile := model.File{
 		FileName:  fileName,
 		FileType:  fileType,
@@ -246,7 +252,7 @@ func createFileRecord(tx *gorm.DB, hashValue string, savedFileInfo *SavedFileInf
 		HashValue: hashValue,
 	}
 
-	if err := tx.Omit("ContentVector").Create(&newFile).Error; err != nil {
+	if err := tx.Create(&newFile).Error; err != nil {
 		// 并发上传同一文件时，可能会命中 hash_value 唯一索引。
 		// 这里返回哨兵错误，交给上层执行“回查并复用”的补偿流程。
 		if isFileHashUniqueViolation(err) {
