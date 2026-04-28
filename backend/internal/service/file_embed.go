@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-// ProcessFileEmbedding 处理文件的向量嵌入管线：
+// EmbedFile 处理文件的向量嵌入管线：
 // 1. 幂等检查 — 若已有向量则跳过
 // 2. 调用 AI 服务生成向量
 // 3. 事务批量写入 file_vectors 表

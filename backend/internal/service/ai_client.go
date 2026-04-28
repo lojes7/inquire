@@ -23,7 +23,7 @@ func getAIServiceURL() string {
 const embedMaxRetry = 2
 
 // embedRequestTimeout AI 服务的请求超时时间
-const embedRequestTimeout = 30 * time.Second
+const embedRequestTimeout = 120 * time.Second
 
 // EmbedReq 发送给 AI 服务的嵌入请求
 type EmbedReq struct {
@@ -67,6 +67,7 @@ func callAIEmbed(filePath string, fileID uint64, fileType string) (*EmbedResp, e
 
 	baseURL := getAIServiceURL()
 	endpoint := baseURL + "/embed"
+	log.Printf("[ai-client] Calling %s for file_id=%d path=%s type=%s", endpoint, fileID, filePath, fileType)
 
 	var lastErr error
 	for i := 0; i <= embedMaxRetry; i++ {
@@ -80,7 +81,8 @@ func callAIEmbed(filePath string, fileID uint64, fileType string) (*EmbedResp, e
 			return resp, nil
 		}
 		lastErr = err
-		log.Printf("[ai-client] call failed for file_id=%d (attempt %d): %v", fileID, i+1, err)
+		log.Printf("[ai-client] call failed for file_id=%d (attempt %d/%d): %v",
+			fileID, i+1, embedMaxRetry+1, err)
 	}
 
 	return nil, fmt.Errorf("callAIEmbed failed after %d retries: %w", embedMaxRetry+1, lastErr)
@@ -104,17 +106,21 @@ func callEmbedOnce(endpoint string, payload []byte) (*EmbedResp, error) {
 		return nil, fmt.Errorf("read response body: %w", err)
 	}
 
-	var embedResp EmbedResp
-	if err := json.Unmarshal(body, &embedResp); err != nil {
-		return nil, fmt.Errorf("unmarshal response: %w (body=%s)", err, string(body))
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("[ai-client] HTTP %d from AI service, body: %s", resp.StatusCode, string(body))
 	}
 
-	if embedResp.Status != "success" {
+	var embedResp EmbedResp
+	if err := json.Unmarshal(body, &embedResp); err != nil {
+		return nil, fmt.Errorf("unmarshal response (HTTP %d): %w (body=%s)", resp.StatusCode, err, string(body))
+	}
+
+	if resp.StatusCode != http.StatusOK || embedResp.Status != "success" {
 		errMsg := embedResp.Answer
 		if errMsg == "" {
-			errMsg = "unknown error from AI service"
+			errMsg = fmt.Sprintf("HTTP %d", resp.StatusCode)
 		}
-		return nil, fmt.Errorf("AI service returned error: %s", errMsg)
+		return nil, fmt.Errorf("AI service error (HTTP %d): %s", resp.StatusCode, errMsg)
 	}
 
 	if len(embedResp.Vectors) == 0 {

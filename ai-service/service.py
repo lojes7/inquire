@@ -95,13 +95,43 @@ def _call_embed_for_text(text: str) -> list[float]:
     result = call_dashscope_multimodal_fusion_embedding(
         input_data=[{"text": text.strip()}],
     )
-    # DashScope 融合嵌入输出结构：output["embedding"] 是一个 float 列表
-    output = result.get("output", {})
-    if isinstance(output, dict):
-        embedding = output.get("embedding")
+    output = result.get("output")
+    if output is not None:
+        embedding = _extract_embedding(output)
         if isinstance(embedding, list) and embedding:
-            return embedding
+            return list(embedding)
     raise Exception("DashScope did not return a valid embedding for text input.")
+
+
+def _extract_embedding(output: object) -> object:
+    """尝试从 DashScope SDK 返回的 output 对象中提取 embedding 向量列表。"""
+    # 方式 1: 对象属性 .embedding
+    val = getattr(output, "embedding", None)
+    if isinstance(val, list) and val:
+        return val
+
+    # 方式 2: dict-like .get("embedding") 或 .get("embeddings")
+    if hasattr(output, "get") and callable(output.get):  # type: ignore[union-attr]
+        for key in ("embeddings", "embedding"):
+            val = output.get(key)  # type: ignore[union-attr]
+            if isinstance(val, list) and val:
+                # DashScope 多模态融合返回结构: {"embeddings": [{"embedding": [...], ...}]}
+                first = val[0]
+                if isinstance(first, dict):
+                    inner = first.get("embedding")
+                    if isinstance(inner, list) and inner:
+                        return inner
+                return val
+            if isinstance(val, dict):
+                inner = val.get("embedding")
+                if isinstance(inner, list) and inner:
+                    return inner
+
+    # 方式 3: output 本身就是一个 list（可能直接是向量）
+    if isinstance(output, list) and output:
+        return output
+
+    return None
 
 
 def _call_embed_for_media(file_path: str, media_type: str) -> list[float]:
@@ -117,11 +147,11 @@ def _call_embed_for_media(file_path: str, media_type: str) -> list[float]:
         raise ValueError(f"Unsupported media type for direct embedding: {media_type}")
 
     result = call_dashscope_multimodal_fusion_embedding(input_data=[input_item])
-    output = result.get("output", {})
-    if isinstance(output, dict):
-        embedding = output.get("embedding")
+    output = result.get("output")
+    if output is not None:
+        embedding = _extract_embedding(output)
         if isinstance(embedding, list) and embedding:
-            return embedding
+            return list(embedding)
     raise Exception(f"DashScope did not return a valid embedding for media input: {file_path}")
 
 
@@ -135,6 +165,7 @@ def process_embed_request(file_path: str, file_id: int, file_type: str) -> Embed
     # 校验文件存在
     resolved = Path(file_path).resolve()
     if not resolved.is_file():
+        logger.error("File not found: %s (file_id=%s, original_path=%s)", resolved, file_id, file_path)
         raise ValueError(f"File not found: {resolved}")
 
     normalized_type = file_type.lower().split(";")[0].strip()
@@ -152,15 +183,20 @@ def process_embed_request(file_path: str, file_id: int, file_type: str) -> Embed
     # 不支持直接嵌入 → 提取文本 → 分块 → 逐块嵌入
     parser = get_parser(str(resolved), normalized_type)
     if parser is None:
+        logger.error(
+            "No parser for file_id=%s type=%s path=%s ext=%s",
+            file_id, normalized_type, resolved, resolved.suffix.lower(),
+        )
         raise ValueError(
-            f"No parser available for file type '{normalized_type}' "
-            f"(file_id={file_id}, path={resolved})"
+            f"No parser available for file type '{normalized_type}' (extension: {resolved.suffix})"
+            f" (file_id={file_id}, path={resolved})"
         )
 
     logger.info("File %s (%s) → extract text via %s", file_id, normalized_type, type(parser).__name__)
     extracted_text = parser.extract_text(str(resolved))
 
     if not extracted_text or not extracted_text.strip():
+        logger.error("File %s produced empty text after extraction", file_id)
         raise ValueError(f"File {file_id} produced empty text after extraction")
 
     logger.info("File %s → extracted %d chars, chunking...", file_id, len(extracted_text))

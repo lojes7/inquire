@@ -18,6 +18,21 @@ _EXTENSION_PARSERS: dict[str, BaseParser] = {
     ".log": TextParser(),
     ".csv": TextParser(),
     ".md": TextParser(),
+    ".html": TextParser(),
+    ".htm": TextParser(),
+    ".xml": TextParser(),
+    ".json": TextParser(),
+    ".yaml": TextParser(),
+    ".yml": TextParser(),
+    ".py": TextParser(),
+    ".js": TextParser(),
+    ".ts": TextParser(),
+    ".go": TextParser(),
+    ".java": TextParser(),
+    ".c": TextParser(),
+    ".cpp": TextParser(),
+    ".h": TextParser(),
+    ".sh": TextParser(),
     ".pdf": PDFParser(),
     ".docx": DocxParser(),
     ".pptx": PptxParser(),
@@ -28,9 +43,16 @@ _MIME_PARSERS: dict[str, BaseParser] = {
     "text/plain": TextParser(),
     "text/csv": TextParser(),
     "text/markdown": TextParser(),
+    "text/html": TextParser(),
+    "text/xml": TextParser(),
+    "application/json": TextParser(),
+    "application/xml": TextParser(),
     "application/pdf": PDFParser(),
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": DocxParser(),
     "application/vnd.openxmlformats-officedocument.presentationml.presentation": PptxParser(),
+    # Go 的 http.DetectContentType 将 ZIP 系 Office 文档识别为 application/zip
+    "application/zip": TextParser(),  # 兜底: 优先走扩展名匹配，无匹配时当纯文本
+    "application/octet-stream": TextParser(),  # 兜底: 当纯文本尝试
 }
 
 
