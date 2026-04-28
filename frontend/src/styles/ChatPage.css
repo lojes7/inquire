@@ -26,14 +26,6 @@
   padding: 20px;
 }
 
-.file-header h2 {
-  font-size: 18px;
-  font-weight: 700;
-  color: #4c1d95;
-  margin-bottom: 10px;
-}
-
-/* 上传 */
 .upload-box {
   border: 2px dashed #d1c4ff;
   padding: 24px;
@@ -41,13 +33,6 @@
   text-align: center;
   cursor: pointer;
   background: white;
-  transition: all 0.25s ease;
-}
-
-.upload-box:hover {
-  border-color: #7c3aed;
-  background: #f5f3ff;
-  transform: translateY(-2px);
 }
 
 /* 文件列表 */
@@ -61,9 +46,6 @@
   padding: 12px 14px;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  background: transparent;
-  font-size: 14px;
 }
 
 .file-item:hover {
@@ -72,13 +54,9 @@
 
 .file-item.active {
   background: #ddd6fe;
-  border: 1px solid #7c3aed;
-  color: #4c1d95;
-  font-weight: 600;
 }
 
 /* ================= 聊天区 ================= */
-/* ================= 聊天区整体 ================= */
 .chat-area {
   flex: 1;
   display: flex;
@@ -87,46 +65,44 @@
   background: #ffffff;
 }
 
-/* 顶部固定 */
+/* 顶部 */
 .chat-header {
   height: 60px;
   flex-shrink: 0;
   border-bottom: 1px solid #eee;
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 0 24px;
-  background: white;
 }
 
-/* ================= 聊天内容（关键） ================= */
+/* ================= 聊天内容 ================= */
 .chat-content {
   flex: 1;
   overflow-y: auto;
   padding: 20px 40px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
-/* 每一行 */
+/* 行 */
 .chat-row {
   display: flex;
   width: 100%;
 }
 
-/* AI 左边 */
+/* 左（AI） */
 .chat-row.bot {
   justify-content: flex-start;
   align-items: flex-start;
 }
 
-/* 用户 右边 */
+/* 右（用户） */
 .chat-row.user {
   justify-content: flex-end;
 }
 
-/* AI头像 */
+/* 头像 */
 .avatar {
   width: 36px;
   height: 36px;
@@ -137,22 +113,22 @@
   justify-content: center;
   color: white;
   margin-right: 10px;
-  flex-shrink: 0;
 }
 
-/* 消息气泡 */
+/* 气泡 */
 .message {
   max-width: 60%;
-  padding: 14px 16px;
+  padding: 12px 16px;
   border-radius: 16px;
   font-size: 14px;
   line-height: 1.6;
+  word-break: break-word;
 }
 
 /* AI气泡 */
 .message.bot {
   background: #f3f4f6;
-  border: 1px solid #eee;
+  border: 1px solid #e5e7eb;
 }
 
 /* 用户气泡 */
@@ -160,26 +136,46 @@
   background: linear-gradient(135deg,#7c3aed,#4c1d95);
   color: white;
 }
+/* 消息气泡 */
+.message {
+  max-width: 60%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+  word-break: break-word;
+}
 
-/* ================= 输入区（关键重点） ================= */
+/* AI */
+.message.bot {
+  background: #f3f4f6;
+  border: 1px solid #eee;
+}
+
+/* 用户 */
+.message.user {
+  background: linear-gradient(135deg,#7c3aed,#4c1d95);
+  color: white;
+}
+
+/* ================= 输入区 ================= */
 .chat-footer {
   flex-shrink: 0;
-  padding: 16px 24px;
+  padding: 12px 20px;
   border-top: 1px solid #eee;
   background: white;
 }
 
-/* 输入框占满 */
+/* 输入容器 */
 .input-box {
-  width: 100%;
   display: flex;
-  gap: 12px;
+  gap: 10px;
   background: #f5f6ff;
   padding: 10px;
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
-/* textarea */
+/* 输入框 */
 textarea {
   flex: 1;
   border: none;
@@ -187,62 +183,107 @@ textarea {
   resize: none;
   background: transparent;
   font-size: 14px;
-  min-height: 60px;
+  min-height: 40px;
 }
 
 /* 发送按钮 */
 .send-btn {
   width: 50px;
-  height: 50px;
+  height: 40px;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   background: linear-gradient(135deg,#7c3aed,#4c1d95);
   color: white;
-  font-size: 18px;
   cursor: pointer;
-}
-/* ================= 顶部操作按钮 ================= */
-.header-actions {
-  display: flex;
-  gap: 10px;
 }
 
-/* 通用按钮 */
-.action-btn {
+/* ================= 空状态 ================= */
+.empty {
+  text-align: center;
+  color: #999;
+}
+.chat-input {
+  padding: 16px 20px;
+  border-top: 1px solid #eee;
+  background: white;
+}
+
+/* 容器 */
+.chat-input-box {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  background: #f5f6ff;
+  padding: 10px 12px;
+  border-radius: 14px;
+}
+
+/* 输入 */
+.chat-input-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+}
+
+/* 按钮 */
+.chat-input-box button {
   padding: 8px 14px;
+  border: none;
   border-radius: 10px;
+  background: linear-gradient(135deg,#7c3aed,#4c1d95);
+  color: white;
   font-size: 13px;
   cursor: pointer;
-  border: none;
   transition: all 0.2s ease;
 }
 
-/* 导出（主功能） */
-.action-btn.export {
-  background: #ede9fe;
-  color: #5b21b6;
-}
-
-.action-btn.export:hover {
-  background: #ddd6fe;
+.chat-input-box button:hover {
   transform: translateY(-1px);
 }
 
-/* 清空（危险操作） */
-.action-btn.clear {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-.action-btn.clear:hover {
-  background: #fee2e2;
-  transform: translateY(-1px);
-}
-
-/* 点击反馈 */
-.action-btn:active {
+.chat-input-box button:active {
   transform: scale(0.95);
+}
+/* 右侧整体 */
+.chat-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* 聊天内容区域（可滚动） */
+.chat-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* 输入框固定在底部 */
+.chat-input {
+  display: flex;
+  padding: 12px;
+  border-top: 1px solid #ddd;
+  background: #fff;
+}
+
+/* 输入框样式 */
+.chat-input input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+}
+
+/* 按钮 */
+.chat-input button {
+  margin-left: 10px;
+  padding: 10px 16px;
+  border: none;
+  background: #4f46e5;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
 }
