@@ -402,6 +402,95 @@
                 }
             }
         },
+        "/auth/files": {
+            "get": {
+                "description": "获取当前用户工作区中的所有文件",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "file"
+                ],
+                "summary": "工作区文件列表",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "查询成功",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/files/upload": {
+            "post": {
+                "description": "上传文件到个人工作区，不在任何会话中",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "file"
+                ],
+                "summary": "上传文件到工作区",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "文件",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "上传成功",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "没有接收到文件",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/files/{message_id}": {
             "get": {
                 "description": "Download a file by message ID",
@@ -815,56 +904,6 @@
                 }
             }
         },
-        "/auth/head/{user_id}": {
-            "get": {
-                "description": "获取指定用户的头像文件（流式传输）",
-                "produces": [
-                    "image/png",
-                    "image/jpeg",
-                    "image/gif"
-                ],
-                "tags": [
-                    "user"
-                ],
-                "summary": "获取用户头像",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bearer Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "用户ID",
-                        "name": "user_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "头像文件",
-                        "schema": {
-                            "type": "file"
-                        }
-                    },
-                    "404": {
-                        "description": "用户未设置头像",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器错误",
-                        "schema": {
-                            "$ref": "#/definitions/response.Response"
-                        }
-                    }
-                }
-            }
-        },
         "/auth/info/friends/id/{id}": {
             "get": {
                 "description": "根据用户ID获取好友详细信息",
@@ -978,6 +1017,56 @@
                     },
                     "400": {
                         "description": "Uid为空或找不到好友",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/info/head/{user_id}": {
+            "get": {
+                "description": "获取指定用户的头像文件（流式传输）",
+                "produces": [
+                    "image/png",
+                    "image/jpeg",
+                    "image/gif"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "获取用户头像",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "头像文件",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "404": {
+                        "description": "用户未设置头像",
                         "schema": {
                             "$ref": "#/definitions/response.Response"
                         }
@@ -1601,6 +1690,59 @@
                 }
             }
         },
+        "/auth/messages/workspace-file": {
+            "post": {
+                "description": "从用户工作区中选择已有文件发送到指定会话",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "message"
+                ],
+                "summary": "从工作区发送文件",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "发送工作区文件请求体",
+                        "name": "req",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SendWorkspaceFileReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "发送成功",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "json解析出错",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "服务器错误",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/refresh_token": {
             "post": {
                 "description": "使用 Refresh Token 获取新的 Access Token",
@@ -1884,7 +2026,7 @@
                     "minItems": 1,
                     "uniqueItems": true,
                     "items": {
-                        "type": "integer"
+                        "type": "string"
                     }
                 }
             }
@@ -2087,6 +2229,23 @@
                     "maxLength": 1024
                 },
                 "conversation_id": {
+                    "type": "string",
+                    "example": "0"
+                }
+            }
+        },
+        "model.SendWorkspaceFileReq": {
+            "type": "object",
+            "required": [
+                "conversation_id",
+                "file_id"
+            ],
+            "properties": {
+                "conversation_id": {
+                    "type": "string",
+                    "example": "0"
+                },
+                "file_id": {
                     "type": "string",
                     "example": "0"
                 }

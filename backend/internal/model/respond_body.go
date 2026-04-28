@@ -11,6 +11,13 @@ type IDResp struct {
 	ID uint64 `json:"id,string"`
 }
 
+type FileInfoResp struct {
+	FileID   uint64 `json:"file_id,string"`
+	FileName string `json:"file_name"`
+	FileSize int64  `json:"file_size,string"`
+	FileType string `json:"file_type"`
+}
+
 // UserInfoResp 用户信息返回体
 type UserInfoResp struct {
 	ID   uint64 `json:"id,string"`
@@ -82,19 +89,22 @@ type ChatHistoryResp struct {
 
 // SendFileResp 发送文件返回体
 type SendFileResp struct {
-	MessageID uint64 `json:"message_id,string"`
-	FileName  string `json:"file_name"`
-	FileSize  int64  `json:"file_size,string"`
-	FileType  string `json:"file_type"`
+	MessageID uint64       `json:"message_id,string"`
+	FileInfo  FileInfoResp `json:"file_info"`
 }
 
-// FileSemanticSearchItemResp 文件语义检索返回体
-type FileSemanticSearchItemResp struct {
-	MessageID      uint64  `json:"message_id,string"`
-	ConversationID uint64  `json:"conversation_id,string"`
-	FileName       string  `json:"file_name"`
-	FileURL        string  `json:"file_url"`
-	FileSize       int64   `json:"file_size,string"`
-	FileType       string  `json:"file_type"`
-	Score          float64 `json:"score"`
+// UploadFileResp 上传文件到工作区返回体
+type UploadFileResp struct {
+	FileInfo FileInfoResp `json:"file_info"`
+}
+
+// WorkspaceFileListResp 工作区文件展示返回体
+type WorkspaceFileListResp struct {
+	Files []FileInfoResp `json:"files"`
+}
+
+// SendWorkspaceFileResp 发送工作区文件返回体
+type SendWorkspaceFileResp struct {
+	MessageID uint64       `json:"message_id,string"`
+	FileInfo  FileInfoResp `json:"file_info"`
 }

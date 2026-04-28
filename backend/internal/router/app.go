@@ -88,10 +88,11 @@ func Launch() *gin.Engine {
 			// 消息相关
 			message := auth.Group("/messages")
 			{
-				message.POST("/text", handler.SendText)          //发送文本消息
-				message.POST("/file", handler.SendFile)          // 发送文件
-				message.DELETE("/recall", handler.RecallMessage) //撤回消息
-				message.DELETE("/delete", handler.DeleteMessage) //删除消息
+				message.POST("/text", handler.SendText)                    // 发送文本消息
+				message.POST("/file", handler.SendFile)                    // 发送文件
+				message.POST("/workspace-file", handler.SendWorkspaceFile) // 发送工作区文件
+				message.DELETE("/recall", handler.RecallMessage)           // 撤回消息
+				message.DELETE("/delete", handler.DeleteMessage)           // 删除消息
 			}
 
 			// 会话相关
@@ -111,8 +112,8 @@ func Launch() *gin.Engine {
 			{
 				file.GET("/:message_id", handler.DownloadFile) // 下载聊天中的文件
 				file.POST("/search")                           // 语义化搜索文件
-				file.POST("/upload")                           // 上传文件到工作区
-				file.GET("")                                   // 展示工作区文件
+				file.POST("/upload", handler.UploadFile)       // 上传文件到工作区
+				file.GET("", handler.WorkspaceFileList)        // 展示工作区文件
 			}
 
 		}
