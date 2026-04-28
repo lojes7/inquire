@@ -29,6 +29,7 @@ func UploadFile(userID uint64, file *multipart.FileHeader) (*model.UploadFileRes
 
 	db := infra.GetDB()
 	var fileRecord *model.File
+	var savedFilePath string // 事务失败时用于清理孤儿文件
 
 	err = db.Transaction(func(tx *gorm.DB) error {
 		// 2) 按 Hash 查重
@@ -44,6 +45,7 @@ func UploadFile(userID uint64, file *multipart.FileHeader) (*model.UploadFileRes
 			if saveErr != nil {
 				return saveErr
 			}
+			savedFilePath = saved.FilePath
 
 			fileRecord, err = createFileRecord(tx, hashValue, saved)
 			if err != nil {
@@ -80,6 +82,12 @@ func UploadFile(userID uint64, file *multipart.FileHeader) (*model.UploadFileRes
 	})
 
 	if err != nil {
+		// 事务失败时清理刚落盘的文件，避免产生孤儿文件
+		if strings.TrimSpace(savedFilePath) != "" {
+			if removeErr := os.Remove(savedFilePath); removeErr != nil && !errors.Is(removeErr, os.ErrNotExist) {
+				log.Printf("事务失败后清理文件失败: %v", removeErr)
+			}
+		}
 		return nil, err
 	}
 

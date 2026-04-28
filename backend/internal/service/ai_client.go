@@ -129,3 +129,126 @@ func callEmbedOnce(endpoint string, payload []byte) (*EmbedResp, error) {
 
 	return &embedResp, nil
 }
+
+// askReq 发送给 AI 服务 /ask 的文本查询请求
+type askReq struct {
+	InputData []map[string]string `json:"input_data"`
+}
+
+// callAIAsk 调用 AI 服务的 /ask 端点，获取查询文本的嵌入向量。
+func callAIAsk(query string) ([]float32, error) {
+	reqBody := askReq{
+		InputData: []map[string]string{{"text": query}},
+	}
+
+	payload, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("marshal ask request: %w", err)
+	}
+
+	endpoint := getAIServiceURL() + "/ask"
+	log.Printf("[ai-client] Calling /ask, query_len=%d", len(query))
+
+	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(payload))
+	if err != nil {
+		return nil, fmt.Errorf("create ask request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	httpResp, err := embedHTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("http ask request: %w", err)
+	}
+	defer httpResp.Body.Close()
+
+	body, err := io.ReadAll(httpResp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read ask response: %w", err)
+	}
+
+	if httpResp.StatusCode != http.StatusOK {
+		log.Printf("[ai-client] /ask HTTP %d, body: %s", httpResp.StatusCode, string(body))
+		return nil, fmt.Errorf("AI /ask returned HTTP %d", httpResp.StatusCode)
+	}
+
+	// 解析 /ask 响应结构: {"status":"success","answer":{"output":{"embeddings":[{"embedding":[...]}]}}}
+	var raw struct {
+		Status string          `json:"status"`
+		Answer json.RawMessage `json:"answer"`
+	}
+	if err := json.Unmarshal(body, &raw); err != nil {
+		return nil, fmt.Errorf("parse ask response: %w", err)
+	}
+	if raw.Status != "success" {
+		return nil, fmt.Errorf("AI /ask error: %s", string(raw.Answer))
+	}
+
+	var answer struct {
+		Output map[string]any `json:"output"`
+	}
+	if err := json.Unmarshal(raw.Answer, &answer); err != nil {
+		return nil, fmt.Errorf("parse ask answer: %w", err)
+	}
+
+	// 从 output 中提取向量，结构与 _extract_embedding 一致：
+	// output["embeddings"] → [] → [0]["embedding"] → []float32
+	vec, err := extractEmbeddingFromOutput(answer.Output)
+	if err != nil {
+		return nil, err
+	}
+	if len(vec) != 1024 {
+		return nil, fmt.Errorf("query embedding dimension mismatch: got %d, expected 1024", len(vec))
+	}
+
+	return vec, nil
+}
+
+// extractEmbeddingFromOutput 从 AI 服务返回的 output dict 中提取向量。
+// 与 Python 端 _extract_embedding 对应，处理 {"embeddings": [{"embedding": [...]}]} 结构。
+func extractEmbeddingFromOutput(output map[string]any) ([]float32, error) {
+	// 尝试 "embeddings" key（DashScope 多模态融合返回）
+	if raw, ok := output["embeddings"]; ok {
+		if arr, ok := raw.([]any); ok && len(arr) > 0 {
+			if first, ok := arr[0].(map[string]any); ok {
+				if embRaw, ok := first["embedding"]; ok {
+					return floatSliceFromInterface(embRaw)
+				}
+			}
+			// 备份: 如果第一个元素是向量列表而非 dict
+			return floatSliceFromInterface(arr[0])
+		}
+	}
+
+	// 尝试 "embedding" key
+	if raw, ok := output["embedding"]; ok {
+		return floatSliceFromInterface(raw)
+	}
+
+	return nil, fmt.Errorf("no embedding found in output")
+}
+
+// floatSliceFromInterface 把 []any 或 []float64 转为 []float32。
+func floatSliceFromInterface(raw any) ([]float32, error) {
+	if arr, ok := raw.([]any); ok {
+		vec := make([]float32, len(arr))
+		for i, v := range arr {
+			switch val := v.(type) {
+			case float64:
+				vec[i] = float32(val)
+			case float32:
+				vec[i] = val
+			default:
+				return nil, fmt.Errorf("unexpected embedding element type %T at index %d", v, i)
+			}
+		}
+		return vec, nil
+	}
+	if arr, ok := raw.([]float64); ok {
+		vec := make([]float32, len(arr))
+		for i, v := range arr {
+			vec[i] = float32(v)
+		}
+		return vec, nil
+	}
+	return nil, fmt.Errorf("embedding value is not a slice, got %T", raw)
+}

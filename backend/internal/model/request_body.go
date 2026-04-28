@@ -70,3 +70,10 @@ type SendWorkspaceFileReq struct {
 	ConversationID uint64 `json:"conversation_id,string" binding:"required,gt=0"`
 	FileID         uint64 `json:"file_id,string" binding:"required,gt=0"`
 }
+
+// FileSemanticSearchReq 文件语义搜索请求体
+type FileSemanticSearchReq struct {
+	Query     string  `json:"query" binding:"required,min=1,max=2048"`
+	Limit     int     `json:"limit" binding:"omitempty,min=1,max=20"`
+	Threshold float64 `json:"threshold" binding:"omitempty,min=0,max=2"`
+}

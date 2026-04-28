@@ -108,3 +108,17 @@ type SendWorkspaceFileResp struct {
 	MessageID uint64       `json:"message_id,string"`
 	FileInfo  FileInfoResp `json:"file_info"`
 }
+
+// SemanticSearchFileItem 文件语义搜索单条结果
+type SemanticSearchFileItem struct {
+	FileID   uint64  `json:"file_id,string"`
+	FileName string  `json:"file_name"`
+	FileSize int64   `json:"file_size,string"`
+	FileType string  `json:"file_type"`
+	Score    float64 `json:"score"`
+}
+
+// SemanticSearchFilesResp 文件语义搜索返回体
+type SemanticSearchFilesResp struct {
+	Files []SemanticSearchFileItem `json:"files"`
+}

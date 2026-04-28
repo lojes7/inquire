@@ -110,10 +110,10 @@ func Launch() *gin.Engine {
 			// 文件相关
 			file := auth.Group("/files")
 			{
-				file.GET("/:message_id", handler.DownloadFile) // 下载聊天中的文件
-				file.POST("/search")                           // 语义化搜索文件
-				file.POST("/upload", handler.UploadFile)       // 上传文件到工作区
-				file.GET("", handler.WorkspaceFileList)        // 展示工作区文件
+				file.GET("/:message_id", handler.DownloadFile)    // 下载聊天中的文件
+				file.POST("/search", handler.SemanticSearchFiles) // 语义化搜索文件
+				file.POST("/upload", handler.UploadFile)          // 上传文件到工作区
+				file.GET("", handler.WorkspaceFileList)           // 展示工作区文件
 			}
 
 		}
