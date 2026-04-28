@@ -19,6 +19,7 @@ import (
 	"github.com/lojes7/inquire/pkg/secure"
 	"github.com/lojes7/inquire/pkg/utils"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 const saveFileMaxRetry = 2
@@ -277,4 +278,44 @@ func checkFileByHash(tx *gorm.DB, hashValue string) (*model.File, bool, error) {
 	}
 
 	return nil, false, nil
+}
+
+// createUserFileRelations SendFile 的辅助函数。
+//
+// 设计说明：
+// 1. 这里不做应用层“先查后写”的去重判断，避免并发窗口导致判断失真。
+// 2. 关系唯一性完全交给数据库唯一索引(user_id, file_id, deleted_at is null)保证。
+// 3. 批量写入时使用 ON CONFLICT DO NOTHING，若命中重复关系则静默跳过，不影响发送流程。
+func createUserFileRelations(tx *gorm.DB, conversationID, fileID uint64) error {
+	var userIDs []uint64
+	err := tx.Model(&model.ConversationUser{}).
+		Where("conversation_id = ? AND deleted_at IS NULL", conversationID).
+		Pluck("user_id", &userIDs).Error
+	if err != nil {
+		log.Println(err)
+		return secure.Wrap(500, "查询会话成员失败", err)
+	}
+
+	if len(userIDs) == 0 {
+		return secure.Wrap(500, "会话成员为空", errors.New("conversation has no members"))
+	}
+
+	userFiles := make([]model.UserFile, 0, len(userIDs))
+	for _, userID := range userIDs {
+		userFiles = append(userFiles, model.UserFile{
+			UserID: userID,
+			FileID: fileID,
+		})
+	}
+
+	if len(userFiles) == 0 {
+		return nil
+	}
+
+	if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&userFiles).Error; err != nil {
+		log.Println(err)
+		return secure.Wrap(500, "写入 user_files 关系失败", err)
+	}
+
+	return nil
 }

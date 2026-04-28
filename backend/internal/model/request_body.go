@@ -61,14 +61,12 @@ type SendTextReq struct {
 	Content        string `json:"content" binding:"required,max=1024"`
 }
 
-// FileSemanticSearchReq 文件语义检索请求体
-type FileSemanticSearchReq struct {
-	Query string `json:"query" binding:"required,min=1,max=2048"`
-	//ConversationID uint64 `json:"conversation_id,string"`
-	Limit int `json:"limit" binding:"omitempty,min=1,max=20"`
-}
-
 type CreateGroupReq struct {
 	GroupName string   `json:"group_name" binding:"required,min=1,max=64"`
 	MemberIDs []string `json:"member_ids" binding:"required,min=1,unique"`
+}
+
+type SendWorkspaceFileReq struct {
+	ConversationID uint64 `json:"conversation_id,string" binding:"required,gt=0"`
+	FileID         uint64 `json:"file_id,string" binding:"required,gt=0"`
 }
