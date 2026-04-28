@@ -52,7 +52,7 @@ definitions:
         type: string
       member_ids:
         items:
-          type: integer
+          type: string
         minItems: 1
         type: array
         uniqueItems: true
@@ -201,6 +201,18 @@ definitions:
     required:
     - content
     - conversation_id
+    type: object
+  model.SendWorkspaceFileReq:
+    properties:
+      conversation_id:
+        example: "0"
+        type: string
+      file_id:
+        example: "0"
+        type: string
+    required:
+    - conversation_id
+    - file_id
     type: object
   model.StrangerInfoResp:
     properties:
@@ -516,6 +528,31 @@ paths:
       summary: 发起私聊
       tags:
       - conversation
+  /auth/files:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户工作区中的所有文件
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 工作区文件列表
+      tags:
+      - file
   /auth/files/{message_id}:
     get:
       consumes:
@@ -558,6 +595,40 @@ paths:
       summary: 下载文件
       tags:
       - message
+  /auth/files/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传文件到个人工作区，不在任何会话中
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 上传成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: 没有接收到文件
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 上传文件到工作区
+      tags:
+      - file
   /auth/friendship_requests:
     get:
       consumes:
@@ -791,40 +862,6 @@ paths:
       summary: 修改好友备注
       tags:
       - friendship
-  /auth/head/{user_id}:
-    get:
-      description: 获取指定用户的头像文件（流式传输）
-      parameters:
-      - description: Bearer Token
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      - description: 用户ID
-        in: path
-        name: user_id
-        required: true
-        type: integer
-      produces:
-      - image/png
-      - image/jpeg
-      - image/gif
-      responses:
-        "200":
-          description: 头像文件
-          schema:
-            type: file
-        "404":
-          description: 用户未设置头像
-          schema:
-            $ref: '#/definitions/response.Response'
-        "500":
-          description: 服务器错误
-          schema:
-            $ref: '#/definitions/response.Response'
-      summary: 获取用户头像
-      tags:
-      - user
   /auth/info/friends/id/{id}:
     get:
       consumes:
@@ -901,6 +938,40 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: 根据Uid查看好友信息
+      tags:
+      - user
+  /auth/info/head/{user_id}:
+    get:
+      description: 获取指定用户的头像文件（流式传输）
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 用户ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - image/png
+      - image/jpeg
+      - image/gif
+      responses:
+        "200":
+          description: 头像文件
+          schema:
+            type: file
+        "404":
+          description: 用户未设置头像
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 获取用户头像
       tags:
       - user
   /auth/info/strangers/id/{id}:
@@ -1297,6 +1368,41 @@ paths:
           schema:
             $ref: '#/definitions/response.Response'
       summary: 发送文本消息
+      tags:
+      - message
+  /auth/messages/workspace-file:
+    post:
+      consumes:
+      - application/json
+      description: 从用户工作区中选择已有文件发送到指定会话
+      parameters:
+      - description: Bearer Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: 发送工作区文件请求体
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/model.SendWorkspaceFileReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 发送成功
+          schema:
+            $ref: '#/definitions/response.Response'
+        "400":
+          description: json解析出错
+          schema:
+            $ref: '#/definitions/response.Response'
+        "500":
+          description: 服务器错误
+          schema:
+            $ref: '#/definitions/response.Response'
+      summary: 从工作区发送文件
       tags:
       - message
   /auth/refresh_token:
