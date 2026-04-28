@@ -416,14 +416,23 @@ export default function AddFriendPage() {
                 <div className="search-box">
                   <select
                     value={searchType}
-                    onChange={(e) => setSearchType(e.target.value)}
+                    onChange={(e) => {
+                      setSearchType(e.target.value);
+                      setKeyword("");
+                      setStranger(null);
+                      setHasSearched(false);
+                    }}
                   >
                     <option value="id">通过 手机号</option>
                     <option value="uid">通过 UID</option>
                   </select>
 
                   <input
-                    placeholder="请输入用户 手机号 或 UID"
+                    placeholder={
+                      searchType === "id"
+                        ? "请输入用户手机号"
+                        : "请输入用户UID"
+                    }
                     value={keyword}
                     onChange={(e) => setKeyword(e.target.value)}
                   />
@@ -437,7 +446,6 @@ export default function AddFriendPage() {
                   </button>
                 </div>
               </div>
-
               {hasSearched && (
                 <div className="card">
                   <h4>搜索结果</h4>

@@ -1,200 +1,248 @@
+/* ================= 全局 ================= */
 .chatpage-app {
   display: flex;
   height: 100vh;
-  background: #f6f8fc;
+  background: #f4f6fb;
+  font-family: "Inter", "Microsoft YaHei", sans-serif;
 }
 
-/* 中间栏 */
-.chat-middle {
-  width: 280px;
-  background: white;
-  border-right: 1px solid #eee;
+/* ================= 主体布局 ================= */
+.workspace {
+  display: flex;
+  flex: 1;
+  height: 100vh;
+}
+
+/* ================= 文件区 ================= */
+.file-panel {
+  width: 300px;
+  background: #f7f5ff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+}
+
+.file-header {
+  padding: 20px;
+}
+
+.file-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #4c1d95;
+  margin-bottom: 10px;
+}
+
+/* 上传 */
+.upload-box {
+  border: 2px dashed #d1c4ff;
   padding: 24px;
-  display: flex;
-  flex-direction: column;
+  border-radius: 14px;
+  text-align: center;
+  cursor: pointer;
+  background: white;
+  transition: all 0.25s ease;
 }
 
-.new-chat {
-  padding: 14px;
-  border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg,#6366f1,#8b5cf6);
-  color: white;
-  font-size: 15px;
+.upload-box:hover {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+  transform: translateY(-2px);
+}
+
+/* 文件列表 */
+.file-list {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+}
+
+.file-item {
+  padding: 12px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  font-size: 14px;
+}
+
+.file-item:hover {
+  background: #ede9fe;
+}
+
+.file-item.active {
+  background: #ddd6fe;
+  border: 1px solid #7c3aed;
+  color: #4c1d95;
   font-weight: 600;
-  cursor: pointer;
-  margin-bottom: 24px;
 }
 
-.chat-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.chat-item {
-  padding: 14px;
-  border-radius: 14px;
-  background: #f8fafc;
-  cursor: pointer;
-  transition: .3s;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.chat-item:hover {
-  background: #eef2ff;
-}
-
-.chat-item.active {
-  background: #e0e7ff;
-  border: 1px solid #6366f1;
-}
-
-.chat-item small {
-  color: #888;
-}
-
-/* 主区域 */
-.chat-main {
+/* ================= 聊天区 ================= */
+/* ================= 聊天区整体 ================= */
+.chat-area {
   flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  background: #ffffff;
 }
 
-/* 顶部 */
-.header {
-  height: 80px;
-  padding: 0 30px;
-  background: white;
+/* 顶部固定 */
+.chat-header {
+  height: 60px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #eee;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #eee;
+  padding: 0 24px;
+  background: white;
 }
 
-.header-left {
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.header-right {
-  display: flex;
-  gap: 12px;
-}
-
-.header-right button {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 10px;
-  background: #f3f4f6;
-  cursor: pointer;
-}
-
-/* 内容区 */
-.content {
+/* ================= 聊天内容（关键） ================= */
+.chat-content {
   flex: 1;
-  padding: 30px;
   overflow-y: auto;
+  padding: 20px 40px;
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-/* 消息 */
-.message {
-  max-width: 70%;
-  padding: 16px 20px;
-  border-radius: 18px;
-  line-height: 1.8;
-  font-size: 15px;
-}
-
-.message.user {
-  align-self: flex-end;
-  background: linear-gradient(135deg,#6366f1,#8b5cf6);
-  color: white;
-  border-bottom-right-radius: 6px;
-}
-
-.message.bot {
-  align-self: flex-start;
-  background: white;
-  border: 1px solid #eee;
-  border-bottom-left-radius: 6px;
-}
-
-/* 文档列表 */
-.doc-list {
-  margin-top: 14px;
+/* 每一行 */
+.chat-row {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  width: 100%;
 }
 
-.doc-item {
-  padding: 14px;
-  border-radius: 14px;
-  background: #f8fafc;
-  display: flex;
-  justify-content: space-between;
-  transition: .3s;
+/* AI 左边 */
+.chat-row.bot {
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
-.doc-item:hover {
-  background: #eef2ff;
+/* 用户 右边 */
+.chat-row.user {
+  justify-content: flex-end;
 }
 
-/* 底部 */
-.footer {
-  padding: 20px 30px;
-  background: white;
-  border-top: 1px solid #eee;
-}
-
-.actions {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.actions button {
-  padding: 10px 18px;
-  border: none;
+/* AI头像 */
+.avatar {
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
-  background: #f3f4f6;
-  cursor: pointer;
-  transition: .3s;
-}
-
-.actions button:hover {
-  background: #e0e7ff;
-}
-
-.input-box {
+  background: linear-gradient(135deg,#7c3aed,#4c1d95);
   display: flex;
-  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-right: 10px;
+  flex-shrink: 0;
 }
 
+/* 消息气泡 */
+.message {
+  max-width: 60%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* AI气泡 */
+.message.bot {
+  background: #f3f4f6;
+  border: 1px solid #eee;
+}
+
+/* 用户气泡 */
+.message.user {
+  background: linear-gradient(135deg,#7c3aed,#4c1d95);
+  color: white;
+}
+
+/* ================= 输入区（关键重点） ================= */
+.chat-footer {
+  flex-shrink: 0;
+  padding: 16px 24px;
+  border-top: 1px solid #eee;
+  background: white;
+}
+
+/* 输入框占满 */
+.input-box {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  background: #f5f6ff;
+  padding: 10px;
+  border-radius: 14px;
+}
+
+/* textarea */
 textarea {
   flex: 1;
-  resize: none;
   border: none;
   outline: none;
-  padding: 18px;
-  border-radius: 16px;
-  background: #f8fafc;
-  min-height: 70px;
-  font-size: 15px;
+  resize: none;
+  background: transparent;
+  font-size: 14px;
+  min-height: 60px;
 }
 
+/* 发送按钮 */
 .send-btn {
-  width: 60px;
+  width: 50px;
+  height: 50px;
   border: none;
-  border-radius: 16px;
-  background: linear-gradient(135deg,#6366f1,#8b5cf6);
+  border-radius: 12px;
+  background: linear-gradient(135deg,#7c3aed,#4c1d95);
   color: white;
-  font-size: 22px;
+  font-size: 18px;
   cursor: pointer;
+}
+/* ================= 顶部操作按钮 ================= */
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* 通用按钮 */
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+/* 导出（主功能） */
+.action-btn.export {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.action-btn.export:hover {
+  background: #ddd6fe;
+  transform: translateY(-1px);
+}
+
+/* 清空（危险操作） */
+.action-btn.clear {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.action-btn.clear:hover {
+  background: #fee2e2;
+  transform: translateY(-1px);
+}
+
+/* 点击反馈 */
+.action-btn:active {
+  transform: scale(0.95);
 }

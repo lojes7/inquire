@@ -71,14 +71,22 @@ export default function EditProfilePage() {
   =========================
   */
   useEffect(() => {
-    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
-    if (user) {
-      setUid(user.uid || "");
-      setNickname(user.name || "");
-      if (user.id) fetchAvatar(user.id);
+  console.log("初始化 user:", user);
+
+  if (user) {
+    setUid(user.uid || "");
+    setNickname(user.name || "");
+
+    if (user.id) {
+      console.log("开始请求头像 userId =", user.id);
+      fetchAvatar(user.id);
+    } else {
+      console.log("❌ 没有 user.id");
     }
-  }, []);
+  }
+}, []);
 
   /*
   =========================

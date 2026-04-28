@@ -4,12 +4,11 @@ import "../styles/Sidebar.css";
 import logo from "../images/logo.svg";
 
 const navItems = [
-  { to: "/chat", icon: "💬", label: "聊天" },
-  { to: "/addfriend", icon: "👥", label: "好友" },
-  { to: "/chatpage", icon: "📝", label: "文档" },
-  { to: "/calendar", icon: "📅", label: "日程" },
-  { to: "/persional", icon: "⚙️", label: "设置" },
-  
+  { to: "/chat", icon: "chat" },
+  { to: "/addfriend", icon: "group_add" },
+  { to: "/chatpage", icon: "edit_note" },
+  { to: "/calendar", icon: "calendar_month" },
+  { to: "/persional", icon: "settings" },
 ];
 
 export default function Sidebar() {
@@ -23,16 +22,9 @@ export default function Sidebar() {
 
   const [avatar, setAvatar] = useState("/default-avatar.png");
 
-  /*
-  ========================
-  获取 token
-  ========================
-  */
   const getToken = () => {
     const stored = sessionStorage.getItem("token");
-
     if (!stored) return null;
-
     try {
       const parsed = JSON.parse(stored);
       return parsed?.token || stored;
@@ -41,11 +33,6 @@ export default function Sidebar() {
     }
   };
 
-  /*
-  ========================
-  获取头像
-  ========================
-  */
   const fetchAvatar = async (userId) => {
     try {
       const token = getToken();
@@ -62,25 +49,20 @@ export default function Sidebar() {
       if (!res.ok) throw new Error();
 
       const blob = await res.blob();
+      if (!blob || blob.size === 0) throw new Error();
 
       const imageUrl = URL.createObjectURL(blob);
-
       setAvatar(imageUrl);
+    } catch {
+      const purpleAvatar =
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100%25' height='100%25' fill='%23E6E6FA'/%3E%3C/svg%3E";
 
-    } catch (err) {
-      console.error("头像加载失败");
+      setAvatar(purpleAvatar);
     }
   };
 
-  /*
-  ========================
-  加载用户信息
-  ========================
-  */
   const loadUserInfo = () => {
-    const user = JSON.parse(
-      sessionStorage.getItem("user") || "{}"
-    );
+    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
     setUserInfo({
       name: user.name || "未知用户",
@@ -93,40 +75,27 @@ export default function Sidebar() {
     }
   };
 
-  /*
-  ========================
-  初始化 + 监听用户更新
-  ========================
-  */
   useEffect(() => {
     loadUserInfo();
-
     window.addEventListener("userUpdated", loadUserInfo);
-
     return () => {
       window.removeEventListener("userUpdated", loadUserInfo);
     };
   }, []);
 
-  /*
-  ========================
-  退出登录
-  ========================
-  */
   const handleLogout = () => {
     sessionStorage.clear();
     navigate("/login");
   };
 
   return (
-    <aside className="sidebar">
-      {/* Logo */}
+    <aside className="sidebar mini">
+      {/* Logo（只留图标） */}
       <div className="sidebar-logo">
         <img src={logo} alt="logo" className="logo-icon" />
-        <span className="logo-text">询觅</span>
       </div>
 
-      {/* 用户信息 */}
+      {/* 用户头像 */}
       <div className="sidebar-user">
         <img
           className="user-avatar"
@@ -136,14 +105,9 @@ export default function Sidebar() {
             e.target.src = "/default-avatar.png";
           }}
         />
-
-        <div className="user-info">
-          <p className="user-name">{userInfo.name}</p>
-          <p className="user-email">UID：{userInfo.uid}</p>
-        </div>
       </div>
 
-      {/* 主导航 */}
+      {/* 导航 */}
       <nav className="sidebar-nav">
         {navItems.map((item) => (
           <NavLink
@@ -153,20 +117,22 @@ export default function Sidebar() {
               isActive ? "sidebar-item active" : "sidebar-item"
             }
           >
-            <span>{item.icon}</span>
-            <span>{item.label}</span>
+            <span className="material-symbols-outlined icon">
+              {item.icon}
+            </span>
           </NavLink>
         ))}
       </nav>
 
-      {/* 底部退出 */}
+      {/* 退出 */}
       <div className="sidebar-bottom">
         <button
           onClick={handleLogout}
           className="sidebar-item logout-btn"
         >
-          <span>🚪</span>
-          <span>退出登录</span>
+          <span className="material-symbols-outlined">
+            logout
+          </span>
         </button>
       </div>
     </aside>

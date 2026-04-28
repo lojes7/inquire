@@ -5,16 +5,34 @@ import "../styles/CalendarPage.css";
 export default function CalendarPage() {
   const today = new Date();
 
+  const todayDate = today.getDate();
+  const todayMonth = today.getMonth();
+  const todayYear = today.getFullYear();
+
   const [currentDate, setCurrentDate] = useState(today);
-  const [selectedDay, setSelectedDay] = useState(today.getDate());
+  const [selectedDay, setSelectedDay] = useState(todayDate);
 
   const [tasks, setTasks] = useState({
-    10: ["产品调研讨论", "UI设计会议", "写日报"],
-    15: ["数据库优化"],
-    20: ["项目答辩", "材料准备"],
+    10: [{ text: "产品调研讨论", deadline: "" }],
+    15: [{ text: "数据库优化", deadline: "" }],
+    20: [
+      { text: "项目答辩", deadline: "" },
+      { text: "材料准备", deadline: "" },
+    ],
   });
 
   const [newTask, setNewTask] = useState("");
+  const [newDate, setNewDate] = useState(todayDate);
+  const [deadline, setDeadline] = useState("");
+
+  // 弹窗控制
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showMoreModal, setShowMoreModal] = useState(false);
+
+  const [editIndex, setEditIndex] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [editDeadline, setEditDeadline] = useState("");
 
   /*
   =========================
@@ -44,24 +62,28 @@ export default function CalendarPage() {
         1
       )
     );
-
     setSelectedDay(1);
   };
 
   /*
   =========================
-  添加任务
+  添加任务（弹窗）
   =========================
   */
-  const addTask = () => {
+  const handleAddTask = () => {
     if (!newTask.trim()) return;
 
     setTasks((prev) => ({
       ...prev,
-      [selectedDay]: [...(prev[selectedDay] || []), newTask],
+      [newDate]: [
+        ...(prev[newDate] || []),
+        { text: newTask, deadline },
+      ],
     }));
 
     setNewTask("");
+    setDeadline("");
+    setShowAddModal(false);
   };
 
   /*
@@ -72,7 +94,6 @@ export default function CalendarPage() {
   const deleteTask = (index) => {
     setTasks((prev) => {
       const updated = [...(prev[selectedDay] || [])];
-
       updated.splice(index, 1);
 
       return {
@@ -84,27 +105,37 @@ export default function CalendarPage() {
 
   /*
   =========================
-  编辑任务
+  打开编辑弹窗
   =========================
   */
-  const editTask = (index) => {
-    const newText = prompt(
-      "编辑任务",
-      tasks[selectedDay][index]
-    );
+  const openEdit = (index) => {
+    const task = tasks[selectedDay][index];
+    setEditIndex(index);
+    setEditText(task.text);
+    setEditDeadline(task.deadline);
+    setShowEditModal(true);
+  };
 
-    if (!newText) return;
-
+  /*
+  =========================
+  保存编辑
+  =========================
+  */
+  const saveEdit = () => {
     setTasks((prev) => {
       const updated = [...prev[selectedDay]];
-
-      updated[index] = newText;
+      updated[editIndex] = {
+        text: editText,
+        deadline: editDeadline,
+      };
 
       return {
         ...prev,
         [selectedDay]: updated,
       };
     });
+
+    setShowEditModal(false);
   };
 
   /*
@@ -116,27 +147,20 @@ export default function CalendarPage() {
 
   return (
     <div className="calendar-layout">
-
-      {/* 左侧 Sidebar */}
       <Sidebar />
 
-      {/* 页面主体 */}
       <div className="calendar-page">
-
-        {/* 日历区域 */}
+        {/* 日历 */}
         <div className="calendar-main">
-
           <div className="calendar-top">
             <h2>📅 智能日历计划</h2>
 
             <div className="calendar-switch">
               <button onClick={() => changeMonth(-1)}>←</button>
-
               <span>
-                {currentDate.getFullYear()} 年
+                {currentDate.getFullYear()} 年{" "}
                 {currentDate.getMonth() + 1} 月
               </span>
-
               <button onClick={() => changeMonth(1)}>→</button>
             </div>
           </div>
@@ -144,25 +168,35 @@ export default function CalendarPage() {
           <div className="calendar-grid">
             {Array.from({ length: daysInMonth }).map((_, i) => {
               const day = i + 1;
-
               const dayTasks = tasks[day] || [];
+
+              const isToday =
+                day === todayDate &&
+                currentDate.getMonth() === todayMonth &&
+                currentDate.getFullYear() === todayYear;
 
               return (
                 <div
                   key={i}
-                  className={`day-box ${
-                    selectedDay === day ? "selected" : ""
-                  }`}
+                  className={`day-box 
+                    ${selectedDay === day ? "selected" : ""}
+                    ${isToday ? "today" : ""}
+                  `}
                   onClick={() => setSelectedDay(day)}
                 >
                   <div className="day-number">{day}</div>
 
                   {dayTasks.length > 0 && (
                     <div className="mini-task">
-                      <p>{dayTasks[0]}</p>
+                      <p>{dayTasks[0].text}</p>
 
                       {dayTasks.length > 1 && (
-                        <span>
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowMoreModal(true);
+                          }}
+                        >
                           +{dayTasks.length - 1} 更多
                         </span>
                       )}
@@ -172,15 +206,11 @@ export default function CalendarPage() {
               );
             })}
           </div>
-
         </div>
 
-        {/* 右侧功能区 */}
+        {/* 右侧 */}
         <div className="right-wrapper">
-
-          {/* 智能管理 */}
           <div className="smart-panel">
-
             <h2>🤖 智能日程管理</h2>
 
             <div className="smart-card">
@@ -195,54 +225,40 @@ export default function CalendarPage() {
               </strong>
             </div>
 
-            <div className="smart-card">
-              <p>完成率建议</p>
-              <strong>
-                {Math.min(
-                  100,
-                  Math.round(
-                    (selectedDay / daysInMonth) * 100
-                  )
-                )}
-                %
-              </strong>
-            </div>
-
-            <div className="ai-tip">
-              💡 AI建议：
-              <br />
-              今天适合优先完成高优先级任务，
-              建议控制在 3 项以内提高效率。
-            </div>
-
+            <button
+              className="add-btn"
+              onClick={() => setShowAddModal(true)}
+            >
+              <span className="plus">＋</span>
+              <span>添加任务</span>
+            </button>
           </div>
 
           {/* 任务详情 */}
           <div className="detail-panel">
-
-            <h2>📌 {selectedDay} 日任务详情</h2>
+            <h2>📌 {selectedDay} 日任务</h2>
 
             <div className="task-list">
               {tasks[selectedDay]?.length ? (
                 tasks[selectedDay].map((task, index) => (
-                  <div
-                    key={index}
-                    className="task-item"
-                  >
-                    <span>{task}</span>
+                  <div key={index} className="task-item">
+                    <div>
+                      <span>{task.text}</span>
+                      {task.deadline && (
+                        <p className="deadline">
+                          ⏰ 截止：{task.deadline}
+                        </p>
+                      )}
+                    </div>
 
                     <div>
                       <button
-                        className="edit-btn"
-                        onClick={() =>
-                          editTask(index)
-                        }
+                        onClick={() => openEdit(index)}
                       >
                         编辑
                       </button>
 
                       <button
-                        className="delete-btn"
                         onClick={() =>
                           deleteTask(index)
                         }
@@ -253,31 +269,165 @@ export default function CalendarPage() {
                   </div>
                 ))
               ) : (
-                <p className="empty-tip">
-                  暂无任务
-                </p>
+                <p>暂无任务</p>
               )}
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div className="add-task">
+      {/* =========================
+          添加任务弹窗
+      ========================= */}
+      {showAddModal && (
+        <div className="modal">
+          <div className="modal-content fancy">
+            <h3>✨ 新建任务</h3>
+
+            <div className="form-group">
+              <label>任务内容</label>
               <input
+                placeholder="请输入任务..."
                 value={newTask}
-                onChange={(e) =>
-                  setNewTask(e.target.value)
-                }
-                placeholder="新增任务..."
+                onChange={(e) => setNewTask(e.target.value)}
               />
-
-              <button onClick={addTask}>
-                添加
-              </button>
             </div>
 
+            <div className="form-group">
+              <label>选择日期</label>
+              <input
+                type="number"
+                min="1"
+                max={daysInMonth}
+                value={newDate}
+                onChange={(e) => setNewDate(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>截止时间</label>
+              <input
+                type="datetime-local"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button className="confirm" onClick={handleAddTask}>
+                ✔ 添加
+              </button>
+
+              <button
+                className="cancel"
+                onClick={() => setShowAddModal(false)}
+              >
+                取消
+              </button>
+            </div>
           </div>
-
         </div>
+      )}
 
-      </div>
+      {/* =========================
+          编辑弹窗
+      ========================= */}
+      {showEditModal && (
+        <div className="modal">
+          <div className="modal-content fancy">
+            <h3>✏️ 编辑任务</h3>
+
+            <div className="form-group">
+              <label>任务内容</label>
+              <input
+                value={editText}
+                onChange={(e) =>
+                  setEditText(e.target.value)
+                }
+              />
+            </div>
+
+            <div className="form-group">
+              <label>截止时间</label>
+              <input
+                type="datetime-local"
+                value={editDeadline}
+                onChange={(e) =>
+                  setEditDeadline(e.target.value)
+                }
+              />
+            </div>
+
+            <div className="modal-actions">
+              <button className="confirm" onClick={saveEdit}>
+                ✔ 保存修改
+              </button>
+
+              <button
+                className="cancel"
+                onClick={() => setShowEditModal(false)}
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================
+          查看更多弹窗
+      ========================= */}
+     {showMoreModal && (
+        <div className="modal">
+          <div className="modal-content fancy large">
+            <h3>📋 {selectedDay} 日全部任务</h3>
+
+            <div className="task-modal-list">
+              {tasks[selectedDay]?.map((t, i) => (
+                <div key={i} className="task-card">
+                  <div className="task-info">
+                    <span className="task-text">
+                      {t.text}
+                    </span>
+
+                    {t.deadline && (
+                      <span className="task-deadline">
+                        ⏰ {t.deadline}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="task-actions">
+                    <button
+                      className="mini edit"
+                      onClick={() => {
+                        setShowMoreModal(false);
+                        openEdit(i);
+                      }}
+                    >
+                      编辑
+                    </button>
+
+                    <button
+                      className="mini delete"
+                      onClick={() => deleteTask(i)}
+                    >
+                      删除
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              className="close-btn"
+              onClick={() => setShowMoreModal(false)}
+            >
+              关闭
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
