@@ -2,15 +2,13 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"mime/multipart"
-	"path/filepath"
+	"os"
 
 	"github.com/lojes7/inquire/internal/model"
 	"github.com/lojes7/inquire/pkg/infra"
 	"github.com/lojes7/inquire/pkg/secure"
-	"github.com/lojes7/inquire/pkg/utils"
 	"gorm.io/gorm"
 )
 
@@ -258,20 +256,19 @@ func GetHeadPath(userID uint64) (string, error) {
 
 // UploadHead 上传头像
 func UploadHead(userID uint64, file *multipart.FileHeader) error {
-	uploadDir := infra.GetFilePath()
-	ext := filepath.Ext(file.Filename)
-	newID := utils.NewUniqueID()
-	filePath := filepath.Join(uploadDir, fmt.Sprintf("head_%d%s", newID, ext))
-
-	if err := saveFile(file, filePath); err != nil {
-		log.Println(err)
-		return secure.Wrap(500, "保存头像文件失败", err)
+	savedFileInfo, err := SaveFileIntoServer(file)
+	if err != nil {
+		return err
 	}
 
-	err := infra.GetDB().Model(&model.User{}).
+	err = infra.GetDB().Model(&model.User{}).
 		Where("id = ?", userID).
-		Update("head", filePath).Error
+		Update("head", savedFileInfo.FilePath).Error
 	if err != nil {
+		// 数据库更新失败时清理刚刚上传的头像文件，防止产生孤儿文件
+		if removeErr := os.Remove(savedFileInfo.FilePath); removeErr != nil && !errors.Is(removeErr, os.ErrNotExist) {
+			log.Printf("更新头像失败后清理文件失败: %v", removeErr)
+		}
 		log.Println(err)
 		return secure.Wrap(500, "更新头像路径失败", err)
 	}

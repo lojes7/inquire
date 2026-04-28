@@ -44,13 +44,11 @@ services:
     container_name: worker
     command: ["./worker"]
     environment:
-      DATABASE_URL: "host=${DB_HOST} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} port=${DB_PORT} sslmode=${POSTGRES_SSLMODE}"
+      DATABASE_URL: "host=${DB_HOST} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} port=${DB_PORT} sslmode=${POSTGRES_SSLMODE} timezone=Asia/Shanghai"
       PORT: ${BACKEND_PORT}
       JWT_KEY: ${JWT_KEY}
       JWT_EXPIRE_TIME: ${JWT_EXPIRE_TIME}
       JWT_REFRESH_TIME: ${JWT_REFRESH_TIME}
-      QWEN_API_KEY: ${QWEN_API_KEY}
-      QWEN_BASE_URL: ${QWEN_BASE_URL}
       RABBITMQ_URL: ${RABBITMQ_URL}
     volumes:
       - file_assets:/assets
@@ -67,7 +65,7 @@ services:
       dockerfile: ./docker/Dockerfile
     container_name: backend
     environment:
-      DATABASE_URL: "host=${DB_HOST} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} port=${DB_PORT} sslmode=${POSTGRES_SSLMODE}"
+      DATABASE_URL: "host=${DB_HOST} user=${POSTGRES_USER} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} port=${DB_PORT} sslmode=${POSTGRES_SSLMODE} timezone=Asia/Shanghai"
       PORT: ${BACKEND_PORT}
       JWT_KEY: ${JWT_KEY} 
       JWT_EXPIRE_TIME: ${JWT_EXPIRE_TIME}
@@ -83,6 +81,19 @@ services:
       rabbitmq:
         condition: service_started
     restart: always
+
+  ai-service:
+    build:
+      context: ./ai
+    container_name: inquire-ai-service
+    ports:
+      - "${AI_SERVICE_PORT:-8001}:${AI_SERVICE_PORT:-8001}"
+    environment:
+      - DASHSCOPE_API_KEY=${QWEN_API_KEY}
+      - PORT=${AI_SERVICE_PORT:-8001}
+    volumes:
+      - file_assets:/assets    
+    restart: unless-stopped
 
   frontend:
     build:

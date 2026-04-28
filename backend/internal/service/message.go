@@ -4,11 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"mime/multipart"
-	"path/filepath"
-	"strings"
+	"os"
 	"time"
 
 	"github.com/lojes7/inquire/internal/model"
@@ -76,19 +74,11 @@ func createSystemMessage(tx *gorm.DB, content string, conversationID, newID uint
 		MyModel: model.MyModel{
 			ID: newID,
 		},
-		Status: model.SYSTEM,
-	}
-	newText := model.Text{
-		Text:      content,
-		MessageID: newID,
-	}
-	res := tx.Create(&newMsg)
-	if res.Error != nil {
-		log.Println(res.Error)
-		return secure.Wrap(500, "创建系统消息失败", res.Error)
+		Status:  model.SYSTEM,
+		Content: content,
 	}
 
-	res = tx.Create(&newText)
+	res := tx.Create(&newMsg)
 	if res.Error != nil {
 		log.Println(res.Error)
 		return secure.Wrap(500, "创建系统消息失败", res.Error)
@@ -131,6 +121,36 @@ func updateLastMessageID(tx *gorm.DB, conversationID, msgID uint64) error {
 	return nil
 }
 
+func createUserFileRelations(tx *gorm.DB, conversationID, fileID uint64) error {
+	var userIDs []uint64
+	err := tx.Model(&model.ConversationUser{}).
+		Where("conversation_id = ? AND deleted_at IS NULL", conversationID).
+		Pluck("user_id", &userIDs).Error
+	if err != nil {
+		log.Println(err)
+		return secure.Wrap(500, "查询会话成员失败", err)
+	}
+
+	if len(userIDs) == 0 {
+		return secure.Wrap(500, "会话成员为空", errors.New("conversation has no members"))
+	}
+
+	userFiles := make([]model.UserFile, 0, len(userIDs))
+	for _, userID := range userIDs {
+		userFiles = append(userFiles, model.UserFile{
+			UserID: userID,
+			FileID: fileID,
+		})
+	}
+
+	if err := tx.Create(&userFiles).Error; err != nil {
+		log.Println(err)
+		return secure.Wrap(500, "写入 user_files 关系失败", err)
+	}
+
+	return nil
+}
+
 func SendText(senderID, conversationID uint64, content string) (uint64, error) {
 	err := sendMessageAuth(senderID, conversationID)
 	if err != nil {
@@ -145,20 +165,12 @@ func SendText(senderID, conversationID uint64, content string) (uint64, error) {
 		MyModel: model.MyModel{
 			ID: newID,
 		},
+		Content: content,
 	}
-	newText := model.Text{
-		Text:      content,
-		MessageID: newID,
-	}
+
 	db := infra.GetDB()
 	err = db.Transaction(func(tx *gorm.DB) error {
 		res := tx.Create(&newMsg)
-		if res.Error != nil {
-			log.Println(res.Error)
-			return secure.Wrap(500, "发送消息失败", res.Error)
-		}
-
-		res = tx.Create(&newText)
 		if res.Error != nil {
 			log.Println(res.Error)
 			return secure.Wrap(500, "发送消息失败", res.Error)
@@ -197,66 +209,68 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 		return nil, err
 	}
 
-	newID := utils.NewUniqueID()
+	// 此为新文件的 id
+	newFileID := utils.NewUniqueID()
+	// 新消息的 id
+	newMsgID := utils.NewUniqueID()
 
-	// 获取 uploads 目录
-	uploadDir := infra.GetFilePath()
-
-	// 生成文件路径，使用newID作为文件名，保持原扩展名
-	ext := filepath.Ext(file.Filename)
-	fileName := strings.TrimSuffix(file.Filename, ext) // 原文件名
-	filePath := filepath.Join(uploadDir, fmt.Sprintf("%d%s", newID, ext))
-
-	// 保存文件
-	if err := saveFile(file, filePath); err != nil {
-		log.Println(err)
-		return nil, secure.Wrap(500, "保存文件失败", err)
+	savedFileInfo, err := SaveFileIntoServer(file)
+	if err != nil {
+		return nil, err
 	}
 
-	// 获取文件信息
-	fileSize := file.Size
-	fileType := getFileType(filePath)
-
+	// 新消息
 	newMsg := model.Message{
+		MyModel: model.MyModel{
+			ID: newMsgID,
+		},
 		SenderID:       senderID,
 		ConversationID: conversationID,
 		Status:         model.FILE,
-		MyModel: model.MyModel{
-			ID: newID,
-		},
+		FileID:         newFileID,
 	}
 
 	// 新文件
 	newFile := model.File{
-		FileName:  fileName,
-		FileType:  fileType,
-		FileURL:   filePath,
-		FileSize:  fileSize,
-		MessageID: newID,
+		MyModel: model.MyModel{
+			ID: newFileID,
+		},
+		FileName: savedFileInfo.FileName,
+		FileType: savedFileInfo.FileType,
+		FileURL:  savedFileInfo.FilePath,
+		FileSize: savedFileInfo.FileSize,
 	}
 
 	// 保存到数据库
 	db := infra.GetDB()
 	resp := &model.SendFileResp{
-		MessageID: newID,
-		FileName:  fileName,
-		FileSize:  fileSize,
-		FileType:  fileType,
+		MessageID: newFileID,
+		FileName:  savedFileInfo.FileName,
+		FileSize:  savedFileInfo.FileSize,
+		FileType:  savedFileInfo.FileType,
 	}
+
 	err = db.Transaction(func(tx *gorm.DB) error {
+
 		res := tx.Create(&newMsg)
 		if res.Error != nil {
 			log.Println(res.Error)
 			return secure.Wrap(500, "发送文件消息失败", res.Error)
 		}
 
-		res = tx.Omit("ContentVector").Create(&newFile)
+		res = tx.Omit("ContentVector").
+			Create(&newFile)
 		if res.Error != nil {
 			log.Println(res.Error)
 			return secure.Wrap(500, "发送文件消息失败", res.Error)
 		}
 
-		err := updateLastMessageID(tx, conversationID, newID)
+		err = createUserFileRelations(tx, conversationID, newFileID)
+		if err != nil {
+			return err
+		}
+
+		err := updateLastMessageID(tx, conversationID, newMsgID)
 		if err != nil {
 			return err
 		}
@@ -269,12 +283,18 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 		return nil
 	})
 
+	if err != nil {
+		if removeErr := os.Remove(savedFileInfo.FilePath); removeErr != nil && !errors.Is(removeErr, os.ErrNotExist) {
+			log.Printf("数据库写入失败后清理文件失败: %v", removeErr)
+		}
+	}
+
 	if err == nil {
 		// 发送 websocket 通知
 		// actually frontend might need different structure
 		// resp is: MessageID, FileName, FileSize, FileType
 		notifyConversationUsers(conversationID, "new_message", map[string]any{
-			"message_id":      newID,
+			"message_id":      newMsgID,
 			"conversation_id": conversationID,
 			"sender_id":       senderID,
 			"content":         resp,       // Sending the file response object as content
@@ -293,7 +313,7 @@ func DownloadFile(userID, messageID uint64) (string, error) {
 	var file model.File
 	err := db.Model(&model.File{}).
 		Select("files.file_url").
-		Joins("JOIN messages m ON m.id = files.message_id").
+		Joins("JOIN messages m ON m.file_id = files.id").
 		Joins("JOIN conversation_users cu ON cu.conversation_id = m.conversation_id").
 		Where("files.message_id = ? AND cu.user_id = ? AND m.status = ?",
 			messageID, userID, model.FILE).
@@ -394,7 +414,7 @@ func DeleteMessage(userID, messageID uint64) error {
 
 	if err != nil {
 		log.Println(err)
-		return secure.Wrap(500, "查询消息失败", err)
+		return secure.Wrap(500, "没有找到该条消息", err)
 	}
 	conversationID := msg.ConversationID
 
@@ -407,8 +427,18 @@ func DeleteMessage(userID, messageID uint64) error {
 			return secure.Wrap(500, "删除消息失败", res.Error)
 		}
 		if res.RowsAffected == 0 {
-			log.Println("删除消息操作影响了0行表")
-			return secure.Wrap(500, "删除消息失败", errors.New("rows affected 0"))
+			log.Println("删除消息操作影响了0行表，自动创建删除记录")
+			newID := utils.NewUniqueID()
+			newMU := model.MessageUser{
+				MyModel:   model.MyModel{ID: newID},
+				UserID:    userID,
+				MessageID: messageID,
+				IsDeleted: true,
+			}
+			if err := tx.Create(&newMU).Error; err != nil {
+				log.Println("创建已删除的MessageUser失败:", err)
+				return secure.Wrap(500, "删除消息失败", err)
+			}
 		}
 
 		var lastID uint64
@@ -425,7 +455,7 @@ func DeleteMessage(userID, messageID uint64) error {
 			return secure.Wrap(500, "更新最新消息失败", res.Error)
 		}
 		if res.RowsAffected == 0 {
-			log.Println("删除消息更新最后消息id 时没有查到id")
+			log.Println("删除消息 更新最后消息id时没有查到id")
 			return secure.Wrap(500, "更新最新消息失败", errors.New("rows affected 0"))
 		}
 

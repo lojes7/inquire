@@ -111,6 +111,8 @@ func Launch() *gin.Engine {
 			{
 				file.GET("/:message_id", handler.DownloadFile) // 下载聊天中的文件
 				file.POST("/search")                           // 语义化搜索文件
+				file.POST("/upload")                           // 上传文件到工作区
+				file.GET("")                                   // 展示工作区文件
 			}
 
 		}
