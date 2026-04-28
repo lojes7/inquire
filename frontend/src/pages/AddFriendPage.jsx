@@ -26,8 +26,25 @@ export default function AddFriendPage() {
   const [hasSearched, setHasSearched] = useState(false);
 
   // 记录已处理申请状态
-  const [handledRequests, setHandledRequests] = useState({});
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "info", // success | error | info
+  });
+  const showToast = (message, type = "info") => {
+    setToast({ show: true, message, type });
 
+    setTimeout(() => {
+      setToast({ show: false, message: "", type: "info" });
+    }, 2000);
+  };
+  const [requestModal, setRequestModal] = useState({
+  show: false,
+  receiverId: null,
+});
+
+const [requestMessage, setRequestMessage] = useState("");
+const [sending, setSending] = useState(false);
   /*
   =========================
   获取 token
@@ -105,18 +122,6 @@ export default function AddFriendPage() {
         setFriendRequests(result.data);
 
         // 初始化 handledRequests 状态
-        const initialHandled = {};
-        result.data.forEach((item) => {
-          fetchAvatar(item.sender_id);
-
-          // 假设接口返回 status 字段：accepted / rejected / pending
-          if (item.status === "accepted" || item.status === "rejected") {
-            initialHandled[item.request_id] = item.status;
-          }
-        });
-
-        setHandledRequests(initialHandled);
-
       } else {
         setErrorRequests(result.message);
       }
@@ -149,17 +154,20 @@ export default function AddFriendPage() {
       const result = await res.json();
 
       if (result.code === 200) {
-        alert("已同意好友申请");
+        // ⭐ 关键：更新本地列表状态
+        setFriendRequests((prev) =>
+          prev.map((item) =>
+            item.request_id === requestId
+              ? { ...item, status: "accepted" }
+              : item
+          )
+        );
 
-        setHandledRequests((prev) => ({
-          ...prev,
-          [requestId]: "accepted",
-        }));
-
+        showToast("已同意好友申请", "success");
         fetchFriends();
       }
     } catch (err) {
-      alert("同意失败");
+      showToast("操作失败", "error");
     }
   };
 
@@ -185,78 +193,79 @@ export default function AddFriendPage() {
       const result = await res.json();
 
       if (result.code === 200) {
-        alert("已拒绝好友申请");
+        setFriendRequests((prev) =>
+          prev.map((item) =>
+            item.request_id === requestId
+              ? { ...item, status: "rejected" }
+              : item
+          )
+        );
 
-        setHandledRequests((prev) => ({
-          ...prev,
-          [requestId]: "rejected",
-        }));
+        showToast("已拒绝好友申请", "info");
       }
     } catch (err) {
-      alert("拒绝失败");
+      showToast("操作失败", "error");
     }
   };
 
-  /*
-  =========================
-  搜索用户
-  =========================
-  */
-  const handleSearchUser = async () => {
-    if (!keyword.trim()) return;
+    /*
+    =========================
+    搜索用户
+    =========================
+    */
+    const handleSearchUser = async () => {
+      if (!keyword.trim()) return;
 
-    setSearching(true);
-    setHasSearched(true);
+      setSearching(true);
+      setHasSearched(true);
 
-    try {
-      const token = getToken();
+      try {
+        const token = getToken();
 
-      const url =
-        searchType === "id"
-          ? `http://localhost:8000/api/auth/info/strangers/id/${keyword}`
-          : `http://localhost:8000/api/auth/info/strangers/uid/${keyword}`;
+        const url =
+          searchType === "id"
+            ? `http://localhost:8000/api/auth/info/strangers/id/${keyword}`
+            : `http://localhost:8000/api/auth/info/strangers/uid/${keyword}`;
 
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        const res = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      const result = await res.json();
+        const result = await res.json();
 
-      if (result.code === 200) {
-        setStranger(result.data);
+        if (result.code === 200 && result.data) {
+          setStranger(result.data);
+          fetchAvatar(result.data.id);
+        } else {
+          setStranger(null);
+          showToast(result.message || "未找到用户", "error");
+        }
 
-        fetchAvatar(result.data.id);
-      } else {
-        setStranger(null);
-        alert("未找到用户");
+      } catch (err) {
+        showToast("搜索失败", "error");
+      } finally {
+        setSearching(false);
       }
-    } catch (err) {
-      alert("搜索失败");
-    } finally {
-      setSearching(false);
-    }
-  };
+    };
 
   /*
   =========================
   发送好友申请
   =========================
   */
-  const handleSendFriendRequest = async (receiverId) => {
-    const message = prompt("请输入好友申请备注");
-
-    if (message === null) return;
+  const handleSendFriendRequest = async () => {
+    if (sending) return;          // 🚫 防重复点击
+    setSending(true);             // 🔒 锁按钮
 
     const token = getToken();
-
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
     const body = {
-      receiver_id: receiverId,
+      receiver_id: requestModal.receiverId,
       sender_name: user.name,
-      verification_message: message,
+      verification_message: requestMessage,
     };
 
     try {
@@ -275,10 +284,19 @@ export default function AddFriendPage() {
       const result = await res.json();
 
       if (result.code === 201) {
-        alert("发送成功");
+        showToast("发送成功", "success");
+
+        setRequestModal({ show: false, receiverId: null });
+        setRequestMessage("");
+      } else {
+        showToast(result.message || "发送失败", "error");
       }
+
     } catch (err) {
-      alert("发送失败");
+      showToast("网络错误", "error");
+
+    } finally {
+      setSending(false);   // 🔓 解锁按钮（关键）
     }
   };
 
@@ -313,7 +331,7 @@ export default function AddFriendPage() {
         state: { conversationId, friendId, friendName },
       });
     } else {
-      alert("创建会话失败");
+      showToast("创建会话失败", "error");
     }
   };
 
@@ -344,7 +362,7 @@ export default function AddFriendPage() {
         });
       }
     } catch (err) {
-      alert("获取好友失败");
+      showToast("获取好友失败", "error");
     } finally {
       setLoadingFriends(false);
     }
@@ -361,7 +379,13 @@ export default function AddFriendPage() {
   }, [activeTab]);
 
   return (
+    
     <div className="chatpage-app">
+      {toast.show && (
+        <div className={`toast toast-${toast.type}`}>
+          {toast.message}
+        </div>
+      )}
       <Sidebar />
 
      <aside className="addfriend-middle">
@@ -446,16 +470,16 @@ export default function AddFriendPage() {
                   </button>
                 </div>
               </div>
-              {hasSearched && (
-                <div className="card">
-                  <h4>搜索结果</h4>
+                  {hasSearched && (
+                  <div className="card">
+                    <h4>搜索结果</h4>
 
-                  {!stranger && <div className="tip">暂无搜索结果</div>}
-
-                  {stranger && (
-                    <div className="user-item">
-                      <img
-                        className="avatar"
+                    {!stranger ? (
+                      <div className="tip">暂无搜索结果</div>
+                    ) : (
+                      <div className="user-item">
+                        <img
+                          className="avatar"
                         src={avatarMap[String(stranger.id)] || "/default-avatar.png"}
                         onError={(e) =>
                           (e.currentTarget.src = "/default-avatar.png")
@@ -469,7 +493,12 @@ export default function AddFriendPage() {
 
                       <button
                         className="outline-btn"
-                        onClick={() => handleSendFriendRequest(stranger.id)}
+                        onClick={() =>
+                          setRequestModal({
+                            show: true,
+                            receiverId: stranger.id,
+                          })
+                        }
                       >
                         添加好友
                       </button>
@@ -479,7 +508,6 @@ export default function AddFriendPage() {
               )}
             </>
           )}
-
           {/* 好友申请 */}
           {activeTab === "request" && (
             <div className="card">
@@ -514,9 +542,8 @@ export default function AddFriendPage() {
                       {item.verification_message || "请求添加你为好友"}
                     </div>
                   </div>
-
                   <div className="actions">
-                    {!handledRequests[item.request_id] ? (
+                    {(item.status || "pending") === "pending" && (
                       <>
                         <button
                           className="primary-btn small"
@@ -532,19 +559,17 @@ export default function AddFriendPage() {
                           拒绝
                         </button>
                       </>
-                    ) : (
-                      <span
-                        style={{
-                          color:
-                            handledRequests[item.request_id] === "accepted"
-                              ? "#be49b4"
-                              : "#ef4444",
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {handledRequests[item.request_id] === "accepted"
-                          ? "已同意"
-                          : "已拒绝"}
+                    )}
+
+                    {item.status === "accepted" && (
+                      <span style={{ color: "#22c55e", fontWeight: "bold" }}>
+                        已同意
+                      </span>
+                    )}
+
+                    {item.status === "rejected" && (
+                      <span style={{ color: "#ef4444", fontWeight: "bold" }}>
+                        已拒绝
                       </span>
                     )}
                   </div>
@@ -591,9 +616,42 @@ export default function AddFriendPage() {
               ))}
             </div>
           )}
+          {requestModal.show && (
+            <div className="modal-overlay">
+              <div className="modal-box">
+                <h3>发送好友申请</h3>
+
+                <input
+                  className="modal-input"
+                  placeholder="请输入备注信息"
+                  value={requestMessage}
+                  onChange={(e) => setRequestMessage(e.target.value)}
+                />
+
+                <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+                  <button
+                    className="ghost-btn"
+                    onClick={() => {
+                      setRequestModal({ show: false, receiverId: null });
+                      setRequestMessage("");
+                    }}
+                  >
+                    取消
+                  </button>
+
+                  <button
+                    className="primary-btn"
+                    onClick={handleSendFriendRequest}
+                    disabled={sending}
+                  >
+                    {sending ? "发送中..." : "发送"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
       </main>
     </div>
- 
 );
 }
