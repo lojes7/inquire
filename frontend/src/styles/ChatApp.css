@@ -57,185 +57,232 @@
 .chat-sidebar .sidebar-footer button {
   border: none;
   background: none;
-  color: #cfcfe0;
+  color: #e5e5e7;
   font-size: 16px;
   cursor: pointer;
 }
 
 /* ======================
-   三、中间联系人列表
+   三、中间联系人列表（升级版）
 ====================== */
 .chat-middle {
   width: 300px;
-  background-color: #3b1a70;
-  color: rgb(2, 2, 2);
+  background: #f7f7fb;
   display: flex;
   flex-direction: column;
+  border-right: 1px solid #e5e7eb;
 }
 
+/* 搜索区域 */
 .chat-middle .search {
-  padding: 16px;
+  padding: 14px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .chat-middle .search input {
-  width: 80%;
-  padding: 8px 14px;
-  border-radius: 20px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
   border: none;
   outline: none;
-  background-color: #f0f0f0;
+  background: #ffffff;
   font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  transition: all 0.2s ease;
 }
 
+.chat-middle .search input:focus {
+  box-shadow: 0 0 0 2px #6366f1;
+}
+
+/* 联系人列表 */
 .chat-middle .contacts {
   flex: 1;
   overflow-y: auto;
-  border-top: 1px solid #818083;
+  padding: 8px;
 }
 
+/* 单个联系人卡片 */
 .contact {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 6px;
+  border-radius: 12px;
   cursor: pointer;
-  border-bottom: 1px solid #818083;
+  transition: all 0.2s ease;
 }
 
+/* hover效果 */
 .contact:hover {
-  background-color: #d8c7f4;
+  background: #eef2ff;
+  transform: translateY(-1px);
 }
 
+/* 选中状态（你可以配合 active 类） */
+.contact.active {
+  background: #6366f1;
+  color: #fff;
+}
+
+/* 头像 */
 .contact-avatar {
-  width: 34px;
-  height: 34px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background-color: #b3a0ff;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
   flex-shrink: 0;
 }
 
+/* 右侧信息 */
 .contact-info {
   flex: 1;
   min-width: 0;
 }
 
+/* 名字 + 时间 */
 .contact-name {
   display: flex;
   justify-content: space-between;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
+/* 消息预览 */
 .contact-message {
   font-size: 12px;
-  color: #575758;
+  color: #6b7280;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* 选中时文字颜色 */
+.contact.active .contact-message {
+  color: rgba(255,255,255,0.8);
+}
+
+/* 滚动条美化 */
+.chat-middle .contacts::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-middle .contacts::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+
+.chat-middle .contacts::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
 /* ======================
-   四、右侧聊天区域（整体）
+   四、右侧聊天整体
 ====================== */
 .chat-main {
   flex: 1;
-  height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #e5e7eb;
+  background: #f9fafb;
   overflow: hidden;
 }
 
-/* 未选联系人时的占位页 */
+/* 空状态 */
 .chat-main .main-content {
   margin: auto;
   text-align: center;
 }
 
 .chat-main .icon {
-  font-size: 84px;
-  margin-bottom: 16px;
-  color: #6b21a8;
+  font-size: 72px;
+  color: #9ca3af;
+  margin-bottom: 12px;
 }
 
 .chat-main h2 {
-  font-size: 40px;
-  color: #1f2937;
+  font-size: 24px;
+  color: #111827;
 }
 
 .chat-main p {
   font-size: 14px;
   color: #6b7280;
-  margin: 8px 0 16px;
+  margin: 6px 0 14px;
 }
 
 .chat-main button {
-  padding: 14px 28px;
-  font-size: 20px;
-  border-radius: 8px;
-  border: 1px solid #6b21a8;
-  background-color: white;
-  color: #6b21a8;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  background: #6366f1;
+  color: #fff;
   cursor: pointer;
+  padding-bottom: 8px;
 }
 
 .chat-main button:hover {
-  background-color: #f3e8ff;
+  background: #4f46e5;
 }
 
 /* ======================
-   五、聊天面板（点联系人后）
+   聊天面板
 ====================== */
 .chat-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
   overflow: hidden;
 }
 
 /* 顶部栏 */
 .chat-top {
-  height: 72px;
+  height: 64px;
   padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #565658;
-  flex-shrink: 0;
-  background: #e5e7eb;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .chat-name {
-  font-size: 25px;
+  font-size: 18px;
   font-weight: 600;
 }
 
 .chat-back {
-  padding: 3px 8px;
-  border-radius: 6px;
-  border: 1px solid #6b21a8;
+  border: none;
   background: transparent;
-  color: #6b21a8;
   cursor: pointer;
+  font-size: 20px;
+  color: #6b7280;
 }
 
-/* 消息区域（核心修复） */
+.chat-back:hover {
+  color: #111827;
+}
+
+/* ======================
+   消息区域
+====================== */
 .chat-body {
   flex: 1;
   padding: 16px;
   overflow-y: auto;
-  min-height: 0;
+
+  /* ⭐关键：留出 footer 空间 */
+  padding-bottom: 90px;
 }
 
 /* 单条消息 */
 .msg {
   display: flex;
-  align-items: flex-end;
-  gap: 8px;
   margin-bottom: 12px;
+  align-items: flex-end;
 }
 
+/* 自己 / 对方 */
 .msg.self {
   justify-content: flex-end;
 }
@@ -244,120 +291,190 @@
   justify-content: flex-start;
 }
 
-/* 聊天头像 */
+/* 头像 */
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
+  margin: 0 6px;
 }
 
-.avatar.other {
-  background-color: #7c7ee7;
-}
-
-.avatar.self {
-  background-color: #9333ea;
-}
-
-/* 聊天气泡 */
+/* ======================
+   聊天气泡（重点优化）
+====================== */
 .bubble {
-  max-width: 80%;
-  padding: 10px 15px;
-  border-radius: 12px;
-  font-size: 18px;
-  line-height: 1.4;
-  background-color: rgba(86, 83, 83, 0.08);
+  max-width: 60%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.5;
   word-break: break-word;
+  position: relative;
 }
 
+/* 对方气泡 */
+.msg.other .bubble {
+  background: #ffffff;
+  color: #111827;
+  border-top-left-radius: 4px;
+}
+
+/* 自己气泡 */
 .msg.self .bubble {
-  background-color: #6b21a8;
-  color: white;
+  background: #6366f1;
+  color: #fff;
+  border-top-right-radius: 4px;
 }
 
-/* 输入区（核心修复） */
-.chat-footer {
+/* ======================
+   图片消息
+====================== */
+.chat-image {
+  max-width: 220px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+/* ======================
+   文件卡片（高级感）
+====================== */
+.file-card {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-top: 1px solid #2a2a40;
-  flex-shrink: 0;
-  background: #e5e7eb;
-}
-
-.chat-footer input {
-  flex: 1;
-  padding: 20px 12px;
-  border-radius: 6px;
-  border: none;
-  outline: none;
-}
-
-.chat-footer button {
-  padding: 10px 16px;
-  border-radius: 6px;
-  border: none;
-  background-color: #6b21a8;
-  color: white;
+  border-radius: 12px;
+  background: #ffffff;
+  max-width: 240px;
   cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #e5e7eb;
 }
 
-.chat-footer button:hover {
-  background-color: #5b1a90;
+.file-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
-/* 工具按钮 */
-.chat-tools {
+/* 自己的文件 */
+.msg.self .file-card {
+  background: #e0e7ff;
+}
+
+/* 图标 */
+.file-icon {
+  font-size: 24px;
+}
+
+/* 文件信息 */
+.file-info {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.chat-tools button {
-  border: none;
-  background: transparent;
-  font-size: 18px;
-  cursor: pointer;
+.file-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-type {
+  font-size: 11px;
   color: #6b7280;
 }
 
-.chat-tools button:hover {
-  color: #6b21a8;
+/* ======================
+   输入区域（重做重点）
+====================== */
+.chat-footer {
+  padding: 15px 20px;
+  background: #fff;
+  border-top: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  gap: 12px; /* 间距控制 */
 }
 
-.chat-message {
-  max-width: 60%;
-  padding: 8px 12px;
-  margin: 6px 0;
-  border-radius: 12px;
-  word-break: break-word;
+/* 文本输入框 */
+.chat-footer input[type="text"] {
+  flex: 1;
+  height: 42px;
+  background: #f3f4f6;
+  border: 1px solid #f3f4f6;
+  border-radius: 21px;
+  padding: 0 18px;
+  outline: none;
+  font-size: 14px;
+  transition: 0.2s;
 }
 
-.chat-message.me {
-  background-color: #4caf50;
+.chat-footer input[type="text"]:focus {
+  background: #fff;
+  border-color: #6366f1;
+}
+
+.chat-footer input[type="text"]:focus {
+  border-color: #6366f1;
+  background: #fff;
+}
+
+/* 文件按钮 */
+.file-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  border-radius: 50%;
+  cursor: pointer;
+  flex-shrink: 0; /* 禁止压缩 */
+  transition: 0.2s;
+  color: #666;
+  font-size: 20px;
+}
+
+.file-btn:hover {
+  background: #e5e7eb;
+  color: #6366f1;
+}
+
+/* 隐藏原生 input */
+.file-btn input[type="file"] {
+  display: none;
+}
+
+/* 发送按钮 */
+.chat-footer .send-btn {
+  height: 42px;
+  padding: 0 22px;
+  background: #6366f1;
   color: #fff;
-  margin-left: auto;
-  text-align: right;
+  border: none;
+  border-radius: 21px;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0; /* 禁止压缩 */
+  transition: 0.3s;
 }
 
-.chat-message.friend {
-  background-color: #f1f0f0;
-  color: #000;
-  margin-right: auto;
-  text-align: left;
+.chat-footer .send-btn:hover {
+  background: #4f46e5;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
-.chat-image {
-  max-width: 200px;
-  border-radius: 8px;
+/* ======================
+   滚动条美化
+====================== */
+.chat-body::-webkit-scrollbar {
+  width: 6px;
 }
 
-.chat-file {
-  display: inline-block;
-  padding: 6px 10px;
-  background-color: #e0e0e0;
-  border-radius: 8px;
-  text-decoration: none;
-  color: #333;
+.chat-body::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
 }
