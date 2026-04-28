@@ -50,6 +50,7 @@ services:
       JWT_EXPIRE_TIME: ${JWT_EXPIRE_TIME}
       JWT_REFRESH_TIME: ${JWT_REFRESH_TIME}
       RABBITMQ_URL: ${RABBITMQ_URL}
+      AI_SERVICE_URL: ${AI_SERVICE_URL}
     volumes:
       - file_assets:/assets
     depends_on:
@@ -71,6 +72,7 @@ services:
       JWT_EXPIRE_TIME: ${JWT_EXPIRE_TIME}
       JWT_REFRESH_TIME: ${JWT_REFRESH_TIME}
       RABBITMQ_URL: ${RABBITMQ_URL}
+      AI_SERVICE_URL: ${AI_SERVICE_URL}
     volumes:
       - file_assets:/assets
     ports:
@@ -84,13 +86,13 @@ services:
 
   ai-service:
     build:
-      context: ./ai
+      context: ./ai-service
     container_name: inquire-ai-service
     ports:
       - "${AI_SERVICE_PORT:-8001}:${AI_SERVICE_PORT:-8001}"
     environment:
       - DASHSCOPE_API_KEY=${QWEN_API_KEY}
-      - PORT=${AI_SERVICE_PORT:-8001}
+      - PORT=${AI_SERVICE_PORT}
     volumes:
       - file_assets:/assets    
     restart: unless-stopped

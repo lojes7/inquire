@@ -198,6 +198,7 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 
 	resp := &model.SendFileResp{MessageID: newMsgID}
 	var savedFilePath string
+	var fileRecordForEmbed *model.File // 捕获文件记录，用于事务外的嵌入触发
 
 	db := infra.GetDB()
 	err = db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -246,6 +247,7 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 			resp.FileName = fileRecord.FileName
 			resp.FileSize = fileRecord.FileSize
 			resp.FileType = fileRecord.FileType
+			fileRecordForEmbed = fileRecord
 			return nil
 		}
 
@@ -323,6 +325,7 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 		resp.FileName = fileRecord.FileName
 		resp.FileSize = fileRecord.FileSize
 		resp.FileType = fileRecord.FileType
+		fileRecordForEmbed = fileRecord
 		return nil
 	})
 
@@ -335,6 +338,11 @@ func SendFile(ctx context.Context, senderID, conversationID uint64, file *multip
 			}
 		}
 		return nil, err
+	}
+
+	// 异步触发文件向量嵌入管线，不阻塞上传响应
+	if fileRecordForEmbed != nil && strings.TrimSpace(fileRecordForEmbed.FileURL) != "" {
+		go EmbedFile(fileRecordForEmbed.ID, fileRecordForEmbed.FileURL, fileRecordForEmbed.FileType)
 	}
 
 	// 发送 websocket 通知
@@ -400,8 +408,8 @@ func DownloadFile(userID, messageID uint64) (string, error) {
 		Select("files.file_url").
 		Joins("JOIN messages m ON m.file_id = files.id").
 		Joins("JOIN conversation_users cu ON cu.conversation_id = m.conversation_id").
-		Where("files.message_id = ? AND cu.user_id = ? AND m.status = ?",
-			messageID, userID, model.FILE).
+		Where("cu.user_id = ? AND m.status = ?",
+			userID, model.FILE).
 		First(&file).Error
 
 	if err != nil {

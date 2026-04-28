@@ -49,3 +49,31 @@ class AskRequest(BaseModel):
 class AskResponse(BaseModel):
     answer: Any
     status: Literal["success", "error"]
+
+
+# -------------------- 文件嵌入相关 schema --------------------
+
+
+class EmbedRequest(BaseModel):
+    """文件嵌入请求体，Backend 调用 /embed 时传入。"""
+
+    file_path: str = Field(..., description="文件在容器中的绝对路径")
+    file_id: int = Field(..., description="files 表中的文件 ID", gt=0)
+    file_type: str = Field(..., description="文件 MIME 类型，如 application/pdf")
+
+
+class EmbedVectorItem(BaseModel):
+    """单个向量块。"""
+
+    number: int = Field(..., description="向量分片序号，从 0 递增")
+    vector: list[float] = Field(..., description="1024 维浮点向量")
+
+
+class EmbedResponse(BaseModel):
+    """文件嵌入响应体。"""
+
+    status: Literal["success", "error"] = "success"
+    file_id: int = Field(..., description="与请求中相同的 file_id")
+    vectors: list[EmbedVectorItem] = Field(default_factory=list, description="向量列表")
+    chunk_count: int = Field(0, description="分块数量")
+    answer: str | None = Field(default=None, description="错误时的描述信息")
