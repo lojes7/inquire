@@ -6,30 +6,15 @@ import "../styles/Persional.css";
 export default function EditProfilePage() {
   const fileInputRef = useRef(null);
 
-  /*
-  =========================
-  用户信息（不动）
-  =========================
-  */
   const [uid, setUid] = useState("");
   const [nickname, setNickname] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("/default-avatar.png");
 
-  /*
-  =========================
-  密码（不动）
-  =========================
-  */
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [editingField, setEditingField] = useState("");
 
-  /*
-  =========================
-  外观 / 通知（第二版UI需要）
-  =========================
-  */
   const [theme, setTheme] = useState("light");
 
   const [notifications, setNotifications] = useState({
@@ -48,11 +33,6 @@ export default function EditProfilePage() {
     setCroppedAreaPixels(croppedPixels);
   }, []);
 
-  /*
-  =========================
-  token（不动）
-  =========================
-  */
   const getToken = () => {
     const stored = sessionStorage.getItem("token");
     if (!stored) return null;
@@ -65,38 +45,24 @@ export default function EditProfilePage() {
     }
   };
 
-  /*
-  =========================
-  初始化
-  =========================
-  */
   useEffect(() => {
-  const user = JSON.parse(sessionStorage.getItem("user") || "{}");
+    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
-  console.log("初始化 user:", user);
+    if (user) {
+      setUid(user.uid || "");
+      setNickname(user.name || "");
 
-  if (user) {
-    setUid(user.uid || "");
-    setNickname(user.name || "");
-
-    if (user.id) {
-      console.log("开始请求头像 userId =", user.id);
-      fetchAvatar(user.id);
-    } else {
-      console.log("❌ 没有 user.id");
+      if (user.id) {
+        fetchAvatar(user.id);
+      }
     }
-  }
-}, []);
+  }, []);
 
-  /*
-  =========================
-  获取头像
-  =========================
-  */
+  // ✅ 修复1：防缓存 + 清理旧URL
   const fetchAvatar = async (userId) => {
     try {
       const res = await fetch(
-        `http://localhost:8000/api/auth/info/head/${userId}`,
+        `http://localhost:8000/api/auth/info/head/${userId}?t=${Date.now()}`, // 防缓存
         {
           headers: { Authorization: `Bearer ${getToken()}` },
         }
@@ -105,15 +71,20 @@ export default function EditProfilePage() {
       if (!res.ok) return;
 
       const blob = await res.blob();
-      setAvatarUrl(URL.createObjectURL(blob));
-    } catch {}
+      const newUrl = URL.createObjectURL(blob);
+
+      // 清理旧URL（防内存泄漏）
+      setAvatarUrl((prev) => {
+        if (prev && prev.startsWith("blob:")) {
+          URL.revokeObjectURL(prev);
+        }
+        return newUrl;
+      });
+    } catch (err) {
+      console.log("头像加载失败:", err);
+    }
   };
 
-  /*
-  =========================
-  保存 UID / 昵称（功能不动）
-  =========================
-  */
   const saveField = async (type) => {
     const token = getToken();
     const user = JSON.parse(sessionStorage.getItem("user") || "{}");
@@ -153,11 +124,6 @@ export default function EditProfilePage() {
     alert("保存成功");
   };
 
-  /*
-  =========================
-  保存密码（不动）
-  =========================
-  */
   const savePassword = async () => {
     if (!password || !confirmPassword)
       return alert("密码不能为空");
@@ -186,11 +152,6 @@ export default function EditProfilePage() {
     alert("密码修改成功");
   };
 
-  /*
-  =========================
-  头像裁剪上传（不动）
-  =========================
-  */
   const getCroppedBlob = async (imageSrc, crop) => {
     const image = new Image();
     image.src = imageSrc;
@@ -219,6 +180,7 @@ export default function EditProfilePage() {
     });
   };
 
+  // ✅ 修复2：强制刷新头像
   const saveAvatar = async () => {
     if (!avatarPreview || !croppedAreaPixels)
       return alert("请选择头像");
@@ -227,6 +189,8 @@ export default function EditProfilePage() {
 
     const formData = new FormData();
     formData.append("file", blob, "avatar.jpg");
+
+    const user = JSON.parse(sessionStorage.getItem("user") || "{}");
 
     const res = await fetch(
       "http://localhost:8000/api/auth/me/head",
@@ -240,19 +204,23 @@ export default function EditProfilePage() {
     );
 
     const data = await res.json();
+    console.log("上传返回:", data);
+
     if (!res.ok) return alert(data.message || "上传失败");
 
-    window.dispatchEvent(new Event("userUpdated"));
-
+    // 👇 强制刷新
     setAvatarPreview(null);
+    setAvatarUrl("");
+
+    setTimeout(() => {
+      if (user.id) {
+        fetchAvatar(user.id);
+      }
+    }, 100);
+
     alert("头像更新成功");
   };
 
-  /*
-  =========================
-  通知 / 主题
-  =========================
-  */
   const toggleNotification = (key) => {
     setNotifications((prev) => ({
       ...prev,

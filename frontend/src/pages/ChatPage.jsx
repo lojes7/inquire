@@ -20,9 +20,6 @@ const getToken = () => {
 };
 
 export default function ChatPage() {
-  /* =========================
-     状态
-  ========================= */
   const [files, setFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [activeFileId, setActiveFileId] = useState(null);
@@ -33,7 +30,6 @@ export default function ChatPage() {
 
   const [token, setToken] = useState(null);
 
-  // ✅ 新增聊天状态
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -73,8 +69,7 @@ export default function ChatPage() {
 
       try {
         const text = await res.text();
-
-        console.log("原始返回：", text); // 🔥 用来排查后端问题
+        console.log("原始返回：", text);
 
         data = text ? JSON.parse(text) : {};
       } catch (err) {
@@ -88,6 +83,8 @@ export default function ChatPage() {
         data.data?.list ||
         data.list ||
         [];
+
+      console.log("files数据：", fileList); // ✅ 调试关键
 
       setFiles(fileList);
     } catch (err) {
@@ -147,7 +144,7 @@ export default function ChatPage() {
   };
 
   /* =========================
-     点击文件（保留）
+     点击文件
   ========================= */
   const sendWorkspaceFile = async (file) => {
     if (!token) {
@@ -170,8 +167,6 @@ export default function ChatPage() {
         }),
       });
 
-      const data = await res.json();
-
       if (res.ok) {
         setMessages((prev) => [
           ...prev,
@@ -185,88 +180,100 @@ export default function ChatPage() {
   };
 
   /* =========================
-     ✅ AI对话（新增）
+     拆分文件名 + 后缀
+  ========================= */
+  const getNameAndExt = (name = "") => {
+    const parts = name.split(".");
+    if (parts.length === 1) return { name, ext: "" };
+
+    return {
+      name: parts.slice(0, -1).join("."),
+      ext: parts.pop(),
+    };
+  };
+
+  /* =========================
+     AI对话
   ========================= */
   const sendMessage = async () => {
-  if (!input.trim()) return;
+    if (!input.trim()) return;
 
-  if (!token) {
-    alert("未登录");
-    return;
-  }
+    if (!token) {
+      alert("未登录");
+      return;
+    }
 
-  const userText = input;
+    const userText = input;
 
-  setMessages((prev) => [
-    ...prev,
-    { type: "user", content: userText },
-  ]);
+    setMessages((prev) => [
+      ...prev,
+      { type: "user", content: userText },
+    ]);
 
-  setInput("");
-  setSending(true);
-
-  try {
-    const res = await fetch("/api/auth/files/search", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: userText,
-      }),
-    });
-
-    // ✅ 安全解析
-    let data = null;
+    setInput("");
+    setSending(true);
 
     try {
-      const text = await res.text();
-      console.log("原始返回：", text);
-      data = text ? JSON.parse(text) : {};
-    } catch (err) {
-      console.error("JSON解析失败：", err);
-      data = {};
-    }
+      const res = await fetch("/api/auth/files/search", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: userText,
+        }),
+      });
 
-    if (res.ok) {
-      const fileList = data.files || data.data?.files || [];
+      let data = null;
 
-      if (fileList.length === 0) {
-        setMessages((prev) => [
-          ...prev,
-          { type: "bot", content: "未找到相关内容" },
-        ]);
-      } else {
-        const text = fileList
-          .map(
-            (f, i) =>
-              `${i + 1}. ${f.file_name}（score: ${f.score}）`
-          )
-          .join("\n");
-
-        setMessages((prev) => [
-          ...prev,
-          { type: "bot", content: text },
-        ]);
+      try {
+        const text = await res.text();
+        console.log("原始返回：", text);
+        data = text ? JSON.parse(text) : {};
+      } catch (err) {
+        console.error("JSON解析失败：", err);
+        data = {};
       }
-    } else {
-      alert(data.message || `请求失败（${res.status}）`);
+
+      if (res.ok) {
+        const fileList = data.files || data.data?.files || [];
+
+        if (fileList.length === 0) {
+          setMessages((prev) => [
+            ...prev,
+            { type: "bot", content: "未找到相关内容" },
+          ]);
+        } else {
+          const text = fileList
+            .map(
+              (f, i) =>
+                `${i + 1}. ${f.file_name}（score: ${f.score}）`
+            )
+            .join("\n");
+
+          setMessages((prev) => [
+            ...prev,
+            { type: "bot", content: text },
+          ]);
+        }
+      } else {
+        alert(data.message || `请求失败（${res.status}）`);
+      }
+    } catch (err) {
+      console.error("请求异常：", err);
+      alert("请求失败");
+    } finally {
+      setSending(false);
     }
-  } catch (err) {
-    console.error("请求异常：", err);
-    alert("请求失败");
-  } finally {
-    setSending(false);
-  }
-};
+  };
 
   return (
     <div className="chatpage-app">
       <Sidebar />
 
       <main className="workspace">
-        {/* 左侧文件区（保留） */}
+        {/* 左侧文件区 */}
         <aside className="file-panel">
           <div className="file-header">
             <h2>知识资产</h2>
@@ -300,24 +307,37 @@ export default function ChatPage() {
             {!files || files.length === 0 ? (
               <p>暂无文件</p>
             ) : (
-              files.map((file) => (
-                <div
-                  key={file.file_id}
-                  className={`file-item ${
-                    activeFileId === String(file.file_id)
-                      ? "active"
-                      : ""
-                  }`}
-                  onClick={() => sendWorkspaceFile(file)}
-                >
-                  📄 {file.file_name}
-                </div>
-              ))
+              <>
+                {files.map((file) => {
+                  const name = file.file_name;
+                  // 从 MIME 类型取后缀
+                  const ext = file.file_type
+                    ? file.file_type.split("/").pop()
+                    : "";
+
+                  return (
+                    <div
+                      key={file.file_id}
+                      className={`file-item ${
+                        activeFileId === String(file.file_id)
+                          ? "active"
+                          : ""
+                      }`}
+                      onClick={() => sendWorkspaceFile(file)}
+                    >
+                      📄 {name}
+                      {ext && (
+                        <span className="file-ext">.{ext}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </>
             )}
           </div>
         </aside>
 
-        {/* 右侧聊天区（增强） */}
+        {/* 右侧聊天区 */}
         <section className="chat-area">
           <header className="chat-header">
             🤖 AI 对话
@@ -329,10 +349,7 @@ export default function ChatPage() {
             )}
 
             {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`chat-row ${msg.type}`}
-              >
+              <div key={i} className={`chat-row ${msg.type}`}>
                 <div className={`message ${msg.type}`}>
                   {msg.content}
                 </div>
@@ -342,7 +359,6 @@ export default function ChatPage() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* 输入框 */}
           <div className="chat-input">
             <input
               type="text"

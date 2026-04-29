@@ -38,7 +38,7 @@ export default function Sidebar() {
       const token = getToken();
 
       const res = await fetch(
-        `http://localhost:8000/api/auth/info/head/${userId}`,
+        `http://localhost:8000/api/auth/info/head/${userId}?t=${Date.now()}`, // ✅ 防缓存
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -52,7 +52,15 @@ export default function Sidebar() {
       if (!blob || blob.size === 0) throw new Error();
 
       const imageUrl = URL.createObjectURL(blob);
-      setAvatar(imageUrl);
+
+      // ✅ 防内存泄漏
+      setAvatar((prev) => {
+        if (prev && prev.startsWith("blob:")) {
+          URL.revokeObjectURL(prev);
+        }
+        return imageUrl;
+      });
+
     } catch {
       const purpleAvatar =
         "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100%25' height='100%25' fill='%23E6E6FA'/%3E%3C/svg%3E";
@@ -71,7 +79,8 @@ export default function Sidebar() {
     });
 
     if (user.id) {
-      fetchAvatar(user.id);
+      setAvatar(""); // 👈 强制刷新
+      setTimeout(() => fetchAvatar(user.id), 50);
     }
   };
 

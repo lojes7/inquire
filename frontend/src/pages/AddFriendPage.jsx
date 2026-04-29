@@ -69,31 +69,39 @@ const [sending, setSending] = useState(false);
   =========================
   */
   const fetchAvatar = async (userId) => {
-    try {
-      const token = getToken();
+  try {
+    const token = getToken();
 
-      const res = await fetch(
-        `http://localhost:8000/api/auth/info/head/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+    const res = await fetch(
+      `http://localhost:8000/api/auth/info/head/${userId}?t=${Date.now()}`, // ✅ 防缓存
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-      if (!res.ok) throw new Error("头像获取失败");
+    if (!res.ok) throw new Error("头像获取失败");
 
-      const blob = await res.blob();
-      const imageUrl = URL.createObjectURL(blob);
+    const blob = await res.blob();
+    const imageUrl = URL.createObjectURL(blob);
 
-      setAvatarMap((prev) => ({
+    setAvatarMap((prev) => {
+      // ✅ 防内存泄漏
+      if (prev[userId]?.startsWith("blob:")) {
+        URL.revokeObjectURL(prev[userId]);
+      }
+
+      return {
         ...prev,
         [String(userId)]: imageUrl,
-      }));
-    } catch (err) {
-      console.error("头像加载失败:", userId);
-    }
-  };
+      };
+    });
+
+  } catch (err) {
+    console.error("头像加载失败:", userId);
+  }
+};
 
   /*
   =========================
@@ -374,20 +382,22 @@ const [sending, setSending] = useState(false);
   =========================
   */
   useEffect(() => {
-    if (activeTab === "request") fetchFriendRequests();
-    if (activeTab === "list") fetchFriends();
+    if (activeTab === "request") {
+      fetchFriendRequests();
+    } else if (activeTab === "list") {
+      fetchFriends();
+    }
   }, [activeTab]);
 
   return (
-    
     <div className="chatpage-app">
       {toast.show && (
         <div className={`toast toast-${toast.type}`}>
           {toast.message}
         </div>
       )}
-      <Sidebar />
 
+      <Sidebar />
      <aside className="addfriend-middle">
         <div className="addfriend-title">
           <h3>好友管理</h3>
