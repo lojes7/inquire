@@ -91,7 +91,7 @@ func UploadFile(userID uint64, file *multipart.FileHeader) (*model.UploadFileRes
 		return nil, err
 	}
 
-	// 5) 非阻塞触发嵌入管线
+	// 5) 非阻塞触发向量化
 	if strings.TrimSpace(fileRecord.FileURL) != "" {
 		go EmbedFile(fileRecord.ID, fileRecord.FileURL, fileRecord.FileType)
 	}

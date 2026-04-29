@@ -29,7 +29,7 @@ func SemanticSearchFiles(c *gin.Context) {
 		return
 	}
 
-	files, err := service.SearchFiles(userID, req.Query, req.Limit, req.Threshold)
+	files, err := service.SemanticSearchFiles(userID, req.Query, req.Limit, req.Threshold)
 	if err != nil {
 		if myErr := secure.Unwrap(err); myErr != nil {
 			response.Fail(c, myErr.Code, myErr.Message)

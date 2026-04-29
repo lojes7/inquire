@@ -17,12 +17,12 @@ const (
 	defaultSearchThreshold = 0.5
 )
 
-// SearchFiles 对用户工作区文件执行语义搜索。
+// SemanticSearchFiles 对用户工作区文件执行语义搜索。
 //
 // query: 用户输入的自然语言查询
 // limit: 最多返回数量（默认 5，最大 20）
 // threshold: 余弦距离上限，用 pgvector 的 <=> 运算符（默认 0.5）
-func SearchFiles(userID uint64, query string, limit int, threshold float64) ([]model.SemanticSearchFileItem, error) {
+func SemanticSearchFiles(userID uint64, query string, limit int, threshold float64) ([]model.SemanticSearchFileItem, error) {
 	if strings.TrimSpace(query) == "" {
 		return nil, secure.Wrap(400, "查询内容不能为空", fmt.Errorf("empty query"))
 	}
@@ -66,7 +66,7 @@ func SearchFiles(userID uint64, query string, limit int, threshold float64) ([]m
 		WHERE fv.deleted_at IS NULL
 		  AND fv.vector <=> ?::vector < ?
 		GROUP BY f.id, f.file_name, f.file_size, f.file_type
-		ORDER BY distance ASC
+		ORDER BY distance DESC
 		LIMIT ?
 	`
 
